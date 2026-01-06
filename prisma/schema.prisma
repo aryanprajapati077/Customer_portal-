@@ -1,0 +1,106 @@
+// Prisma Schema for Buffindia ESG Platform
+// Optimized for Prisma 7 with Neon Serverless
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  password            String
+  companyName         String
+  contactPerson       String?
+  phone               String?
+  address             String?
+  industry            String?
+  employeeCount       Int?          @default(0)
+  joinDate            DateTime      @default(now())
+  status              String        @default("Active")
+  
+  // Impact Metrics
+  totalWasteCollected Float         @default(0)
+  pendingCollection   Float         @default(0)
+  certificatesEarned  Int           @default(0)
+  co2Saved            Float         @default(0)
+  treesEquivalent     Int           @default(0)
+  monthlyTarget       Float         @default(0)
+  
+  profileImageUrl     String?
+  notes               String?
+  
+  // Relations
+  collections         Collection[]
+  certificates        Certificate[]
+  reports             Report[]
+  
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([email])
+}
+
+model Collection {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  date           DateTime @default(now())
+  weight         Float
+  location       String?
+  status         String   @default("Completed")
+  co2Saved       Float?
+  collectorName  String?
+  vehicleNumber  String?
+  notes          String?
+
+  @@index([customerId])
+  @@index([date])
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name              String
+  issueDate         DateTime @default(now())
+  type              String?
+  description       String?
+  driveFileUrl      String?
+  validUntil        String?
+  issuedBy          String   @default("Buffindia")
+  certificateNumber String   @unique
+
+  @@index([customerId])
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name         String
+  date         DateTime @default(now())
+  type         String?
+  driveFileUrl String?
+  size         String?
+  description  String?
+  period       String?
+  generatedBy  String?
+
+  @@index([customerId])
+  @@index([date])
+}
+
+// System-wide Aggregate Metrics for Homepage
+model GlobalImpact {
+  id               String   @id @default("global-impact")
+  wasteCollected   Float    @default(0)
+  productsCreated  Float    @default(0)
+  treesEquivalent  Int      @default(0)
+  co2Prevented     Float    @default(0)
+  updatedAt        DateTime @updatedAt
+}

@@ -1,19 +1,56 @@
-"use client"
+"use client";
 
-import type { Customer } from "@/lib/auth-context"
-import { Card, CardContent } from "@/components/ui/card"
-import { Cigarette, Award, TrendingUp, Leaf, Calendar, Building2 } from "lucide-react"
-import { AnimatedCounter } from "@/components/animated-counter"
+import type { Customer } from "@/lib/auth-context";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Cigarette,
+  Award,
+  TrendingUp,
+  Leaf,
+  Calendar,
+  Building2,
+} from "lucide-react";
+import { AnimatedCounter } from "@/components/animated-counter";
 
-interface StatsOverviewProps {
-  customer: Customer
+interface CollectionLike {
+  weight?: number | null;
+  co2Saved?: number | null;
 }
 
-export function StatsOverview({ customer }: StatsOverviewProps) {
+interface StatsOverviewProps {
+  customer: Customer;
+  /** When provided, totals are derived from these collections (from API) so stats match collection history. */
+  collections?: CollectionLike[];
+}
+
+function safeNumber(n: unknown): number {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : 0;
+}
+
+export function StatsOverview({ customer, collections }: StatsOverviewProps) {
+  const fromCollections =
+    Array.isArray(collections) && collections.length > 0
+      ? {
+          totalWaste: collections.reduce((s, c) => s + safeNumber(c.weight), 0),
+          totalCO2: collections.reduce(
+            (s, c) => s + safeNumber(c.co2Saved ?? safeNumber(c.weight) * 2.5),
+            0,
+          ),
+        }
+      : null;
+  const totalWaste = fromCollections
+    ? fromCollections.totalWaste
+    : safeNumber(customer.totalWasteCollected);
+  const totalCO2 = fromCollections
+    ? fromCollections.totalCO2
+    : safeNumber(customer.co2Saved) || Math.round(totalWaste * 2.5);
+  const treesEquivalent =
+    safeNumber(customer.treesEquivalent) || Math.round(totalWaste / 10);
   const stats = [
     {
       label: "Total Waste Collected",
-      value: customer.totalWasteCollected || 0,
+      value: totalWaste,
       suffix: " kg",
       icon: Cigarette,
       color: "primary",
@@ -21,7 +58,7 @@ export function StatsOverview({ customer }: StatsOverviewProps) {
     },
     {
       label: "CO2 Saved",
-      value: customer.co2Saved || Math.round((customer.totalWasteCollected || 0) * 2.5),
+      value: totalCO2,
       suffix: " kg",
       icon: Leaf,
       color: "secondary",
@@ -29,7 +66,7 @@ export function StatsOverview({ customer }: StatsOverviewProps) {
     },
     {
       label: "Trees Equivalent",
-      value: customer.treesEquivalent || Math.round((customer.totalWasteCollected || 0) / 10),
+      value: treesEquivalent,
       suffix: "",
       icon: TrendingUp,
       color: "accent",
@@ -37,13 +74,13 @@ export function StatsOverview({ customer }: StatsOverviewProps) {
     },
     {
       label: "Certificates Earned",
-      value: customer.certificatesEarned || 0,
+      value: safeNumber(customer.certificatesEarned),
       suffix: "",
       icon: Award,
       color: "chart-1",
       description: "ESG certifications",
     },
-  ]
+  ];
 
   return (
     <div className="space-y-6">
@@ -54,9 +91,12 @@ export function StatsOverview({ customer }: StatsOverviewProps) {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-                Welcome back, {customer.contactPerson?.split(" ")[0] || "Partner"}!
+                Welcome back,{" "}
+                {customer.contactPerson?.split(" ")[0] || "Partner"}!
               </h1>
-              <p className="text-muted-foreground">Here&apos;s your sustainability impact overview</p>
+              <p className="text-muted-foreground">
+                Here&apos;s your sustainability impact overview
+              </p>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -118,16 +158,23 @@ export function StatsOverview({ customer }: StatsOverviewProps) {
               </div>
               <div className="space-y-1">
                 <div className="text-3xl font-bold text-foreground">
-                  <AnimatedCounter value={stat.value} duration={2000} />
-                  {stat.suffix}
+                  <AnimatedCounter
+                    end={stat.value}
+                    duration={2000}
+                    suffix={stat.suffix}
+                  />
                 </div>
-                <p className="text-sm font-medium text-foreground">{stat.label}</p>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {stat.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
     </div>
-  )
+  );
 }

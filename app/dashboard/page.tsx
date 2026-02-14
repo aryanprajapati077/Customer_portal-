@@ -1,72 +1,74 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { StatsOverview } from "@/components/dashboard/stats-overview"
-import { CollectionHistory } from "@/components/dashboard/collection-history"
-import { CertificatesSection } from "@/components/dashboard/certificates-section"
-import { ReportsSection } from "@/components/dashboard/reports-section"
-import { ImpactVisualization } from "@/components/dashboard/impact-visualization"
-import { CustomerProfile } from "@/components/dashboard/customer-profile"
-import { Loader2, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { StatsOverview } from "@/components/dashboard/stats-overview";
+import { CollectionHistory } from "@/components/dashboard/collection-history";
+import { CertificatesSection } from "@/components/dashboard/certificates-section";
+import { ReportsSection } from "@/components/dashboard/reports-section";
+import { ImpactVisualization } from "@/components/dashboard/impact-visualization";
+import { CustomerProfile } from "@/components/dashboard/customer-profile";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
-  const { customer, isLoading } = useAuth()
-  const router = useRouter()
-  const [collections, setCollections] = useState([])
-  const [certificates, setCertificates] = useState([])
-  const [reports, setReports] = useState([])
-  const [dataLoading, setDataLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const { customer, isLoading } = useAuth();
+  const router = useRouter();
+  const [collections, setCollections] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!isLoading && !customer) {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [customer, isLoading, router])
+  }, [customer, isLoading, router]);
 
   const fetchCustomerData = useCallback(async () => {
-    if (!customer?.id) return
+    if (!customer?.id) return;
 
-    setDataLoading(true)
+    setDataLoading(true);
     try {
       const [collectionsRes, certificatesRes, reportsRes] = await Promise.all([
         fetch(`/api/customer/collections?customerId=${customer.id}`),
         fetch(`/api/customer/certificates?customerId=${customer.id}`),
         fetch(`/api/customer/reports?customerId=${customer.id}`),
-      ])
+      ]);
 
-      const [collectionsData, certificatesData, reportsData] = await Promise.all([
-        collectionsRes.json(),
-        certificatesRes.json(),
-        reportsRes.json(),
-      ])
+      const [collectionsData, certificatesData, reportsData] =
+        await Promise.all([
+          collectionsRes.json(),
+          certificatesRes.json(),
+          reportsRes.json(),
+        ]);
 
-      if (collectionsData.success) setCollections(collectionsData.collections)
-      if (certificatesData.success) setCertificates(certificatesData.certificates)
-      if (reportsData.success) setReports(reportsData.reports)
-      setLastRefresh(new Date())
+      if (collectionsData.success) setCollections(collectionsData.collections);
+      if (certificatesData.success)
+        setCertificates(certificatesData.certificates);
+      if (reportsData.success) setReports(reportsData.reports);
+      setLastRefresh(new Date());
     } catch (error) {
-      console.error("Error fetching customer data:", error)
+      console.error("Error fetching customer data:", error);
     }
-    setDataLoading(false)
-  }, [customer?.id])
+    setDataLoading(false);
+  }, [customer?.id]);
 
   useEffect(() => {
     if (customer?.id) {
-      fetchCustomerData()
+      fetchCustomerData();
     }
-  }, [customer?.id, fetchCustomerData])
+  }, [customer?.id, fetchCustomerData]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await fetchCustomerData()
-    setIsRefreshing(false)
-  }
+    setIsRefreshing(true);
+    await fetchCustomerData();
+    setIsRefreshing(false);
+  };
 
   if (isLoading) {
     return (
@@ -76,14 +78,16 @@ export default function DashboardPage() {
             <div className="absolute -inset-4 rounded-full bg-primary/20 animate-ping" />
             <Loader2 className="w-12 h-12 animate-spin text-primary relative" />
           </div>
-          <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
+          <p className="text-muted-foreground animate-pulse">
+            Loading your dashboard...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!customer) {
-    return null
+    return null;
   }
 
   return (
@@ -102,7 +106,9 @@ export default function DashboardPage() {
           {/* Refresh Bar */}
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {lastRefresh && <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>}
+              {lastRefresh && (
+                <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+              )}
             </div>
             <Button
               variant="outline"
@@ -111,13 +117,15 @@ export default function DashboardPage() {
               disabled={isRefreshing}
               className="bg-transparent"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               {isRefreshing ? "Refreshing..." : "Refresh Data"}
             </Button>
           </div>
 
           {/* Stats Overview */}
-          <StatsOverview customer={customer} />
+          <StatsOverview customer={customer} collections={collections} />
 
           {/* Customer Profile Card */}
           <CustomerProfile customer={customer} />
@@ -127,8 +135,14 @@ export default function DashboardPage() {
 
           {/* Two Column Layout for Collections and Certificates */}
           <div className="grid lg:grid-cols-2 gap-8">
-            <CollectionHistory collections={collections} isLoading={dataLoading} />
-            <CertificatesSection certificates={certificates} isLoading={dataLoading} />
+            <CollectionHistory
+              collections={collections}
+              isLoading={dataLoading}
+            />
+            <CertificatesSection
+              certificates={certificates}
+              isLoading={dataLoading}
+            />
           </div>
 
           {/* Reports Section */}
@@ -136,5 +150,5 @@ export default function DashboardPage() {
         </main>
       </div>
     </div>
-  )
+  );
 }

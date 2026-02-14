@@ -38,6 +38,11 @@ export type Certificate = Prisma.CertificateModel
  */
 export type Report = Prisma.ReportModel
 /**
+ * Model PasswordResetToken
+ * 
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
  * Model GlobalImpact
  * 
  */

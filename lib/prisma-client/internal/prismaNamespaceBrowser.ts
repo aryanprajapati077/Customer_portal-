@@ -55,6 +55,7 @@ export const ModelName = {
   Collection: 'Collection',
   Certificate: 'Certificate',
   Report: 'Report',
+  PasswordResetToken: 'PasswordResetToken',
   GlobalImpact: 'GlobalImpact'
 } as const
 
@@ -147,6 +148,18 @@ export const ReportScalarFieldEnum = {
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  email: 'email',
+  customerId: 'customerId',
+  expireAt: 'expireAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
 export const GlobalImpactScalarFieldEnum = {

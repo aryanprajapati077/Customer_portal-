@@ -1,23 +1,44 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, Lock, ArrowRight, Loader2, AlertCircle, Sparkles, Shield, Recycle } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Shield,
+  Recycle,
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 function FloatingParticle({
   delay,
   size,
   left,
   duration,
-}: { delay: number; size: number; left: number; duration: number }) {
+}: {
+  delay: number;
+  size: number;
+  left: number;
+  duration: number;
+}) {
   return (
     <div
       className="absolute opacity-20"
@@ -28,46 +49,58 @@ function FloatingParticle({
       }}
     >
       <div className="animate-float-up" style={{ width: size, height: size }}>
-        <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-primary">
-          <rect x="6" y="2" width="12" height="18" rx="2" fill="currentColor" opacity="0.3" />
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          className="w-full h-full text-primary"
+        >
+          <rect
+            x="6"
+            y="2"
+            width="12"
+            height="18"
+            rx="2"
+            fill="currentColor"
+            opacity="0.3"
+          />
           <rect x="8" y="2" width="8" height="4" fill="currentColor" />
           <circle cx="12" cy="21" r="2" fill="currentColor" opacity="0.5" />
         </svg>
       </div>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showDemo, setShowDemo] = useState(false)
-  const { login } = useAuth()
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-    const result = await login(email, password)
+    const result = await login(email, password);
 
     if (result.success) {
-      router.push("/dashboard")
+      router.push("/dashboard");
     } else {
-      setError(result.error || "Login failed")
+      setError(result.error || "Login failed");
     }
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
   const fillDemoCredentials = () => {
-    setEmail("demo@buffindia.com")
-    setPassword("demo123")
-    setShowDemo(false)
-  }
+    setEmail("demo@buffindia.com");
+    setPassword("demo123");
+    setShowDemo(false);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
@@ -131,7 +164,10 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo with pulse effect */}
-        <Link href="/" className="flex items-center justify-center gap-3 mb-8 group">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-3 mb-8 group"
+        >
           <div className="relative">
             <div className="absolute -inset-4 rounded-full bg-primary/20 animate-pulse-ring" />
             <div className="w-14 h-14 flex items-center justify-center transition-all duration-500 group-hover:scale-110">
@@ -148,7 +184,9 @@ export default function LoginPage() {
             <span className="text-3xl font-bold tracking-tight text-foreground">
               Buff<span className="text-primary">india</span>
             </span>
-            <span className="text-xs text-muted-foreground -mt-1">Transforming Waste into Value</span>
+            <span className="text-xs text-muted-foreground -mt-1">
+              Transforming Waste into Value
+            </span>
           </div>
         </Link>
 
@@ -164,7 +202,9 @@ export default function LoginPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50"
             >
               <item.icon className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {item.label}
+              </span>
             </div>
           ))}
         </div>
@@ -217,9 +257,8 @@ export default function LoginPage() {
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -228,6 +267,14 @@ export default function LoginPage() {
                     />
                   </div>
                 </div>
+                <p className="text-right text-sm">
+                  <Link
+                    href="/forgot-password"
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </p>
               </div>
 
               <Button
@@ -249,7 +296,9 @@ export default function LoginPage() {
             {/* Demo Credentials Section */}
             <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-secondary/10 to-primary/10 border border-border/50">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-foreground">Try Demo Account</span>
+                <span className="text-sm font-medium text-foreground">
+                  Try Demo Account
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -272,7 +321,10 @@ export default function LoginPage() {
             <div className="mt-4 p-3 rounded-xl bg-muted/30 border border-border/30">
               <p className="text-xs text-muted-foreground text-center">
                 Admin?{" "}
-                <Link href="/setup" className="text-primary font-medium hover:underline">
+                <Link
+                  href="/setup"
+                  className="text-primary font-medium hover:underline"
+                >
                   View Google Sheets Setup Guide
                 </Link>
               </p>
@@ -281,7 +333,10 @@ export default function LoginPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <Link href="/#contact" className="text-primary font-medium hover:underline">
+                <Link
+                  href="/#contact"
+                  className="text-primary font-medium hover:underline"
+                >
                   Contact us
                 </Link>
               </p>
@@ -301,5 +356,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

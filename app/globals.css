@@ -1,0 +1,289 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Premium white theme with orange and green accents for Buffindia ESG */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(0.99 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.65 0.2 45); /* Bold Orange */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.55 0.15 145); /* Deep Green */
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.75 0.18 145); /* Lighter Green */
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.92 0.01 90);
+  --input: oklch(0.95 0 0);
+  --ring: oklch(0.65 0.2 45);
+  --chart-1: oklch(0.65 0.2 45); /* Orange */
+  --chart-2: oklch(0.55 0.15 145); /* Green */
+  --chart-3: oklch(0.75 0.18 145); /* Light Green */
+  --chart-4: oklch(0.8 0.15 45); /* Light Orange */
+  --chart-5: oklch(0.45 0.1 145); /* Dark Green */
+  --radius: 1rem;
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.65 0.2 45);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.55 0.15 145);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: oklch(0.65 0.2 45);
+
+  /* Custom Buffindia tokens */
+  --orange: oklch(0.65 0.2 45);
+  --orange-light: oklch(0.85 0.12 45);
+  --green: oklch(0.55 0.15 145);
+  --green-light: oklch(0.75 0.12 145);
+  --glass: oklch(1 0 0 / 0.7);
+  --glass-border: oklch(1 0 0 / 0.3);
+}
+
+.dark {
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.15 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.7 0.2 45);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.6 0.15 145);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.6 0.15 145);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.5 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0 0);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.7 0.2 45);
+  --chart-1: oklch(0.7 0.2 45);
+  --chart-2: oklch(0.6 0.15 145);
+  --chart-3: oklch(0.75 0.15 145);
+  --chart-4: oklch(0.8 0.15 45);
+  --chart-5: oklch(0.5 0.1 145);
+  --sidebar: oklch(0.15 0 0);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.7 0.2 45);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.6 0.15 145);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.25 0 0);
+  --sidebar-ring: oklch(0.7 0.2 45);
+
+  --orange: oklch(0.7 0.2 45);
+  --orange-light: oklch(0.35 0.1 45);
+  --green: oklch(0.6 0.15 145);
+  --green-light: oklch(0.35 0.1 145);
+  --glass: oklch(0.15 0 0 / 0.7);
+  --glass-border: oklch(0.3 0 0 / 0.3);
+}
+
+@theme inline {
+  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-display: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-orange: var(--orange);
+  --color-orange-light: var(--orange-light);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom glassmorphism and animation utilities */
+@layer utilities {
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-strong {
+    background: oklch(1 0 0 / 0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid oklch(1 0 0 / 0.5);
+  }
+
+  .text-gradient-orange {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-green {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out infinite 2s;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px oklch(0 0 0 / 0.15);
+  }
+
+  @keyframes drop-into-kiosk {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+    20% {
+      opacity: 1;
+      transform: translate(-50%, 60px) scale(0.9);
+    }
+    50% {
+      opacity: 0.9;
+      transform: translate(-50%, 100px) scale(0.7);
+    }
+    80% {
+      opacity: 0.4;
+      transform: translate(-50%, 130px) scale(0.4);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, 150px) scale(0.2);
+    }
+  }
+
+  .animate-drop-into-kiosk {
+    animation: drop-into-kiosk 1.8s ease-in forwards;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes marquee-reverse {
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 80s linear infinite;
+  }
+
+  .animate-marquee-reverse {
+    animation: marquee-reverse 80s linear infinite;
+  }
+
+  .group:hover .animate-marquee,
+  .group:hover .animate-marquee-reverse,
+  .group\/marquee:hover .animate-marquee,
+  .group\/marquee:hover .animate-marquee-reverse {
+    animation-play-state: paused;
+  }
+}

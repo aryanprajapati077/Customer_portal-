@@ -12,8 +12,14 @@ import {
   Package,
   Award,
   Bell,
+  Mail,
   LogOut,
   Sparkles,
+  FileBarChart,
+  ShoppingBag,
+  ClipboardList,
+  Database,
+  LifeBuoy,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -21,9 +27,15 @@ const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/homepage", label: "Homepage", icon: Home },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
   { href: "/admin/collections", label: "Collections", icon: Package },
+  { href: "/admin/shop/products", label: "Shop Products", icon: ShoppingBag },
+  { href: "/admin/shop/orders", label: "Shop Orders", icon: ClipboardList },
+  { href: "/admin/verified-certificates", label: "Verified Certs", icon: Award },
+  { href: "/admin/import", label: "Import Data", icon: Database },
   { href: "/admin/certificates", label: "Certificates", icon: Award },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -13,6 +13,7 @@ import { CustomerProfile } from "@/components/dashboard/customer-profile"
 import { GroupWasteBreakdown } from "@/components/dashboard/group-waste-breakdown"
 import { Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DownloadReportButton } from "@/components/dashboard/download-report-button"
 
 export default function DashboardPage() {
   const { customer, isLoading } = useAuth()
@@ -145,11 +146,13 @@ export default function DashboardPage() {
 
         <main className="container mx-auto px-4 lg:px-8 py-8 space-y-8">
           {/* Refresh Bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="text-sm text-muted-foreground">
               {lastRefresh && <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>}
             </div>
-            <Button
+            <div className="flex items-center gap-2">
+              <DownloadReportButton customerId={effectiveCustomerId!} variant="outline" size="sm" />
+              <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
@@ -159,6 +162,7 @@ export default function DashboardPage() {
               <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
               {isRefreshing ? "Refreshing..." : "Refresh Data"}
             </Button>
+            </div>
           </div>
 
           {/* Stats Overview */}
@@ -178,11 +182,16 @@ export default function DashboardPage() {
           {/* Two Column Layout for Collections and Certificates */}
           <div className="grid lg:grid-cols-2 gap-8">
             <CollectionHistory collections={collections} isLoading={dataLoading} />
-            <CertificatesSection certificates={certificates} isLoading={dataLoading} />
+            <CertificatesSection
+              certificates={certificates}
+              isLoading={dataLoading}
+              customerId={effectiveCustomerId!}
+              contactName={customerView.contactPerson?.split(" ")[0] || customerView.companyName}
+            />
           </div>
 
           {/* Reports Section */}
-          <ReportsSection reports={reports} isLoading={dataLoading} />
+          <ReportsSection reports={reports} isLoading={dataLoading} customerId={effectiveCustomerId!} />
         </main>
       </div>
     </div>

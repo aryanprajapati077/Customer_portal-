@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { randomBytes } from "crypto"
+import { hashPassword } from "@/lib/password"
 
 function generateCuid(): string {
   const timestamp = Date.now().toString(36)
@@ -12,7 +13,8 @@ export async function GET() {
   try {
     const rows = await sql`
       SELECT id, email, "companyName", "contactPerson", phone, address, status,
-             "totalWasteCollected", "disposalUnitInstalled", "updatedAt",
+             "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+             "kraftrebornCredits", "updatedAt",
              "isGroup", "parentCustomerId"
       FROM "Customer"
       ORDER BY "updatedAt" DESC
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest) {
       pendingCollection,
       certificatesEarned,
       co2Saved,
+      kraftrebornCredits,
       treesEquivalent,
       monthlyTarget,
       profileImageUrl,
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
       }
     }
     const now = new Date().toISOString()
+    const passwordHash = await hashPassword(String(password))
 
     const rows = await sql`
       INSERT INTO "Customer" (
@@ -90,12 +94,12 @@ export async function POST(request: NextRequest) {
         "employeeCount", status, "disposalUnitInstalled",
         "totalWasteCollected", "cigaretteButtsCollected", "microplasticsUpcycled",
         "waterResourcesProtected", "pendingCollection", "certificatesEarned",
-        "co2Saved", "treesEquivalent", "monthlyTarget", "profileImageUrl", notes,
+        "co2Saved", "kraftrebornCredits", "treesEquivalent", "monthlyTarget", "profileImageUrl", notes,
         "isGroup", "parentCustomerId", "createdAt", "updatedAt"
       ) VALUES (
         ${id},
         ${emailLower},
-        ${String(password)},
+        ${passwordHash},
         ${String(companyName).trim()},
         ${contactPerson ? String(contactPerson).trim() : null},
         ${phone ? String(phone).trim() : null},
@@ -111,6 +115,7 @@ export async function POST(request: NextRequest) {
         ${num(pendingCollection)},
         ${int(certificatesEarned)},
         ${num(co2Saved)},
+        ${num(kraftrebornCredits)},
         ${int(treesEquivalent)},
         ${num(monthlyTarget)},
         ${profileImageUrl ? String(profileImageUrl).trim() : null},
@@ -122,6 +127,7 @@ export async function POST(request: NextRequest) {
       )
       RETURNING id, email, "companyName", "contactPerson", phone, address, status,
                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+                "kraftrebornCredits",
                 "isGroup", "parentCustomerId", "createdAt", "updatedAt"
     `
 
@@ -154,6 +160,11 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"monthlyTarget" = $${i++}`)
       values.push(Number.isFinite(v) ? v : 0)
     }
+    if (body?.kraftrebornCredits !== undefined) {
+      const v = Number(body.kraftrebornCredits)
+      updates.push(`"kraftrebornCredits" = $${i++}`)
+      values.push(Number.isFinite(v) ? v : 0)
+    }
     if (body?.status !== undefined) {
       updates.push(`status = $${i++}`)
       values.push(String(body.status))
@@ -178,7 +189,8 @@ export async function PATCH(request: NextRequest) {
       SET ${updates.join(", ")}
       WHERE id = $${i}
       RETURNING id, email, "companyName", "contactPerson", phone, address, status,
-                "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget", "updatedAt",
+                "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+                "kraftrebornCredits", "updatedAt",
                 "isGroup", "parentCustomerId"
     `
     values.push(id)

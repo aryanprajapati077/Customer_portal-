@@ -1,8 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import type { Customer } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
-import { Cigarette, Recycle, Droplets, Calendar, Building2, Package } from "lucide-react"
+import { Cigarette, Recycle, Droplets, Calendar, Building2, Package, Sparkles, ExternalLink } from "lucide-react"
 import { AnimatedCounter } from "@/components/animated-counter"
 import { usePreferences } from "@/lib/preferences-context"
 
@@ -65,6 +66,15 @@ export function StatsOverview({ customer, collections }: StatsOverviewProps) {
       color: "chart-1",
       description: "Water protected through recycling",
     },
+    {
+      label: "Kraftreborn Credits",
+      value: Number(customer.kraftrebornCredits) || 0,
+      suffix: "",
+      icon: Sparkles,
+      color: "primary",
+      description: "1 credit = ₹1 · Tap to shop Kraft Reborn products",
+      href: "/dashboard/shop",
+    },
   ]
 
   return (
@@ -95,11 +105,15 @@ export function StatsOverview({ customer, collections }: StatsOverviewProps) {
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {stats.map((stat, index) => {
+          const isClickable = Boolean((stat as { href?: string }).href)
+          const card = (
           <Card
             key={stat.label}
-            className="glass border-border/50 hover-lift group cursor-default overflow-hidden relative"
+            className={`glass border-border/50 hover-lift group overflow-hidden relative ${
+              isClickable ? "cursor-pointer ring-offset-background hover:ring-2 hover:ring-primary/30" : "cursor-default"
+            }`}
           >
             <div
               className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
@@ -147,12 +161,25 @@ export function StatsOverview({ customer, collections }: StatsOverviewProps) {
                     decimals={(stat as any).decimals ?? 0}
                   />
                 </div>
-                <p className="text-sm font-medium text-foreground">{stat.label}</p>
+                <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                  {stat.label}
+                  {isClickable && <ExternalLink className="w-3 h-3 opacity-60" />}
+                </p>
                 <p className="text-xs text-muted-foreground">{stat.description}</p>
               </div>
             </CardContent>
           </Card>
-        ))}
+          )
+
+          if (isClickable) {
+            return (
+              <Link key={stat.label} href={(stat as { href: string }).href} className="block">
+                {card}
+              </Link>
+            )
+          }
+          return card
+        })}
       </div>
     </div>
   )

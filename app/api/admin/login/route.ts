@@ -1,45 +1,48 @@
-import { NextResponse, type NextRequest } from "next/server"
-import { createHash, timingSafeEqual } from "crypto"
+import { type NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { verifyPassword, hashPassword } from "@/lib/password"
+import { createHash } from "crypto"
+import { ADMIN_COOKIE } from "@/lib/auth-session"
 
-const ADMIN_COOKIE = "buffindia_admin"
-
-function sha256(input: string) {
-  return createHash("sha256").update(input).digest("hex")
+function hashEnvPassword(password: string): string {
+  return createHash("sha256").update(password).digest("hex")
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json()
-    const expected = process.env.ADMIN_PASSWORD
-
-    if (!expected) {
-      return NextResponse.json({ success: false, error: "ADMIN_PASSWORD not configured" }, { status: 500 })
-    }
-
-    if (typeof password !== "string") {
+    if (!password) {
       return NextResponse.json({ success: false, error: "Password required" }, { status: 400 })
     }
 
-    const a = Buffer.from(sha256(password))
-    const b = Buffer.from(sha256(expected))
-    const ok = a.length === b.length && timingSafeEqual(a, b)
+    const cred = await prisma.adminCredential.findUnique({ where: { id: "admin" } })
+    let valid = false
 
-    if (!ok) {
+    if (cred) {
+      valid = await verifyPassword(password, cred.passwordHash)
+    } else {
+      const envPass = process.env.ADMIN_PASSWORD
+      if (!envPass) {
+        return NextResponse.json({ success: false, error: "Admin not configured" }, { status: 503 })
+      }
+      valid = hashEnvPassword(password) === hashEnvPassword(envPass)
+    }
+
+    if (!valid) {
       return NextResponse.json({ success: false, error: "Invalid password" }, { status: 401 })
     }
 
-    const res = NextResponse.json({ success: true })
-    res.cookies.set(ADMIN_COOKIE, "1", {
+    const response = NextResponse.json({ success: true })
+    response.cookies.set(ADMIN_COOKIE, "1", {
       httpOnly: true,
-      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24,
     })
-    return res
+    return response
   } catch (error) {
     console.error("Admin login error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }
-

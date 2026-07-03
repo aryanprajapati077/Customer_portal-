@@ -69,3 +69,38 @@ export type Report = Prisma.ReportModel
  * 
  */
 export type GlobalImpact = Prisma.GlobalImpactModel
+/**
+ * Model Product
+ * 
+ */
+export type Product = Prisma.ProductModel
+/**
+ * Model ShopOrder
+ * 
+ */
+export type ShopOrder = Prisma.ShopOrderModel
+/**
+ * Model OrderItem
+ * 
+ */
+export type OrderItem = Prisma.OrderItemModel
+/**
+ * Model PasswordResetOtp
+ * 
+ */
+export type PasswordResetOtp = Prisma.PasswordResetOtpModel
+/**
+ * Model AdminCredential
+ * 
+ */
+export type AdminCredential = Prisma.AdminCredentialModel
+/**
+ * Model VerifiedCertificate
+ * 
+ */
+export type VerifiedCertificate = Prisma.VerifiedCertificateModel
+/**
+ * Model SupportTicket
+ * 
+ */
+export type SupportTicket = Prisma.SupportTicketModel

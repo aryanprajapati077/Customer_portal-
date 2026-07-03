@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         ...customerData,
         disposalUnitInstalled: customerData.disposalUnitInstalled ?? 0,
         totalWasteCollected: customerData.totalWasteCollected || 0,
+        kraftrebornCredits: customerData.kraftrebornCredits || 0,
         isGroup: customerData.isGroup ?? false,
         parentCustomerId: customerData.parentCustomerId ?? null,
       },

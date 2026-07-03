@@ -3,7 +3,15 @@
 import { useEffect, useRef, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Download, Award, Calendar, FileCheck, Shield, TrendingUp, Leaf } from "lucide-react"
+import { FileText, Download, Award, Calendar, FileCheck, Shield, TrendingUp, Leaf, type LucideIcon } from "lucide-react"
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  shield: Shield,
+  award: Award,
+  filecheck: FileCheck,
+  leaf: Leaf,
+  trending: TrendingUp,
+}
 
 const reports = [
   {
@@ -44,13 +52,14 @@ const reports = [
   },
 ]
 
-const certificates = [
+const certificatesFallback = [
   {
     title: "ISO 14001:2015",
     issuer: "International Organization for Standardization",
     validUntil: "December 2026",
     type: "Environmental Management",
     icon: Shield,
+    pdfUrl: null as string | null,
   },
   {
     title: "B Corp Certification",
@@ -58,6 +67,7 @@ const certificates = [
     validUntil: "March 2027",
     type: "Social & Environmental",
     icon: Award,
+    pdfUrl: null,
   },
   {
     title: "GRI Standards Compliance",
@@ -65,6 +75,7 @@ const certificates = [
     validUntil: "Ongoing",
     type: "Sustainability Reporting",
     icon: FileCheck,
+    pdfUrl: null,
   },
   {
     title: "CDP Climate A-List",
@@ -72,6 +83,7 @@ const certificates = [
     validUntil: "2024 Recognition",
     type: "Climate Leadership",
     icon: Leaf,
+    pdfUrl: null,
   },
   {
     title: "Zero Waste Certification",
@@ -79,6 +91,7 @@ const certificates = [
     validUntil: "August 2026",
     type: "Waste Management",
     icon: TrendingUp,
+    pdfUrl: null,
   },
   {
     title: "Fair Trade Certified",
@@ -86,12 +99,46 @@ const certificates = [
     validUntil: "June 2025",
     type: "Social Responsibility",
     icon: Award,
+    pdfUrl: null,
   },
 ]
 
+type CertDisplay = {
+  title: string
+  issuer: string
+  validUntil: string
+  type: string
+  icon: LucideIcon
+  pdfUrl: string | null
+}
+
 export function ReportsCertificates() {
   const [isVisible, setIsVisible] = useState(false)
+  const [certificates, setCertificates] = useState<CertDisplay[]>(certificatesFallback)
   const sectionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/verified-certificates")
+        const data = await res.json()
+        if (data?.success && data.certificates?.length) {
+          setCertificates(
+            data.certificates.map((c: { title: string; issuer: string; validUntil: string; type: string; icon: string; pdfUrl?: string | null }) => ({
+              title: c.title,
+              issuer: c.issuer,
+              validUntil: c.validUntil,
+              type: c.type,
+              icon: ICON_MAP[c.icon] || Shield,
+              pdfUrl: c.pdfUrl || null,
+            })),
+          )
+        }
+      } catch {
+        // keep fallback
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -260,6 +307,10 @@ export function ReportsCertificates() {
                   variant="outline"
                   size="sm"
                   className="w-full rounded-full group-hover:border-secondary group-hover:text-secondary transition-colors bg-transparent text-xs sm:text-sm"
+                  onClick={() => {
+                    if (cert.pdfUrl) window.open(cert.pdfUrl, "_blank")
+                  }}
+                  disabled={!cert.pdfUrl}
                 >
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                   Download Certificate

@@ -2,6 +2,7 @@
 
 import { sql } from "@/lib/db"
 import { getSheetData } from "@/lib/google-sheets"
+import { hashPassword } from "@/lib/password"
 import { revalidateTag } from "next/cache"
 
 export async function syncGoogleSheetToNeon() {
@@ -40,6 +41,8 @@ export async function syncGoogleSheetToNeon() {
             WHERE email = ${email}
           `
         } else {
+          const pwd = String(row.password || "password123")
+          const passwordHash = await hashPassword(pwd)
           // Insert new customer
           await sql`
             INSERT INTO "Customer" (
@@ -49,7 +52,7 @@ export async function syncGoogleSheetToNeon() {
             ) VALUES (
               ${customerId},
               ${email},
-              ${String(row.password || "password123")},
+              ${passwordHash},
               ${String(row.companyName || "")},
               ${String(row.contactPerson || "")},
               ${String(row.phone || "")},

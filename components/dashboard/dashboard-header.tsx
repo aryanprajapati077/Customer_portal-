@@ -2,7 +2,7 @@
 
 import { useAuth, type Customer } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { LogOut, User, Bell, Settings, Building2, ChevronDown } from "lucide-react"
+import { LogOut, User, Bell, Settings, Building2, ChevronDown, ShoppingBag, LifeBuoy } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -201,9 +201,17 @@ export function DashboardHeader({
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/dashboard/shop")}>
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Kraft Reborn Shop
+                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/settings")}>
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/support")}>
+                  <LifeBuoy className="w-4 h-4 mr-2" />
+                  Help & Support
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">

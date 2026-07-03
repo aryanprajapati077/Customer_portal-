@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { hashPassword, verifyPassword, isPasswordHashed } from "@/lib/password"
+import { CUSTOMER_COOKIE, signCustomerSession } from "@/lib/auth-session"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,26 +11,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
     }
 
-    // Find customer by email in database
     const customer = await prisma.customer.findUnique({
-      where: {
-        email: email.toLowerCase(),
-      },
+      where: { email: email.toLowerCase().trim() },
     })
 
     if (!customer) {
-      return NextResponse.json({ success: false, error: "Customer not found" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
-    // Verify password
-    if (customer.password !== password) {
-      return NextResponse.json({ success: false, error: "Invalid password" }, { status: 401 })
+    const valid = await verifyPassword(password, customer.password)
+    if (!valid) {
+      return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
-    // Return customer data (exclude password)
+    if (!isPasswordHashed(customer.password)) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { password: await hashPassword(password) },
+      })
+    }
+
     const { password: _, ...customerData } = customer
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       customer: {
         ...customerData,
@@ -40,11 +45,22 @@ export async function POST(request: NextRequest) {
         pendingCollection: customerData.pendingCollection || 0,
         certificatesEarned: customerData.certificatesEarned || 0,
         co2Saved: customerData.co2Saved || 0,
+        kraftrebornCredits: customerData.kraftrebornCredits || 0,
         treesEquivalent: customerData.treesEquivalent || 0,
         isGroup: customerData.isGroup ?? false,
         parentCustomerId: customerData.parentCustomerId ?? null,
       },
     })
+
+    response.cookies.set(CUSTOMER_COOKIE, await signCustomerSession(customer.id), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    })
+
+    return response
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

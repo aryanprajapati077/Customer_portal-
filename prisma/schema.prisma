@@ -39,6 +39,7 @@ model Customer {
   pendingCollection   Float         @default(0)
   certificatesEarned  Int           @default(0)
   co2Saved            Float         @default(0)
+  kraftrebornCredits  Float         @default(0)
   treesEquivalent     Int           @default(0)
   monthlyTarget       Float         @default(0)
   
@@ -50,6 +51,7 @@ model Customer {
   certificates        Certificate[]
   reports             Report[]
   notifications       Notification[]
+  shopOrders          ShopOrder[]
   
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -130,4 +132,121 @@ model GlobalImpact {
   treesEquivalent  Int      @default(0)
   co2Prevented     Float    @default(0)
   updatedAt        DateTime @updatedAt
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  description   String
+  price         Float
+  category      String      @default("elegant-combos")
+  tagline       String?
+  buttsRescued  Int         @default(40)
+  imageUrl      String?
+  imageGradient String      @default("from-amber-100 via-stone-200 to-emerald-100")
+  allowsLogo    Boolean     @default(false)
+  active        Boolean     @default(true)
+  sortOrder     Int         @default(0)
+  orderItems    OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([category])
+  @@index([active])
+}
+
+model ShopOrder {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status          String      @default("pending")
+  subtotal        Float
+  useKrCredits    Boolean     @default(true)
+  creditsDeducted Boolean     @default(false)
+  logoRequested   Boolean     @default(false)
+  logoUrl         String?
+  shippingName    String?
+  shippingEmail   String?
+  shippingPhone   String?
+  shippingAddress String?
+  notes           String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  completedAt     DateTime?
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       ShopOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  price       Float
+  quantity    Int
+  allowsLogo  Boolean   @default(false)
+
+  @@index([orderId])
+}
+
+model PasswordResetOtp {
+  id         String    @id @default(cuid())
+  email      String
+  purpose    String    @default("customer")
+  otpHash    String
+  resetToken String?   @unique
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  usedAt     DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([email, purpose])
+}
+
+model AdminCredential {
+  id           String   @id @default("admin")
+  email        String
+  passwordHash String
+  updatedAt    DateTime @updatedAt
+}
+
+model VerifiedCertificate {
+  id         String   @id @default(cuid())
+  title      String
+  issuer     String
+  validUntil String
+  type       String
+  icon       String   @default("shield")
+  pdfUrl     String?
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active])
+}
+
+model SupportTicket {
+  id         String   @id @default(cuid())
+  customerId String?
+  name       String
+  email      String
+  subject    String
+  message    String
+  category   String   @default("general")
+  status     String   @default("open")
+  source     String   @default("chatbot")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
 }

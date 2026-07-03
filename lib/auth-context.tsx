@@ -19,6 +19,7 @@ export interface Customer {
   lastCollection: string
   status: string
   co2Saved: number
+  kraftrebornCredits?: number
   treesEquivalent: number
   industry?: string
   employeeCount?: number
@@ -78,8 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {})
     setCustomer(null)
     localStorage.removeItem("buffindia_customer")
+    localStorage.removeItem("buffindia_customer_auth")
   }
 
   const refreshCustomerData = useCallback(async () => {

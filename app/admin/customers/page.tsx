@@ -31,7 +31,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { Loader2, Plus, Save, Search, Users, Check, ChevronsUpDown, X } from "lucide-react"
+import { Loader2, Plus, Save, Search, Users, Check, ChevronsUpDown, X, Mail } from "lucide-react"
 
 type CustomerRow = {
   id: string
@@ -44,6 +44,7 @@ type CustomerRow = {
   totalWasteCollected: number
   disposalUnitInstalled: number
   monthlyTarget?: number
+  kraftrebornCredits?: number
   updatedAt: string
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -68,6 +69,7 @@ const INITIAL_FORM = {
   pendingCollection: "",
   certificatesEarned: "",
   co2Saved: "",
+  kraftrebornCredits: "",
   treesEquivalent: "",
   monthlyTarget: "",
   profileImageUrl: "",
@@ -86,6 +88,7 @@ export default function AdminCustomersPage() {
   const [createForm, setCreateForm] = useState(INITIAL_FORM)
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [sendingReportId, setSendingReportId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -122,6 +125,27 @@ export default function AdminCustomersPage() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
   }
 
+  const sendReportEmail = async (customerId: string) => {
+    setSendingReportId(customerId)
+    try {
+      const now = new Date()
+      const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+      const res = await fetch("/api/admin/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-reports", customerId, period }),
+      })
+      const data = await res.json()
+      if (data?.success && data.sent > 0) {
+        alert("ESG report email sent successfully.")
+      } else {
+        alert(data?.error || data?.results?.[0]?.error || "Failed to send email")
+      }
+    } finally {
+      setSendingReportId(null)
+    }
+  }
+
   const save = async (row: CustomerRow) => {
     setSavingId(row.id)
     try {
@@ -133,6 +157,7 @@ export default function AdminCustomersPage() {
           disposalUnitInstalled: row.disposalUnitInstalled,
           status: row.status,
           monthlyTarget: row.monthlyTarget,
+          kraftrebornCredits: row.kraftrebornCredits,
           isGroup: row.isGroup,
           parentCustomerId: row.parentCustomerId,
         }),
@@ -173,6 +198,7 @@ export default function AdminCustomersPage() {
           pendingCollection: createForm.pendingCollection ? Number(createForm.pendingCollection) : undefined,
           certificatesEarned: createForm.certificatesEarned ? Number(createForm.certificatesEarned) : undefined,
           co2Saved: createForm.co2Saved ? Number(createForm.co2Saved) : undefined,
+          kraftrebornCredits: createForm.kraftrebornCredits ? Number(createForm.kraftrebornCredits) : undefined,
           treesEquivalent: createForm.treesEquivalent ? Number(createForm.treesEquivalent) : undefined,
           monthlyTarget: createForm.monthlyTarget ? Number(createForm.monthlyTarget) : undefined,
           profileImageUrl: createForm.profileImageUrl.trim() || undefined,
@@ -391,6 +417,10 @@ export default function AdminCustomersPage() {
                     <div className="space-y-1">
                       <Label htmlFor="create-co2" className="text-xs">CO2 Saved (kg)</Label>
                       <Input id="create-co2" type="number" min={0} step="0.01" value={createForm.co2Saved} onChange={(e) => setCreateForm((p) => ({ ...p, co2Saved: e.target.value }))} placeholder="0" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="create-kraftreborn" className="text-xs">Kraftreborn Credits</Label>
+                      <Input id="create-kraftreborn" type="number" min={0} step="0.01" value={createForm.kraftrebornCredits} onChange={(e) => setCreateForm((p) => ({ ...p, kraftrebornCredits: e.target.value }))} placeholder="0" />
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="create-trees" className="text-xs">Trees Equivalent</Label>
@@ -619,7 +649,7 @@ export default function AdminCustomersPage() {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:w-[520px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:w-[680px]">
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Status</p>
                         <Select value={r.status} onValueChange={(v) => updateLocal(r.id, { status: v })}>
@@ -651,14 +681,38 @@ export default function AdminCustomersPage() {
                           inputMode="decimal"
                         />
                       </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Kraftreborn Credits</p>
+                        <Input
+                          value={r.kraftrebornCredits ?? 0}
+                          onChange={(e) => updateLocal(r.id, { kraftrebornCredits: Number(e.target.value) })}
+                          inputMode="decimal"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                     <p className="text-xs text-muted-foreground">
                       Total waste (db): <span className="font-medium text-foreground">{Number(r.totalWasteCollected || 0)} kg</span>
                     </p>
-                    <Button size="sm" onClick={() => save(r)} disabled={savingId === r.id}>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendReportEmail(r.id)}
+                        disabled={sendingReportId === r.id}
+                        className="bg-transparent"
+                      >
+                        {sendingReportId === r.id ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Mail className="w-4 h-4 mr-2" />
+                        )}
+                        Email Report
+                      </Button>
+                      <Button size="sm" onClick={() => save(r)} disabled={savingId === r.id}>
                       {savingId === r.id ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
@@ -666,6 +720,7 @@ export default function AdminCustomersPage() {
                       )}
                       Save
                     </Button>
+                    </div>
                   </div>
                 </div>
               ))}

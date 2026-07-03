@@ -15,6 +15,7 @@ const navLinks = [
   { name: "Process", href: "/#process" },
   { name: "Reports", href: "/#reports" },
   { name: "Contact", href: "/contact" },
+  { name: "Support", href: "/support" },
 ]
 
 export function Navbar() {

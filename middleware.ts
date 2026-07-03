@@ -1,13 +1,36 @@
 import { NextResponse, type NextRequest } from "next/server"
+import { CUSTOMER_COOKIE, verifyCustomerSession } from "@/lib/auth-session"
 
 const ADMIN_COOKIE = "buffindia_admin"
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Protect all /admin routes except login
+  if (pathname.startsWith("/dashboard")) {
+    const session = request.cookies.get(CUSTOMER_COOKIE)?.value
+    if (!(await verifyCustomerSession(session))) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      url.searchParams.set("next", pathname)
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (pathname.startsWith("/api/customer")) {
+    const session = request.cookies.get(CUSTOMER_COOKIE)?.value
+    if (!(await verifyCustomerSession(session))) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+  }
+
   if (pathname.startsWith("/admin")) {
-    if (pathname === "/admin/login") return NextResponse.next()
+    if (
+      pathname === "/admin/login" ||
+      pathname === "/admin/forgot-password" ||
+      pathname === "/admin/reset-password"
+    ) {
+      return NextResponse.next()
+    }
     const token = request.cookies.get(ADMIN_COOKIE)?.value
     if (!token) {
       const url = request.nextUrl.clone()
@@ -17,9 +40,15 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Protect admin APIs (except login)
   if (pathname.startsWith("/api/admin")) {
-    if (pathname === "/api/admin/login") return NextResponse.next()
+    const publicAdmin = [
+      "/api/admin/login",
+      "/api/admin/forgot-password",
+      "/api/admin/verify-otp",
+      "/api/admin/reset-password",
+    ]
+    if (publicAdmin.includes(pathname)) return NextResponse.next()
+
     const token = request.cookies.get(ADMIN_COOKIE)?.value
     if (!token) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
@@ -30,6 +59,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/api/customer/:path*", "/admin/:path*", "/api/admin/:path*"],
 }
-

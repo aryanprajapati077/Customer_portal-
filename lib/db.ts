@@ -1,8 +1,53 @@
-// <CHANGE> Replaced Prisma with Neon serverless driver for edge compatibility
-import { neon } from "@neondatabase/serverless"
+import { Pool, type QueryResultRow } from "pg"
 
-// Create SQL client using the pooled connection string
-export const sql = neon(process.env.DATABASE_URL!)
+declare global {
+  // eslint-disable-next-line no-var
+  var pgPool: Pool | undefined
+}
+
+function getPool(): Pool {
+  if (!globalThis.pgPool) {
+    const url = process.env.DATABASE_URL
+    if (!url) {
+      throw new Error("DATABASE_URL is not set. Add it to your .env file.")
+    }
+    globalThis.pgPool = new Pool({ connectionString: url })
+  }
+  return globalThis.pgPool
+}
+
+type SqlTaggedTemplate = {
+  <T extends QueryResultRow = QueryResultRow>(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<T[]>
+  query: <T extends QueryResultRow = QueryResultRow>(text: string, values?: unknown[]) => Promise<T[]>
+}
+
+function buildQuery(strings: TemplateStringsArray, values: unknown[]) {
+  let text = strings[0]
+  for (let i = 0; i < values.length; i++) {
+    text += `$${i + 1}` + strings[i + 1]
+  }
+  return { text, values }
+}
+
+async function taggedQuery<T extends QueryResultRow>(
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): Promise<T[]> {
+  const { text, values: params } = buildQuery(strings, values)
+  const result = await getPool().query<T>(text, params)
+  return result.rows
+}
+
+// Pooled Postgres client — more reliable than Neon HTTP fetch in local Node.js dev
+export const sql = Object.assign(taggedQuery, {
+  query: async <T extends QueryResultRow>(text: string, values: unknown[] = []) => {
+    const result = await getPool().query<T>(text, values)
+    return result.rows
+  },
+}) as SqlTaggedTemplate
 
 // Helper type definitions for our database models
 export type Customer = {

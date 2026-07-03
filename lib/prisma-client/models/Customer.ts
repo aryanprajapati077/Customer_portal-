@@ -36,6 +36,7 @@ export type CustomerAvgAggregateOutputType = {
   pendingCollection: number | null
   certificatesEarned: number | null
   co2Saved: number | null
+  kraftrebornCredits: number | null
   treesEquivalent: number | null
   monthlyTarget: number | null
 }
@@ -50,6 +51,7 @@ export type CustomerSumAggregateOutputType = {
   pendingCollection: number | null
   certificatesEarned: number | null
   co2Saved: number | null
+  kraftrebornCredits: number | null
   treesEquivalent: number | null
   monthlyTarget: number | null
 }
@@ -76,6 +78,7 @@ export type CustomerMinAggregateOutputType = {
   pendingCollection: number | null
   certificatesEarned: number | null
   co2Saved: number | null
+  kraftrebornCredits: number | null
   treesEquivalent: number | null
   monthlyTarget: number | null
   profileImageUrl: string | null
@@ -106,6 +109,7 @@ export type CustomerMaxAggregateOutputType = {
   pendingCollection: number | null
   certificatesEarned: number | null
   co2Saved: number | null
+  kraftrebornCredits: number | null
   treesEquivalent: number | null
   monthlyTarget: number | null
   profileImageUrl: string | null
@@ -136,6 +140,7 @@ export type CustomerCountAggregateOutputType = {
   pendingCollection: number
   certificatesEarned: number
   co2Saved: number
+  kraftrebornCredits: number
   treesEquivalent: number
   monthlyTarget: number
   profileImageUrl: number
@@ -156,6 +161,7 @@ export type CustomerAvgAggregateInputType = {
   pendingCollection?: true
   certificatesEarned?: true
   co2Saved?: true
+  kraftrebornCredits?: true
   treesEquivalent?: true
   monthlyTarget?: true
 }
@@ -170,6 +176,7 @@ export type CustomerSumAggregateInputType = {
   pendingCollection?: true
   certificatesEarned?: true
   co2Saved?: true
+  kraftrebornCredits?: true
   treesEquivalent?: true
   monthlyTarget?: true
 }
@@ -196,6 +203,7 @@ export type CustomerMinAggregateInputType = {
   pendingCollection?: true
   certificatesEarned?: true
   co2Saved?: true
+  kraftrebornCredits?: true
   treesEquivalent?: true
   monthlyTarget?: true
   profileImageUrl?: true
@@ -226,6 +234,7 @@ export type CustomerMaxAggregateInputType = {
   pendingCollection?: true
   certificatesEarned?: true
   co2Saved?: true
+  kraftrebornCredits?: true
   treesEquivalent?: true
   monthlyTarget?: true
   profileImageUrl?: true
@@ -256,6 +265,7 @@ export type CustomerCountAggregateInputType = {
   pendingCollection?: true
   certificatesEarned?: true
   co2Saved?: true
+  kraftrebornCredits?: true
   treesEquivalent?: true
   monthlyTarget?: true
   profileImageUrl?: true
@@ -373,6 +383,7 @@ export type CustomerGroupByOutputType = {
   pendingCollection: number
   certificatesEarned: number
   co2Saved: number
+  kraftrebornCredits: number
   treesEquivalent: number
   monthlyTarget: number
   profileImageUrl: string | null
@@ -426,6 +437,7 @@ export type CustomerWhereInput = {
   pendingCollection?: Prisma.FloatFilter<"Customer"> | number
   certificatesEarned?: Prisma.IntFilter<"Customer"> | number
   co2Saved?: Prisma.FloatFilter<"Customer"> | number
+  kraftrebornCredits?: Prisma.FloatFilter<"Customer"> | number
   treesEquivalent?: Prisma.IntFilter<"Customer"> | number
   monthlyTarget?: Prisma.FloatFilter<"Customer"> | number
   profileImageUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -438,6 +450,7 @@ export type CustomerWhereInput = {
   certificates?: Prisma.CertificateListRelationFilter
   reports?: Prisma.ReportListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
+  shopOrders?: Prisma.ShopOrderListRelationFilter
 }
 
 export type CustomerOrderByWithRelationInput = {
@@ -462,6 +475,7 @@ export type CustomerOrderByWithRelationInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -474,6 +488,7 @@ export type CustomerOrderByWithRelationInput = {
   certificates?: Prisma.CertificateOrderByRelationAggregateInput
   reports?: Prisma.ReportOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
+  shopOrders?: Prisma.ShopOrderOrderByRelationAggregateInput
 }
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
@@ -501,6 +516,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   pendingCollection?: Prisma.FloatFilter<"Customer"> | number
   certificatesEarned?: Prisma.IntFilter<"Customer"> | number
   co2Saved?: Prisma.FloatFilter<"Customer"> | number
+  kraftrebornCredits?: Prisma.FloatFilter<"Customer"> | number
   treesEquivalent?: Prisma.IntFilter<"Customer"> | number
   monthlyTarget?: Prisma.FloatFilter<"Customer"> | number
   profileImageUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -513,6 +529,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   certificates?: Prisma.CertificateListRelationFilter
   reports?: Prisma.ReportListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
+  shopOrders?: Prisma.ShopOrderListRelationFilter
 }, "id" | "email">
 
 export type CustomerOrderByWithAggregationInput = {
@@ -537,6 +554,7 @@ export type CustomerOrderByWithAggregationInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -575,6 +593,7 @@ export type CustomerScalarWhereWithAggregatesInput = {
   pendingCollection?: Prisma.FloatWithAggregatesFilter<"Customer"> | number
   certificatesEarned?: Prisma.IntWithAggregatesFilter<"Customer"> | number
   co2Saved?: Prisma.FloatWithAggregatesFilter<"Customer"> | number
+  kraftrebornCredits?: Prisma.FloatWithAggregatesFilter<"Customer"> | number
   treesEquivalent?: Prisma.IntWithAggregatesFilter<"Customer"> | number
   monthlyTarget?: Prisma.FloatWithAggregatesFilter<"Customer"> | number
   profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
@@ -604,6 +623,7 @@ export type CustomerCreateInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -616,6 +636,7 @@ export type CustomerCreateInput = {
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateInput = {
@@ -640,6 +661,7 @@ export type CustomerUncheckedCreateInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -651,6 +673,7 @@ export type CustomerUncheckedCreateInput = {
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUpdateInput = {
@@ -674,6 +697,7 @@ export type CustomerUpdateInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -686,6 +710,7 @@ export type CustomerUpdateInput = {
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateInput = {
@@ -710,6 +735,7 @@ export type CustomerUncheckedUpdateInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -721,6 +747,7 @@ export type CustomerUncheckedUpdateInput = {
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManyInput = {
@@ -745,6 +772,7 @@ export type CustomerCreateManyInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -774,6 +802,7 @@ export type CustomerUpdateManyMutationInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -804,6 +833,7 @@ export type CustomerUncheckedUpdateManyInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -849,6 +879,7 @@ export type CustomerCountOrderByAggregateInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
@@ -867,6 +898,7 @@ export type CustomerAvgOrderByAggregateInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
 }
@@ -893,6 +925,7 @@ export type CustomerMaxOrderByAggregateInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
@@ -923,6 +956,7 @@ export type CustomerMinOrderByAggregateInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
@@ -941,6 +975,7 @@ export type CustomerSumOrderByAggregateInput = {
   pendingCollection?: Prisma.SortOrder
   certificatesEarned?: Prisma.SortOrder
   co2Saved?: Prisma.SortOrder
+  kraftrebornCredits?: Prisma.SortOrder
   treesEquivalent?: Prisma.SortOrder
   monthlyTarget?: Prisma.SortOrder
 }
@@ -1104,6 +1139,20 @@ export type CustomerUpdateOneRequiredWithoutReportsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutReportsInput, Prisma.CustomerUpdateWithoutReportsInput>, Prisma.CustomerUncheckedUpdateWithoutReportsInput>
 }
 
+export type CustomerCreateNestedOneWithoutShopOrdersInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutShopOrdersInput, Prisma.CustomerUncheckedCreateWithoutShopOrdersInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutShopOrdersInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneRequiredWithoutShopOrdersNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutShopOrdersInput, Prisma.CustomerUncheckedCreateWithoutShopOrdersInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutShopOrdersInput
+  upsert?: Prisma.CustomerUpsertWithoutShopOrdersInput
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutShopOrdersInput, Prisma.CustomerUpdateWithoutShopOrdersInput>, Prisma.CustomerUncheckedUpdateWithoutShopOrdersInput>
+}
+
 export type CustomerCreateWithoutChildCustomersInput = {
   id?: string
   email: string
@@ -1125,6 +1174,7 @@ export type CustomerCreateWithoutChildCustomersInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1136,6 +1186,7 @@ export type CustomerCreateWithoutChildCustomersInput = {
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutChildCustomersInput = {
@@ -1160,6 +1211,7 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1170,6 +1222,7 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutChildCustomersInput = {
@@ -1198,6 +1251,7 @@ export type CustomerCreateWithoutParentCustomerInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1209,6 +1263,7 @@ export type CustomerCreateWithoutParentCustomerInput = {
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutParentCustomerInput = {
@@ -1232,6 +1287,7 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1243,6 +1299,7 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutParentCustomerInput = {
@@ -1287,6 +1344,7 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1298,6 +1356,7 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
@@ -1322,6 +1381,7 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1332,6 +1392,7 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUpsertWithWhereUniqueWithoutParentCustomerInput = {
@@ -1375,6 +1436,7 @@ export type CustomerScalarWhereInput = {
   pendingCollection?: Prisma.FloatFilter<"Customer"> | number
   certificatesEarned?: Prisma.IntFilter<"Customer"> | number
   co2Saved?: Prisma.FloatFilter<"Customer"> | number
+  kraftrebornCredits?: Prisma.FloatFilter<"Customer"> | number
   treesEquivalent?: Prisma.IntFilter<"Customer"> | number
   monthlyTarget?: Prisma.FloatFilter<"Customer"> | number
   profileImageUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -1404,6 +1466,7 @@ export type CustomerCreateWithoutNotificationsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1415,6 +1478,7 @@ export type CustomerCreateWithoutNotificationsInput = {
   collections?: Prisma.CollectionCreateNestedManyWithoutCustomerInput
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutNotificationsInput = {
@@ -1439,6 +1503,7 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1449,6 +1514,7 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   collections?: Prisma.CollectionUncheckedCreateNestedManyWithoutCustomerInput
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutNotificationsInput = {
@@ -1488,6 +1554,7 @@ export type CustomerUpdateWithoutNotificationsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1499,6 +1566,7 @@ export type CustomerUpdateWithoutNotificationsInput = {
   collections?: Prisma.CollectionUpdateManyWithoutCustomerNestedInput
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutNotificationsInput = {
@@ -1523,6 +1591,7 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1533,6 +1602,7 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   collections?: Prisma.CollectionUncheckedUpdateManyWithoutCustomerNestedInput
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCollectionsInput = {
@@ -1556,6 +1626,7 @@ export type CustomerCreateWithoutCollectionsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1567,6 +1638,7 @@ export type CustomerCreateWithoutCollectionsInput = {
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCollectionsInput = {
@@ -1591,6 +1663,7 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1601,6 +1674,7 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCollectionsInput = {
@@ -1640,6 +1714,7 @@ export type CustomerUpdateWithoutCollectionsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1651,6 +1726,7 @@ export type CustomerUpdateWithoutCollectionsInput = {
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCollectionsInput = {
@@ -1675,6 +1751,7 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1685,6 +1762,7 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCertificatesInput = {
@@ -1708,6 +1786,7 @@ export type CustomerCreateWithoutCertificatesInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1719,6 +1798,7 @@ export type CustomerCreateWithoutCertificatesInput = {
   collections?: Prisma.CollectionCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCertificatesInput = {
@@ -1743,6 +1823,7 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1753,6 +1834,7 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   collections?: Prisma.CollectionUncheckedCreateNestedManyWithoutCustomerInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCertificatesInput = {
@@ -1792,6 +1874,7 @@ export type CustomerUpdateWithoutCertificatesInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1803,6 +1886,7 @@ export type CustomerUpdateWithoutCertificatesInput = {
   collections?: Prisma.CollectionUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCertificatesInput = {
@@ -1827,6 +1911,7 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1837,6 +1922,7 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   collections?: Prisma.CollectionUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReportsInput = {
@@ -1860,6 +1946,7 @@ export type CustomerCreateWithoutReportsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1871,6 +1958,7 @@ export type CustomerCreateWithoutReportsInput = {
   collections?: Prisma.CollectionCreateNestedManyWithoutCustomerInput
   certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReportsInput = {
@@ -1895,6 +1983,7 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -1905,6 +1994,7 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   collections?: Prisma.CollectionUncheckedCreateNestedManyWithoutCustomerInput
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+  shopOrders?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReportsInput = {
@@ -1944,6 +2034,7 @@ export type CustomerUpdateWithoutReportsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1955,6 +2046,7 @@ export type CustomerUpdateWithoutReportsInput = {
   collections?: Prisma.CollectionUpdateManyWithoutCustomerNestedInput
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReportsInput = {
@@ -1979,6 +2071,7 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1988,6 +2081,167 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   childCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutParentCustomerNestedInput
   collections?: Prisma.CollectionUncheckedUpdateManyWithoutCustomerNestedInput
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerCreateWithoutShopOrdersInput = {
+  id?: string
+  email: string
+  password: string
+  companyName: string
+  contactPerson?: string | null
+  phone?: string | null
+  address?: string | null
+  industry?: string | null
+  employeeCount?: number | null
+  joinDate?: Date | string
+  status?: string
+  disposalUnitInstalled?: number
+  isGroup?: boolean
+  totalWasteCollected?: number
+  cigaretteButtsCollected?: number
+  microplasticsUpcycled?: number
+  waterResourcesProtected?: number
+  pendingCollection?: number
+  certificatesEarned?: number
+  co2Saved?: number
+  kraftrebornCredits?: number
+  treesEquivalent?: number
+  monthlyTarget?: number
+  profileImageUrl?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  parentCustomer?: Prisma.CustomerCreateNestedOneWithoutChildCustomersInput
+  childCustomers?: Prisma.CustomerCreateNestedManyWithoutParentCustomerInput
+  collections?: Prisma.CollectionCreateNestedManyWithoutCustomerInput
+  certificates?: Prisma.CertificateCreateNestedManyWithoutCustomerInput
+  reports?: Prisma.ReportCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerUncheckedCreateWithoutShopOrdersInput = {
+  id?: string
+  email: string
+  password: string
+  companyName: string
+  contactPerson?: string | null
+  phone?: string | null
+  address?: string | null
+  industry?: string | null
+  employeeCount?: number | null
+  joinDate?: Date | string
+  status?: string
+  disposalUnitInstalled?: number
+  isGroup?: boolean
+  parentCustomerId?: string | null
+  totalWasteCollected?: number
+  cigaretteButtsCollected?: number
+  microplasticsUpcycled?: number
+  waterResourcesProtected?: number
+  pendingCollection?: number
+  certificatesEarned?: number
+  co2Saved?: number
+  kraftrebornCredits?: number
+  treesEquivalent?: number
+  monthlyTarget?: number
+  profileImageUrl?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  childCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutParentCustomerInput
+  collections?: Prisma.CollectionUncheckedCreateNestedManyWithoutCustomerInput
+  certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCustomerInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerCreateOrConnectWithoutShopOrdersInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutShopOrdersInput, Prisma.CustomerUncheckedCreateWithoutShopOrdersInput>
+}
+
+export type CustomerUpsertWithoutShopOrdersInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutShopOrdersInput, Prisma.CustomerUncheckedUpdateWithoutShopOrdersInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutShopOrdersInput, Prisma.CustomerUncheckedCreateWithoutShopOrdersInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutShopOrdersInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutShopOrdersInput, Prisma.CustomerUncheckedUpdateWithoutShopOrdersInput>
+}
+
+export type CustomerUpdateWithoutShopOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
+  isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
+  cigaretteButtsCollected?: Prisma.FloatFieldUpdateOperationsInput | number
+  microplasticsUpcycled?: Prisma.FloatFieldUpdateOperationsInput | number
+  waterResourcesProtected?: Prisma.FloatFieldUpdateOperationsInput | number
+  pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
+  certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
+  treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parentCustomer?: Prisma.CustomerUpdateOneWithoutChildCustomersNestedInput
+  childCustomers?: Prisma.CustomerUpdateManyWithoutParentCustomerNestedInput
+  collections?: Prisma.CollectionUpdateManyWithoutCustomerNestedInput
+  certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerUncheckedUpdateWithoutShopOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
+  isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
+  cigaretteButtsCollected?: Prisma.FloatFieldUpdateOperationsInput | number
+  microplasticsUpcycled?: Prisma.FloatFieldUpdateOperationsInput | number
+  waterResourcesProtected?: Prisma.FloatFieldUpdateOperationsInput | number
+  pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
+  certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
+  treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  childCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutParentCustomerNestedInput
+  collections?: Prisma.CollectionUncheckedUpdateManyWithoutCustomerNestedInput
+  certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
@@ -2012,6 +2266,7 @@ export type CustomerCreateManyParentCustomerInput = {
   pendingCollection?: number
   certificatesEarned?: number
   co2Saved?: number
+  kraftrebornCredits?: number
   treesEquivalent?: number
   monthlyTarget?: number
   profileImageUrl?: string | null
@@ -2041,6 +2296,7 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2052,6 +2308,7 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   certificates?: Prisma.CertificateUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
@@ -2075,6 +2332,7 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2086,6 +2344,7 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCustomerNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutCustomerNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCustomerNestedInput
+  shopOrders?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
@@ -2109,6 +2368,7 @@ export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
   pendingCollection?: Prisma.FloatFieldUpdateOperationsInput | number
   certificatesEarned?: Prisma.IntFieldUpdateOperationsInput | number
   co2Saved?: Prisma.FloatFieldUpdateOperationsInput | number
+  kraftrebornCredits?: Prisma.FloatFieldUpdateOperationsInput | number
   treesEquivalent?: Prisma.IntFieldUpdateOperationsInput | number
   monthlyTarget?: Prisma.FloatFieldUpdateOperationsInput | number
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2128,6 +2388,7 @@ export type CustomerCountOutputType = {
   certificates: number
   reports: number
   notifications: number
+  shopOrders: number
 }
 
 export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2136,6 +2397,7 @@ export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   certificates?: boolean | CustomerCountOutputTypeCountCertificatesArgs
   reports?: boolean | CustomerCountOutputTypeCountReportsArgs
   notifications?: boolean | CustomerCountOutputTypeCountNotificationsArgs
+  shopOrders?: boolean | CustomerCountOutputTypeCountShopOrdersArgs
 }
 
 /**
@@ -2183,6 +2445,13 @@ export type CustomerCountOutputTypeCountNotificationsArgs<ExtArgs extends runtim
   where?: Prisma.NotificationWhereInput
 }
 
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountShopOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShopOrderWhereInput
+}
+
 
 export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2206,6 +2475,7 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   pendingCollection?: boolean
   certificatesEarned?: boolean
   co2Saved?: boolean
+  kraftrebornCredits?: boolean
   treesEquivalent?: boolean
   monthlyTarget?: boolean
   profileImageUrl?: boolean
@@ -2218,6 +2488,7 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   certificates?: boolean | Prisma.Customer$certificatesArgs<ExtArgs>
   reports?: boolean | Prisma.Customer$reportsArgs<ExtArgs>
   notifications?: boolean | Prisma.Customer$notificationsArgs<ExtArgs>
+  shopOrders?: boolean | Prisma.Customer$shopOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -2243,6 +2514,7 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pendingCollection?: boolean
   certificatesEarned?: boolean
   co2Saved?: boolean
+  kraftrebornCredits?: boolean
   treesEquivalent?: boolean
   monthlyTarget?: boolean
   profileImageUrl?: boolean
@@ -2274,6 +2546,7 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pendingCollection?: boolean
   certificatesEarned?: boolean
   co2Saved?: boolean
+  kraftrebornCredits?: boolean
   treesEquivalent?: boolean
   monthlyTarget?: boolean
   profileImageUrl?: boolean
@@ -2305,6 +2578,7 @@ export type CustomerSelectScalar = {
   pendingCollection?: boolean
   certificatesEarned?: boolean
   co2Saved?: boolean
+  kraftrebornCredits?: boolean
   treesEquivalent?: boolean
   monthlyTarget?: boolean
   profileImageUrl?: boolean
@@ -2313,7 +2587,7 @@ export type CustomerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentCustomer?: boolean | Prisma.Customer$parentCustomerArgs<ExtArgs>
   childCustomers?: boolean | Prisma.Customer$childCustomersArgs<ExtArgs>
@@ -2321,6 +2595,7 @@ export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   certificates?: boolean | Prisma.Customer$certificatesArgs<ExtArgs>
   reports?: boolean | Prisma.Customer$reportsArgs<ExtArgs>
   notifications?: boolean | Prisma.Customer$notificationsArgs<ExtArgs>
+  shopOrders?: boolean | Prisma.Customer$shopOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2339,6 +2614,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     certificates: Prisma.$CertificatePayload<ExtArgs>[]
     reports: Prisma.$ReportPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
+    shopOrders: Prisma.$ShopOrderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2362,6 +2638,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     pendingCollection: number
     certificatesEarned: number
     co2Saved: number
+    kraftrebornCredits: number
     treesEquivalent: number
     monthlyTarget: number
     profileImageUrl: string | null
@@ -2768,6 +3045,7 @@ export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime
   certificates<T extends Prisma.Customer$certificatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$certificatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reports<T extends Prisma.Customer$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.Customer$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shopOrders<T extends Prisma.Customer$shopOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$shopOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2818,6 +3096,7 @@ export interface CustomerFieldRefs {
   readonly pendingCollection: Prisma.FieldRef<"Customer", 'Float'>
   readonly certificatesEarned: Prisma.FieldRef<"Customer", 'Int'>
   readonly co2Saved: Prisma.FieldRef<"Customer", 'Float'>
+  readonly kraftrebornCredits: Prisma.FieldRef<"Customer", 'Float'>
   readonly treesEquivalent: Prisma.FieldRef<"Customer", 'Int'>
   readonly monthlyTarget: Prisma.FieldRef<"Customer", 'Float'>
   readonly profileImageUrl: Prisma.FieldRef<"Customer", 'String'>
@@ -3356,6 +3635,30 @@ export type Customer$notificationsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
+ * Customer.shopOrders
+ */
+export type Customer$shopOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShopOrder
+   */
+  select?: Prisma.ShopOrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShopOrder
+   */
+  omit?: Prisma.ShopOrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShopOrderInclude<ExtArgs> | null
+  where?: Prisma.ShopOrderWhereInput
+  orderBy?: Prisma.ShopOrderOrderByWithRelationInput | Prisma.ShopOrderOrderByWithRelationInput[]
+  cursor?: Prisma.ShopOrderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShopOrderScalarFieldEnum | Prisma.ShopOrderScalarFieldEnum[]
 }
 
 /**

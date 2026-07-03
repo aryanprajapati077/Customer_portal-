@@ -56,7 +56,14 @@ export const ModelName = {
   Collection: 'Collection',
   Certificate: 'Certificate',
   Report: 'Report',
-  GlobalImpact: 'GlobalImpact'
+  GlobalImpact: 'GlobalImpact',
+  Product: 'Product',
+  ShopOrder: 'ShopOrder',
+  OrderItem: 'OrderItem',
+  PasswordResetOtp: 'PasswordResetOtp',
+  AdminCredential: 'AdminCredential',
+  VerifiedCertificate: 'VerifiedCertificate',
+  SupportTicket: 'SupportTicket'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -97,6 +104,7 @@ export const CustomerScalarFieldEnum = {
   pendingCollection: 'pendingCollection',
   certificatesEarned: 'certificatesEarned',
   co2Saved: 'co2Saved',
+  kraftrebornCredits: 'kraftrebornCredits',
   treesEquivalent: 'treesEquivalent',
   monthlyTarget: 'monthlyTarget',
   profileImageUrl: 'profileImageUrl',
@@ -179,6 +187,122 @@ export const GlobalImpactScalarFieldEnum = {
 } as const
 
 export type GlobalImpactScalarFieldEnum = (typeof GlobalImpactScalarFieldEnum)[keyof typeof GlobalImpactScalarFieldEnum]
+
+
+export const ProductScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  price: 'price',
+  category: 'category',
+  tagline: 'tagline',
+  buttsRescued: 'buttsRescued',
+  imageUrl: 'imageUrl',
+  imageGradient: 'imageGradient',
+  allowsLogo: 'allowsLogo',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
+
+
+export const ShopOrderScalarFieldEnum = {
+  id: 'id',
+  orderNumber: 'orderNumber',
+  customerId: 'customerId',
+  status: 'status',
+  subtotal: 'subtotal',
+  useKrCredits: 'useKrCredits',
+  creditsDeducted: 'creditsDeducted',
+  logoRequested: 'logoRequested',
+  logoUrl: 'logoUrl',
+  shippingName: 'shippingName',
+  shippingEmail: 'shippingEmail',
+  shippingPhone: 'shippingPhone',
+  shippingAddress: 'shippingAddress',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  completedAt: 'completedAt'
+} as const
+
+export type ShopOrderScalarFieldEnum = (typeof ShopOrderScalarFieldEnum)[keyof typeof ShopOrderScalarFieldEnum]
+
+
+export const OrderItemScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  productId: 'productId',
+  productName: 'productName',
+  price: 'price',
+  quantity: 'quantity',
+  allowsLogo: 'allowsLogo'
+} as const
+
+export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const PasswordResetOtpScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  purpose: 'purpose',
+  otpHash: 'otpHash',
+  resetToken: 'resetToken',
+  expiresAt: 'expiresAt',
+  verifiedAt: 'verifiedAt',
+  usedAt: 'usedAt',
+  attempts: 'attempts',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetOtpScalarFieldEnum = (typeof PasswordResetOtpScalarFieldEnum)[keyof typeof PasswordResetOtpScalarFieldEnum]
+
+
+export const AdminCredentialScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AdminCredentialScalarFieldEnum = (typeof AdminCredentialScalarFieldEnum)[keyof typeof AdminCredentialScalarFieldEnum]
+
+
+export const VerifiedCertificateScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  issuer: 'issuer',
+  validUntil: 'validUntil',
+  type: 'type',
+  icon: 'icon',
+  pdfUrl: 'pdfUrl',
+  sortOrder: 'sortOrder',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VerifiedCertificateScalarFieldEnum = (typeof VerifiedCertificateScalarFieldEnum)[keyof typeof VerifiedCertificateScalarFieldEnum]
+
+
+export const SupportTicketScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  email: 'email',
+  subject: 'subject',
+  message: 'message',
+  category: 'category',
+  status: 'status',
+  source: 'source',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SupportTicketScalarFieldEnum = (typeof SupportTicketScalarFieldEnum)[keyof typeof SupportTicketScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -1,45 +1,74 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { verifyPassword } from "@/lib/password"
+import { verifyTotp } from "@/lib/admin-totp"
+import {
+  ADMIN_PENDING_COOKIE,
+  setAdminSessionCookie,
+  signAdminPending,
+  signAdminSession,
+} from "@/lib/admin-auth"
+import { findAdminByEmail } from "@/lib/admin-auth-server"
 import { prisma } from "@/lib/prisma"
-import { verifyPassword, hashPassword } from "@/lib/password"
-import { createHash } from "crypto"
-import { ADMIN_COOKIE } from "@/lib/auth-session"
-
-function hashEnvPassword(password: string): string {
-  return createHash("sha256").update(password).digest("hex")
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = await request.json()
-    if (!password) {
-      return NextResponse.json({ success: false, error: "Password required" }, { status: 400 })
+    const { email, password, totpCode } = await request.json()
+    const normalizedEmail = String(email || "")
+      .toLowerCase()
+      .trim()
+    const pass = String(password || "")
+
+    if (!normalizedEmail || !pass) {
+      return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
     }
 
-    const cred = await prisma.adminCredential.findUnique({ where: { id: "admin" } })
-    let valid = false
-
-    if (cred) {
-      valid = await verifyPassword(password, cred.passwordHash)
-    } else {
-      const envPass = process.env.ADMIN_PASSWORD
-      if (!envPass) {
-        return NextResponse.json({ success: false, error: "Admin not configured" }, { status: 503 })
-      }
-      valid = hashEnvPassword(password) === hashEnvPassword(envPass)
+    const admin = await findAdminByEmail(normalizedEmail)
+    if (!admin || !admin.active) {
+      return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
+    const valid = await verifyPassword(pass, admin.passwordHash)
     if (!valid) {
-      return NextResponse.json({ success: false, error: "Invalid password" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
-    const response = NextResponse.json({ success: true })
-    response.cookies.set(ADMIN_COOKIE, "1", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24,
+    if (admin.totpEnabled && admin.totpSecret) {
+      const code = String(totpCode || "").trim()
+      if (!code) {
+        const pending = await signAdminPending(admin.id)
+        const response = NextResponse.json({
+          success: false,
+          requiresTotp: true,
+          message: "Enter the 6-digit code from your authenticator app.",
+        })
+        response.cookies.set(ADMIN_PENDING_COOKIE, pending, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 300,
+        })
+        return response
+      }
+
+      const totpOk = await verifyTotp(admin.totpSecret, code)
+      if (!totpOk) {
+        return NextResponse.json({ success: false, error: "Invalid authenticator code" }, { status: 401 })
+      }
+    }
+
+    await prisma.adminUser.update({
+      where: { id: admin.id },
+      data: { lastLoginAt: new Date() },
     })
+
+    const token = await signAdminSession(admin.id, admin.role)
+    const response = NextResponse.json({
+      success: true,
+      admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role },
+    })
+    setAdminSessionCookie(response, token)
+    response.cookies.set(ADMIN_PENDING_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 })
     return response
   } catch (error) {
     console.error("Admin login error:", error)

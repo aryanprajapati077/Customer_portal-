@@ -12,7 +12,6 @@ import {
   Package,
   Award,
   Bell,
-  Mail,
   LogOut,
   Sparkles,
   FileBarChart,
@@ -20,8 +19,12 @@ import {
   ClipboardList,
   Database,
   LifeBuoy,
+  ShieldCheck,
+  UserCog,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+type AdminMe = { id: string; email: string; name: string; role: string }
 
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -38,10 +41,25 @@ const nav = [
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
 ]
 
+const AUTH_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"]
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [admin, setAdmin] = useState<AdminMe | null>(null)
+
+  const isAuthPage = AUTH_PATHS.includes(pathname)
+
+  useEffect(() => {
+    if (isAuthPage) return
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.admin) setAdmin(d.admin)
+      })
+      .catch(() => {})
+  }, [isAuthPage, pathname])
 
   const logout = async () => {
     setIsLoggingOut(true)
@@ -54,6 +72,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }
 
+  if (isAuthPage) {
+    return <div className="min-h-screen bg-background">{children}</div>
+  }
+
+  const fullNav = [
+    ...nav,
+    { href: "/admin/security", label: "Authenticator", icon: ShieldCheck },
+    ...(admin?.role === "super_admin"
+      ? [{ href: "/admin/users", label: "Admin Users", icon: UserCog }]
+      : []),
+  ]
+
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed inset-0 pointer-events-none">
@@ -62,7 +92,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <div className="relative z-10 flex">
-        {/* Sidebar */}
         <aside className="hidden lg:flex w-72 min-h-screen sticky top-0 border-r border-border/50 glass-strong">
           <div className="w-full flex flex-col p-5">
             <div className="flex items-center gap-3">
@@ -71,14 +100,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground leading-5">Buffindia Admin</p>
-                <p className="text-xs text-muted-foreground">Manage portal + website</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {admin?.name || "Loading..."}
+                  {admin?.role === "super_admin" ? " · Super Admin" : ""}
+                </p>
               </div>
             </div>
 
             <Separator className="my-5" />
 
-            <nav className="space-y-1">
-              {nav.map((item) => {
+            <nav className="space-y-1 flex-1 overflow-y-auto">
+              {fullNav.map((item) => {
                 const active = pathname === item.href
                 return (
                   <Link
@@ -103,28 +135,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               })}
             </nav>
 
-            <div className="mt-auto pt-6">
+            <div className="pt-6">
               <Button variant="outline" className="w-full justify-start" onClick={logout} disabled={isLoggingOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 {isLoggingOut ? "Signing out..." : "Sign out"}
               </Button>
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Tip: deploy this admin on a separate domain by routing only <span className="font-mono">/admin</span>.
-              </p>
             </div>
           </div>
         </aside>
 
-        {/* Main */}
-        <div className="flex-1">
-          {/* Topbar */}
+        <div className="flex-1 min-w-0">
           <header className="sticky top-0 z-40 glass-strong border-b border-border/50">
             <div className="container mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm font-medium text-foreground">Admin</span>
-                <span className="text-xs text-muted-foreground hidden sm:inline">/ {pathname.replace("/admin", "") || "overview"}</span>
+                <span className="text-xs text-muted-foreground hidden sm:inline truncate">
+                  / {pathname.replace("/admin", "") || "overview"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
+                {admin && (
+                  <span className="text-xs text-muted-foreground hidden md:inline truncate max-w-[180px]">
+                    {admin.email}
+                  </span>
+                )}
                 <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
                   Go to Portal
                 </Button>
@@ -132,12 +166,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </header>
 
-          <main className="container mx-auto px-4 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {children}
-          </main>
+          <main className="container mx-auto px-4 lg:px-8 py-8">{children}</main>
         </div>
       </div>
     </div>
   )
 }
-

@@ -4,15 +4,14 @@ import { verifyOtpHash, createResetToken } from "@/lib/auth-session"
 
 export async function POST(request: NextRequest) {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase()
-    if (!adminEmail) {
-      return NextResponse.json({ success: false, error: "ADMIN_EMAIL not configured" }, { status: 503 })
-    }
-
-    const { otp } = await request.json()
+    const { otp, email } = await request.json()
+    const adminEmail = String(email || process.env.ADMIN_EMAIL || "")
+      .toLowerCase()
+      .trim()
     const code = String(otp || "").trim()
-    if (!code) {
-      return NextResponse.json({ success: false, error: "OTP required" }, { status: 400 })
+
+    if (!adminEmail || !code) {
+      return NextResponse.json({ success: false, error: "Email and OTP required" }, { status: 400 })
     }
 
     const record = await prisma.passwordResetOtp.findFirst({
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
       data: { verifiedAt: new Date(), resetToken },
     })
 
-    return NextResponse.json({ success: true, resetToken })
+    return NextResponse.json({ success: true, resetToken, email: adminEmail })
   } catch (error) {
     console.error("Admin verify OTP error:", error)
     return NextResponse.json({ success: false, error: "Verification failed" }, { status: 500 })

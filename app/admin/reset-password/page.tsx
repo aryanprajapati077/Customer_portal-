@@ -10,15 +10,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react"
+import { useEffect } from "react"
 
 export default function AdminResetPasswordPage() {
   const router = useRouter()
   const [step, setStep] = useState<"otp" | "password" | "done">("otp")
   const [otp, setOtp] = useState("")
+  const [email, setEmail] = useState("")
   const [resetToken, setResetToken] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("admin_reset_email")
+    if (saved) setEmail(saved)
+  }, [])
 
   const verify = async () => {
     setLoading(true)
@@ -26,22 +33,29 @@ export default function AdminResetPasswordPage() {
     const res = await fetch("/api/admin/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ otp }),
+      body: JSON.stringify({ otp, email }),
     })
     const data = await res.json()
     setLoading(false)
-    if (!data.success) { setError(data.error); return }
+    if (!data.success) {
+      setError(data.error)
+      return
+    }
     setResetToken(data.resetToken)
+    if (data.email) setEmail(data.email)
     setStep("password")
   }
 
   const reset = async () => {
-    if (password.length < 8) { setError("Min 8 characters"); return }
+    if (password.length < 8) {
+      setError("Min 8 characters")
+      return
+    }
     setLoading(true)
     const res = await fetch("/api/admin/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resetToken, password }),
+      body: JSON.stringify({ resetToken, password, email }),
     })
     const data = await res.json()
     setLoading(false)

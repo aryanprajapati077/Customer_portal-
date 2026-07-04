@@ -217,6 +217,27 @@ model AdminCredential {
   updatedAt    DateTime @updatedAt
 }
 
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("admin")
+  totpSecret   String?
+  totpEnabled  Boolean   @default(false)
+  active       Boolean   @default(true)
+  createdById  String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdBy    AdminUser?  @relation("AdminCreatedBy", fields: [createdById], references: [id])
+  createdUsers AdminUser[] @relation("AdminCreatedBy")
+
+  @@index([role])
+  @@index([active])
+}
+
 model VerifiedCertificate {
   id         String   @id @default(cuid())
   title      String

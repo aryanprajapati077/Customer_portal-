@@ -4,18 +4,14 @@ import { hashPassword } from "@/lib/password"
 
 export async function POST(request: NextRequest) {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase()
-    if (!adminEmail) {
-      return NextResponse.json({ success: false, error: "ADMIN_EMAIL not configured" }, { status: 503 })
-    }
-
-    const { resetToken, password } = await request.json()
+    const { resetToken, password, email } = await request.json()
     const token = String(resetToken || "")
     const newPassword = String(password || "")
+    const adminEmail = String(email || "").toLowerCase().trim()
 
-    if (!token || newPassword.length < 8) {
+    if (!token || !adminEmail || newPassword.length < 8) {
       return NextResponse.json(
-        { success: false, error: "Reset token and password (min 8 chars) required" },
+        { success: false, error: "Email, reset token, and password (min 8 chars) required" },
         { status: 400 },
       )
     }
@@ -38,6 +34,16 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(newPassword)
 
     await prisma.$transaction([
+      prisma.adminUser.upsert({
+        where: { email: adminEmail },
+        create: {
+          email: adminEmail,
+          name: "Admin",
+          passwordHash,
+          role: "admin",
+        },
+        update: { passwordHash },
+      }),
       prisma.adminCredential.upsert({
         where: { id: "admin" },
         create: { id: "admin", email: adminEmail, passwordHash },
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
-    return NextResponse.json({ success: true, message: "Admin password updated." })
+    return NextResponse.json({ success: true, message: "Password updated. Sign in with your email." })
   } catch (error) {
     console.error("Admin reset password error:", error)
     return NextResponse.json({ success: false, error: "Reset failed" }, { status: 500 })

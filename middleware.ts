@@ -1,7 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { CUSTOMER_COOKIE, verifyCustomerSession } from "@/lib/auth-session"
+import { verifyAdminSessionToken } from "@/lib/admin-auth"
 
 const ADMIN_COOKIE = "buffindia_admin"
+
+const ADMIN_PUBLIC = [
+  "/admin/login",
+  "/admin/forgot-password",
+  "/admin/reset-password",
+]
+
+const ADMIN_API_PUBLIC = [
+  "/api/admin/login",
+  "/api/admin/verify-2fa",
+  "/api/admin/forgot-password",
+  "/api/admin/verify-otp",
+  "/api/admin/reset-password",
+]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -24,15 +39,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin")) {
-    if (
-      pathname === "/admin/login" ||
-      pathname === "/admin/forgot-password" ||
-      pathname === "/admin/reset-password"
-    ) {
+    if (ADMIN_PUBLIC.some((p) => pathname === p)) {
       return NextResponse.next()
     }
     const token = request.cookies.get(ADMIN_COOKIE)?.value
-    if (!token) {
+    if (!(await verifyAdminSessionToken(token))) {
       const url = request.nextUrl.clone()
       url.pathname = "/admin/login"
       url.searchParams.set("next", pathname)
@@ -41,16 +52,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/admin")) {
-    const publicAdmin = [
-      "/api/admin/login",
-      "/api/admin/forgot-password",
-      "/api/admin/verify-otp",
-      "/api/admin/reset-password",
-    ]
-    if (publicAdmin.includes(pathname)) return NextResponse.next()
+    if (ADMIN_API_PUBLIC.includes(pathname)) return NextResponse.next()
 
     const token = request.cookies.get(ADMIN_COOKIE)?.value
-    if (!token) {
+    if (!(await verifyAdminSessionToken(token))) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
   }

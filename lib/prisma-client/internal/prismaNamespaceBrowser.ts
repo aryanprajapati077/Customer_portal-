@@ -62,6 +62,7 @@ export const ModelName = {
   OrderItem: 'OrderItem',
   PasswordResetOtp: 'PasswordResetOtp',
   AdminCredential: 'AdminCredential',
+  AdminUser: 'AdminUser',
   VerifiedCertificate: 'VerifiedCertificate',
   SupportTicket: 'SupportTicket'
 } as const
@@ -269,6 +270,24 @@ export const AdminCredentialScalarFieldEnum = {
 } as const
 
 export type AdminCredentialScalarFieldEnum = (typeof AdminCredentialScalarFieldEnum)[keyof typeof AdminCredentialScalarFieldEnum]
+
+
+export const AdminUserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  name: 'name',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  totpSecret: 'totpSecret',
+  totpEnabled: 'totpEnabled',
+  active: 'active',
+  createdById: 'createdById',
+  lastLoginAt: 'lastLoginAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
 
 
 export const VerifiedCertificateScalarFieldEnum = {

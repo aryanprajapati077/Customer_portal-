@@ -95,6 +95,11 @@ export type PasswordResetOtp = Prisma.PasswordResetOtpModel
  */
 export type AdminCredential = Prisma.AdminCredentialModel
 /**
+ * Model AdminUser
+ * 
+ */
+export type AdminUser = Prisma.AdminUserModel
+/**
  * Model VerifiedCertificate
  * 
  */

@@ -24,3 +24,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Failed to generate report" }, { status: 500 })
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as {
+      customerId?: string
+      period?: string
+    }
+
+    if (!body.customerId) {
+      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
+    }
+
+    const { pdfBuffer, filename } = await generateImpactReportPdf(body.customerId, {
+      period: body.period,
+    })
+
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-store",
+      },
+    })
+  } catch (error) {
+    console.error("Error generating impact report PDF:", error)
+    return NextResponse.json({ success: false, error: "Failed to generate report" }, { status: 500 })
+  }
+}

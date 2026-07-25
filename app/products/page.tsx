@@ -1,21 +1,19 @@
-import type { Metadata } from "next"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+"use client"
+
 import Link from "next/link"
-import { Sparkles, DollarSign, Users, Package, ArrowRight } from "lucide-react"
+import { Sparkles, DollarSign, Users, Package, ArrowRight, Recycle, CheckCircle2 } from "lucide-react"
+import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
 
 const features = [
   {
     icon: DollarSign,
     title: "Budget-Friendly",
-    description: "Sustainable products that don't compromise on affordability.",
+    description: "Sustainable products that don't compromise on affordability—ideal for corporate gifting at scale.",
   },
   {
     icon: Users,
     title: "Empowering Women",
-    description: "Products are handcrafted by stay-at-home mothers, supporting women's empowerment.",
+    description: "Products are handcrafted by stay-at-home mothers and community artisans, supporting livelihoods.",
   },
   {
     icon: Package,
@@ -25,109 +23,174 @@ const features = [
   {
     icon: Sparkles,
     title: "Eco-Friendly & Handcrafted",
-    description: "Each product is crafted with care using recycled cigarette waste fibers and natural materials.",
+    description: "Each piece is crafted with care using recycled cigarette waste fibres and natural materials.",
   },
 ]
 
+const recoveryStreams = [
+  {
+    letter: "A",
+    title: "Ash → Bricks",
+    body: "Detoxified ash is reused through in-house machinery into useful construction-oriented forms.",
+  },
+  {
+    letter: "T",
+    title: "Tobacco → Compost",
+    body: "Leftover tobacco is directed to composting to produce a nutrient-rich soil input.",
+  },
+  {
+    letter: "F",
+    title: "Filter Fibre → Objects",
+    body: "Cleaned fibre is refined and combined with gypsum and clay for designed articles and décor.",
+  },
+]
+
+const productTypes = ["Coasters", "Planters", "Photo frames", "Mobile stands", "Vases", "QR stands"]
+
 const useCases = [
-  "Celebrating special occasions with thoughtful, eco-friendly items.",
-  "Personalized corporate gifting with a sustainability message.",
-  "Sustainable home and office decor",
+  "Celebrating special occasions with thoughtful, eco-friendly items",
+  "Personalized corporate gifting with a sustainability message",
+  "Sustainable home and office décor that starts conversations",
+  "Client welcome kits and conference giveaways with measurable impact",
 ]
 
 const benefits = [
-  "Aligning with sustainability goals while saving on costs.",
-  "Empowering women artisans and fostering livelihood opportunities.",
-  "Supporting waste management and recycling initiatives.",
+  "Aligning with sustainability goals while saving on costs",
+  "Empowering women artisans and fostering livelihood opportunities",
+  "Supporting waste management and recycling initiatives",
+  "Closing the loop on cigarette waste collected through BuffIndia services",
 ]
-
-export const metadata: Metadata = {
-  title: "Products | EcoArt by BuffIndia – Sustainable Decor & Gifting",
-  description:
-    "World's first e-commerce store for sustainable decor & gifting. Handcrafted from recycled cigarette waste. Budget-friendly, eco-friendly products.",
-}
 
 export default function ProductsPage() {
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
-      <section className="pt-28 pb-16 sm:pt-32 sm:pb-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              <span className="text-foreground">EcoArt by BuffIndia: </span>
-              <span className="text-gradient-orange">World's First E-Commerce Store for Sustainable Decor & Gifting</span>
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Handcrafted from recycled cigarette waste, our eco-friendly products are budget-friendly and purposeful
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-8 text-center">What Sets EcoArt Apart</h2>
-            <p className="text-center text-muted-foreground mb-12 text-lg">Sustainability Meets Craftsmanship</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {features.map((feature) => (
-                <Card key={feature.title} className="p-6 bg-card border-border/50 hover-lift">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <feature.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                      <p className="text-muted-foreground text-sm">{feature.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          <div className="max-w-4xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-8 text-center">Why Choose EcoArt?</h2>
-            <p className="text-center text-muted-foreground mb-8 text-lg">
-              Purposeful Decor & Gifts for Every Occasion
-            </p>
-            <p className="text-muted-foreground mb-4">EcoArt products are perfect for:</p>
-            <ul className="space-y-2 mb-12">
-              {useCases.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-primary" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="text-xl font-semibold text-foreground mb-6 text-center">The Bigger Picture – More Than Just Products</h3>
-            <p className="text-muted-foreground mb-4">By choosing EcoArt, you're making a difference:</p>
-            <ul className="space-y-2 mb-12">
-              {benefits.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-secondary" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Explore the Collection</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Discover Unique Creations, Crafted with Purpose. Browse our wide range of sustainable decor and gifting
-              items. While this page offers a glimpse of what we create, the full collection is available on our
-              e-commerce store.
-            </p>
-            <a href="https://ecoart.buffindia.com" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="rounded-full px-8">
-                Shop Now
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </a>
-            <p className="text-sm text-muted-foreground mt-6">Support Sustainability – Shop BuffIndia Products Today!</p>
-          </div>
+    <InspirePage
+      eyebrow="EcoArt by BuffIndia"
+      title="Waste becomes"
+      accent="design"
+      subtitle="World's first e-commerce store for sustainable décor & gifting. Handcrafted from recycled cigarette waste—budget-friendly, purposeful, and proof that litter can become design."
+      cta={{ href: "https://ecoart.buffindia.com", label: "Shop EcoArt Now" }}
+    >
+      <section className="mb-14">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
+          From waste stream to product
+        </h2>
+        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[#5A5A5A]">
+          One waste stream. Three new directions—then into objects you can gift and display.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {recoveryStreams.map((stream, i) => (
+            <InspireCard key={stream.letter} delay={i * 0.04}>
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#1B7339]/15 text-[15px] font-bold text-[#1B7339]">
+                {stream.letter}
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight text-[#141414]">{stream.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#5A5A5A]">{stream.body}</p>
+            </InspireCard>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-wrap gap-2">
+          {productTypes.map((name) => (
+            <span
+              key={name}
+              className="rounded-full border border-black/10 bg-white/80 px-4 py-2 text-[13px] font-medium text-[#5A5A5A]"
+            >
+              {name}
+            </span>
+          ))}
         </div>
       </section>
-      <Footer />
-    </main>
+
+      <section className="mb-14">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
+          What sets EcoArt apart
+        </h2>
+        <p className="mt-2 text-[15px] text-[#5A5A5A]">Sustainability meets craftsmanship.</p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {features.map((feature, i) => (
+            <InspireCard key={feature.title} delay={i * 0.04}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
+                  <feature.icon className="h-5 w-5" strokeWidth={1.7} />
+                </div>
+                <div>
+                  <h3 className="text-[17px] font-semibold tracking-tight text-[#141414]">{feature.title}</h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-[#5A5A5A]">{feature.description}</p>
+                </div>
+              </div>
+            </InspireCard>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-14">
+        <InspireCard>
+          <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.5rem,3vw,2rem)] tracking-tight text-[#141414]">
+            Why choose EcoArt?
+          </h2>
+          <p className="mt-2 text-[15px] text-[#5A5A5A]">Purposeful décor & gifts for every occasion.</p>
+          <p className="mt-6 text-[14px] font-medium text-[#141414]">EcoArt products are perfect for:</p>
+          <ul className="mt-3 space-y-2">
+            {useCases.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-[14px] text-[#5A5A5A]">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1B7339]" strokeWidth={1.7} />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <h3 className="mt-8 text-[17px] font-semibold tracking-tight text-[#141414]">
+            The bigger picture – more than just products
+          </h3>
+          <p className="mt-2 text-[14px] text-[#5A5A5A]">By choosing EcoArt, you&apos;re making a difference:</p>
+          <ul className="mt-3 space-y-2">
+            {benefits.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-[14px] text-[#5A5A5A]">
+                <Recycle className="mt-0.5 h-5 w-5 shrink-0 text-[#EF6C00]" strokeWidth={1.7} />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-[13px] text-[#5A5A5A]">
+            Site partners on BuffIndia&apos;s{" "}
+            <Link href="/services" className="font-medium text-[#1B7339] hover:underline">
+              annual service
+            </Link>{" "}
+            often receive branded EcoArt as part of their sustainability package.
+          </p>
+        </InspireCard>
+      </section>
+
+      <div className="rounded-[28px] bg-[#141414] px-6 py-10 text-center text-white sm:px-10">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,4vw,2.6rem)] leading-tight">
+          Explore the <em className="italic text-[#C8F000]">collection</em>
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-[14px] leading-relaxed text-white/70">
+          Browse sustainable décor and gifting on our EcoArt store—or learn how collection services feed this circular
+          catalogue.
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="https://ecoart.buffindia.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-[#C8F000] px-5 py-2.5 text-[14px] font-semibold text-[#141414] hover:bg-[#d4f53a]"
+          >
+            Shop EcoArt Now
+            <ArrowRight className="h-4 w-4" />
+          </a>
+          <Link
+            href="/services"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-white/10"
+          >
+            See Collection Services
+          </Link>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white/80 hover:text-white"
+          >
+            Ask About Corporate Gifting
+          </Link>
+        </div>
+      </div>
+    </InspirePage>
   )
 }

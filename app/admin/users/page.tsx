@@ -93,22 +93,28 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-          <Shield className="w-3.5 h-3.5" />
+        <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
+          <Shield className="h-3.5 w-3.5" />
           Super Admin
-        </div>
-        <h1 className="text-3xl font-bold">Admin Users</h1>
-        <p className="text-sm text-muted-foreground mt-1">Create and manage admin accounts. Only super admins can access this page.</p>
+        </p>
+        <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
+          Admin <em className="italic text-[#1B7339]">Users</em>
+        </h1>
+        <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
+          Create and manage admin accounts. New users can enable authenticator from Security.
+        </p>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="border-[#E5E5E5] bg-white lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <UserPlus className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <UserPlus className="h-5 w-5 text-[#1B7339]" />
               Add admin user
             </CardTitle>
-            <CardDescription>New admins sign in with email + password. They can enable authenticator from Security.</CardDescription>
+            <CardDescription>
+              New admins sign in with email + password, then set up authenticator.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={createUser} className="space-y-4">
@@ -118,11 +124,24 @@ export default function AdminUsersPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-email">Email</Label>
-                <Input id="new-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input
+                  id="new-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">Temporary password</Label>
-                <Input id="new-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required />
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={8}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
@@ -137,15 +156,19 @@ export default function AdminUsersPage() {
                 </Select>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              <Button
+                type="submit"
+                className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                disabled={saving}
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Create admin
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card className="border-[#E5E5E5] bg-white lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-lg">All admins</CardTitle>
             <CardDescription>{users.length} account(s)</CardDescription>
@@ -153,22 +176,46 @@ export default function AdminUsersPage() {
           <CardContent>
             {loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#1B7339]" />
               </div>
             ) : (
-              <ul className="divide-y divide-border/50">
+              <ul className="divide-y divide-[#EAEAEA]">
                 {users.map((u) => (
-                  <li key={u.id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <li
+                    key={u.id}
+                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div>
-                      <p className="font-medium">{u.name}</p>
-                      <p className="text-sm text-muted-foreground">{u.email}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        <Badge variant={u.role === "super_admin" ? "default" : "secondary"}>{u.role.replace("_", " ")}</Badge>
-                        <Badge variant={u.active ? "outline" : "destructive"}>{u.active ? "Active" : "Inactive"}</Badge>
-                        {u.totpEnabled && <Badge variant="outline">2FA on</Badge>}
+                      <p className="font-medium text-[#141414]">{u.name}</p>
+                      <p className="text-sm text-[#6B6B6B]">{u.email}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <Badge
+                          variant={u.role === "super_admin" ? "default" : "secondary"}
+                          className={
+                            u.role === "super_admin" ? "bg-[#1B7339] hover:bg-[#145a2c]" : ""
+                          }
+                        >
+                          {u.role.replace("_", " ")}
+                        </Badge>
+                        <Badge variant={u.active ? "outline" : "destructive"}>
+                          {u.active ? "Active" : "Inactive"}
+                        </Badge>
+                        {u.totpEnabled && (
+                          <Badge
+                            variant="outline"
+                            className="border-[#C8E6D4] bg-[#E8F5E9] text-[#1B7339]"
+                          >
+                            2FA on
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => toggleActive(u)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-[#DCE8DC]"
+                      onClick={() => toggleActive(u)}
+                    >
                       {u.active ? "Deactivate" : "Activate"}
                     </Button>
                   </li>

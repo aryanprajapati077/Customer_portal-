@@ -1,8 +1,5 @@
-import type { Metadata } from "next"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+"use client"
+
 import Link from "next/link"
 import {
   Package,
@@ -16,122 +13,98 @@ import {
   Building2,
   ArrowRight,
 } from "lucide-react"
+import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
 
 const services = [
   {
     icon: Package,
-    title: "Seamless Installation of Unique Disposal Units",
+    title: "Disposal unit installation",
     description:
-      "Our innovative cigarette waste disposal units are installed at your premises on an annual rental basis. Designed for convenience and sustainability, these units encourage thoughtful waste disposal habits.",
+      "Self-educative cigarette waste kiosks installed at your premises — designed so the right action is obvious.",
   },
   {
     icon: Megaphone,
-    title: "Building Awareness for Sustainable Habits",
+    title: "Awareness programmes",
     description:
-      "We conduct impactful awareness activities at your location, inspiring patrons and employees to adopt responsible cigarette waste disposal habits. Together, we can drive habitual transformation for a cleaner future.",
+      "On-site activities that inspire patrons and employees to adopt responsible disposal habits.",
   },
   {
     icon: Truck,
-    title: "Hassle-Free Waste Collection Services",
+    title: "Door-to-door collection",
     description:
-      "Our team ensures timely and efficient door-to-door collection of cigarette waste, allowing you to focus on your business while contributing to sustainability.",
+      "Reliable pickup from smoking areas to local storage — hassle-free for your operations team.",
   },
   {
     icon: Recycle,
-    title: "BuffIndia Recycle Process",
+    title: "Recovery & recycling",
     description:
-      "BuffIndia&apos;s innovative recycle process transforms cigarette waste into eco-friendly products. It's an impactful step towards sustainability.",
+      "Waste is weighed, segregated and routed into ash bricks, compost and designed objects.",
   },
   {
     icon: Palette,
-    title: "Turning Waste into Wonders – Eco-Art by BuffIndia",
+    title: "EcoArt upcycled products",
     description:
-      "Collected cigarette waste is upcycled into stunning eco-friendly decor and gifting items. These sustainable products not only reduce waste but also create value for your business.",
+      "Filter fibre becomes décor and gifting — circular design your brand can show off.",
   },
   {
     icon: Gift,
-    title: "Sustainability Delivered, At No Extra Cost",
+    title: "Branded sustainability gifts",
     description:
-      "Receive upcycled products customized with your branding, logo, and sustainability message – perfect for interior decor or gifting, all at no additional cost.",
+      "Custom upcycled products with your logo — included with partnership, not sold as an add-on.",
   },
   {
     icon: BarChart3,
-    title: "Data-Driven Impact Insights",
+    title: "Monthly impact reporting",
     description:
-      "Stay informed with monthly reports detailing your waste management contributions, environmental benefits, and the social impact of your support for BuffIndia's mission.",
+      "Butts diverted, water protected, waste upcycled — measurable ESG outcomes every month.",
   },
   {
     icon: Users,
-    title: "Empowering Communities Through Sustainability",
+    title: "Community livelihoods",
     description:
-      "Your partnership supports livelihoods for students, unskilled labor, and stay-at-home mothers. Together, we create a positive ripple effect in society.",
+      "Partnerships support artisans and local labour who handcraft EcoArt products.",
   },
   {
     icon: Building2,
-    title: "A Trusted Partner in Sustainability",
+    title: "Trusted enterprise partner",
     description:
-      "BuffIndia is proud to be supported by major Fortune 500 corporates, premium hotels, and renowned establishments across India. Join the growing community of businesses making a difference.",
+      "Fortune 500 corporates, hotels and campuses across India choose BuffIndia.",
   },
 ]
 
-export const metadata: Metadata = {
-  title: "Services | BuffIndia – End-to-End Cigarette Waste Management",
-  description:
-    "From innovative disposal to upcycling, BuffIndia creates a win-win solution for your business and the planet. Annual rental, awareness programs, collection & recycling.",
-}
-
 export default function ServicesPage() {
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
-      <section className="pt-28 pb-16 sm:pt-32 sm:pb-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              <span className="text-foreground">Redefining Sustainability: </span>
-              <span className="text-gradient-orange">End-to-End Cigarette Waste Management</span>
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              From innovative disposal to upcycling, BuffIndia creates a win-win solution for your business and the
-              planet.
-            </p>
-          </div>
+    <InspirePage
+      eyebrow="Our services"
+      title="One system."
+      accent="Full circle."
+      subtitle="From kiosk to collection to recovery to report — BuffIndia runs the loop so your spaces stay litter-free and your impact stays visible."
+      cta={{ href: "/contact", label: "Start a conversation" }}
+    >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((s, i) => (
+          <InspireCard key={s.title} delay={i * 0.04}>
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
+              <s.icon className="h-5 w-5" strokeWidth={1.7} />
+            </div>
+            <h3 className="text-[17px] font-semibold tracking-tight text-[#141414]">{s.title}</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-[#5A5A5A]">{s.description}</p>
+          </InspireCard>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {services.map((service, index) => (
-              <Card
-                key={service.title}
-                className="p-6 bg-card border-border/50 hover-lift group"
-              >
-                <CardHeader className="p-0 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <service.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">{service.title}</h3>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <p className="text-muted-foreground leading-relaxed">{service.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <p className="text-xl font-semibold text-foreground mb-6">Be the Change You Want to See</p>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Take the first step towards a sustainable future. Contact BuffIndia today to explore our annual service
-              packages and join the movement for a cleaner, greener planet.
-            </p>
-            <Link href="/contact">
-              <Button size="lg" className="rounded-full px-8">
-                Contact Us Today
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-      <Footer />
-    </main>
+      <div className="mt-14 rounded-[28px] bg-[#141414] px-6 py-10 text-center text-white sm:px-10">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,4vw,2.6rem)] leading-tight">
+          Ready to make your space <em className="italic text-[#C8F000]">litter-free</em>?
+        </h2>
+        <Link
+          href="/login"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#C8F000] px-5 py-2.5 text-[14px] font-semibold text-[#141414] hover:bg-[#d4f53a]"
+        >
+          Customer login
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+    </InspirePage>
   )
 }

@@ -1,231 +1,215 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { Loader2, Plus, Search, Users, Download, Table2 } from "lucide-react"
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import { Loader2, Plus, Save, Search, Users, Check, ChevronsUpDown, X, Mail } from "lucide-react"
+  CreateCustomerForm,
+  EMPTY_CREATE_CUSTOMER_FORM,
+  useNextCustomerId,
+  type CreateCustomerFormState,
+} from "@/components/admin/create-customer-form"
+import ExcelJS from "exceljs"
 
 type CustomerRow = {
   id: string
   email: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
   contactPerson: string | null
   phone: string | null
   address: string | null
   status: string
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  collectionFrequency?: string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  serviceStartDate?: string | null
   totalWasteCollected: number
   disposalUnitInstalled: number
   monthlyTarget?: number
   kraftrebornCredits?: number
   updatedAt: string
-  isGroup?: boolean
-  parentCustomerId?: string | null
 }
 
-const INITIAL_FORM = {
-  id: "",
-  email: "",
-  password: "",
-  companyName: "",
-  contactPerson: "",
-  phone: "",
-  address: "",
-  industry: "",
-  employeeCount: "",
-  status: "Active",
-  disposalUnitInstalled: "0",
-  totalWasteCollected: "",
-  cigaretteButtsCollected: "",
-  microplasticsUpcycled: "",
-  waterResourcesProtected: "",
-  pendingCollection: "",
-  certificatesEarned: "",
-  co2Saved: "",
-  kraftrebornCredits: "",
-  treesEquivalent: "",
-  monthlyTarget: "",
-  profileImageUrl: "",
-  notes: "",
-  isGroup: false,
-  parentCustomerId: "__none__",
-  selectedChildIds: [] as string[],
+const SHEET_COLUMNS: { key: keyof CustomerRow | "collectionPocSummary"; label: string; width: number }[] = [
+  { key: "id", label: "Customer ID", width: 110 },
+  { key: "companyName", label: "Brand Name", width: 160 },
+  { key: "tradeName", label: "Trade Name", width: 150 },
+  { key: "gstin", label: "GSTIN", width: 140 },
+  { key: "state", label: "State", width: 120 },
+  { key: "city", label: "City", width: 110 },
+  { key: "lsuName", label: "LSU Name", width: 140 },
+  { key: "lsuTechnicianName", label: "LSU Technician", width: 140 },
+  { key: "operationsIncharge", label: "Ops Incharge", width: 130 },
+  { key: "primaryPocName", label: "Primary POC", width: 130 },
+  { key: "primaryPocEmail", label: "POC Email", width: 180 },
+  { key: "primaryPocNumber", label: "POC Phone", width: 120 },
+  { key: "collectionFrequency", label: "Frequency", width: 120 },
+  { key: "noOfKiosk", label: "Kiosks", width: 80 },
+  { key: "serviceStartDate", label: "Service Start", width: 110 },
+  { key: "status", label: "Status", width: 90 },
+  { key: "email", label: "Login Email", width: 180 },
+]
+
+function cellValue(row: CustomerRow, key: (typeof SHEET_COLUMNS)[number]["key"]): string {
+  if (key === "collectionPocSummary") {
+    try {
+      const pocs = JSON.parse(row.collectionPocs || "[]") as { name?: string }[]
+      return pocs.map((p) => p.name).filter(Boolean).join(", ")
+    } catch {
+      return ""
+    }
+  }
+  const v = row[key as keyof CustomerRow]
+  if (v == null || v === "") return ""
+  if (key === "serviceStartDate" && typeof v === "string") {
+    return new Date(v).toLocaleDateString("en-IN")
+  }
+  return String(v)
 }
 
 export default function AdminCustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [savingId, setSavingId] = useState<string | null>(null)
   const [q, setQ] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
-  const [createForm, setCreateForm] = useState(INITIAL_FORM)
+  const [createForm, setCreateForm] = useState<CreateCustomerFormState>(EMPTY_CREATE_CUSTOMER_FORM)
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [sendingReportId, setSendingReportId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<CustomerRow | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const nextCustomerId = useNextCustomerId(createOpen)
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/customers")
+      const data = await res.json()
+      if (data?.success) setRows(data.customers || [])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        const res = await fetch("/api/admin/customers")
-        const data = await res.json()
-        if (cancelled) return
-        if (data?.success) setRows(data.customers || [])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
+    load()
   }, [])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
     if (!s) return rows
-    return rows.filter((r) => {
-      return (
-        r.id.toLowerCase().includes(s) ||
-        r.email.toLowerCase().includes(s) ||
-        r.companyName.toLowerCase().includes(s) ||
-        (r.contactPerson || "").toLowerCase().includes(s)
-      )
-    })
+    return rows.filter((r) =>
+      [
+        r.id,
+        r.email,
+        r.companyName,
+        r.tradeName,
+        r.city,
+        r.state,
+        r.gstin,
+        r.lsuName,
+        r.primaryPocName,
+        r.primaryPocEmail,
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(s)),
+    )
   }, [rows, q])
-
-  const updateLocal = (id: string, patch: Partial<CustomerRow>) => {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
-  }
-
-  const sendReportEmail = async (customerId: string) => {
-    setSendingReportId(customerId)
-    try {
-      const now = new Date()
-      const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
-      const res = await fetch("/api/admin/reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send-reports", customerId, period }),
-      })
-      const data = await res.json()
-      if (data?.success && data.sent > 0) {
-        alert("ESG report email sent successfully.")
-      } else {
-        alert(data?.error || data?.results?.[0]?.error || "Failed to send email")
-      }
-    } finally {
-      setSendingReportId(null)
-    }
-  }
-
-  const save = async (row: CustomerRow) => {
-    setSavingId(row.id)
-    try {
-      const res = await fetch("/api/admin/customers", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: row.id,
-          disposalUnitInstalled: row.disposalUnitInstalled,
-          status: row.status,
-          monthlyTarget: row.monthlyTarget,
-          kraftrebornCredits: row.kraftrebornCredits,
-          isGroup: row.isGroup,
-          parentCustomerId: row.parentCustomerId,
-        }),
-      })
-      const data = await res.json()
-      if (data?.success && data.customer) {
-        updateLocal(row.id, data.customer)
-      }
-    } finally {
-      setSavingId(null)
-    }
-  }
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreateError(null)
+    if (!createForm.state || !createForm.city) {
+      setCreateError("State and City are required")
+      return
+    }
+    if (!createForm.collectionFrequency) {
+      setCreateError("Collection Frequency is required")
+      return
+    }
+    if (createForm.noOfKiosk === "") {
+      setCreateError("No. Of Kiosk is required")
+      return
+    }
+
     setCreateLoading(true)
     try {
       const res = await fetch("/api/admin/customers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: createForm.id.trim() || undefined,
-          email: createForm.email.trim(),
-          password: createForm.password,
-          companyName: createForm.companyName.trim(),
-          contactPerson: createForm.contactPerson.trim() || undefined,
-          phone: createForm.phone.trim() || undefined,
-          address: createForm.address.trim() || undefined,
-          industry: createForm.industry.trim() || undefined,
-          employeeCount: createForm.employeeCount ? Number(createForm.employeeCount) : undefined,
-          status: createForm.status,
-          disposalUnitInstalled: Number(createForm.disposalUnitInstalled) || 0,
-          totalWasteCollected: createForm.totalWasteCollected ? Number(createForm.totalWasteCollected) : undefined,
-          cigaretteButtsCollected: createForm.cigaretteButtsCollected ? Number(createForm.cigaretteButtsCollected) : undefined,
-          microplasticsUpcycled: createForm.microplasticsUpcycled ? Number(createForm.microplasticsUpcycled) : undefined,
-          waterResourcesProtected: createForm.waterResourcesProtected ? Number(createForm.waterResourcesProtected) : undefined,
-          pendingCollection: createForm.pendingCollection ? Number(createForm.pendingCollection) : undefined,
-          certificatesEarned: createForm.certificatesEarned ? Number(createForm.certificatesEarned) : undefined,
-          co2Saved: createForm.co2Saved ? Number(createForm.co2Saved) : undefined,
-          kraftrebornCredits: createForm.kraftrebornCredits ? Number(createForm.kraftrebornCredits) : undefined,
-          treesEquivalent: createForm.treesEquivalent ? Number(createForm.treesEquivalent) : undefined,
-          monthlyTarget: createForm.monthlyTarget ? Number(createForm.monthlyTarget) : undefined,
-          profileImageUrl: createForm.profileImageUrl.trim() || undefined,
-          notes: createForm.notes.trim() || undefined,
-          isGroup: createForm.isGroup,
-          parentCustomerId: createForm.isGroup ? undefined : (createForm.parentCustomerId && createForm.parentCustomerId !== "__none__" ? createForm.parentCustomerId : undefined),
+          brandName: createForm.brandName.trim(),
+          tradeName: createForm.tradeName.trim(),
+          state: createForm.state,
+          city: createForm.city,
+          lsuName: createForm.lsuName.trim(),
+          lsuTechnicianName: createForm.lsuTechnicianName.trim(),
+          operationsIncharge: createForm.operationsIncharge.trim(),
+          primaryPocName: createForm.primaryPocName.trim(),
+          primaryPocEmail: createForm.primaryPocEmail.trim(),
+          primaryPocNumber: createForm.primaryPocNumber.trim(),
+          primaryPocDesignation: createForm.primaryPocDesignation.trim() || undefined,
+          collectionPocs: createForm.collectionPocs,
+          serviceStartDate: createForm.serviceStartDate,
+          noOfKiosk: Number(createForm.noOfKiosk),
+          noOfBasicKiosk: Number(createForm.noOfBasicKiosk) || 0,
+          noOfAdvanceKiosk: Number(createForm.noOfAdvanceKiosk) || 0,
+          noOfPanVendorKiosk: Number(createForm.noOfPanVendorKiosk) || 0,
+          noOfWallMountKiosk: Number(createForm.noOfWallMountKiosk) || 0,
+          collectionFrequency: createForm.collectionFrequency,
+          gstin: createForm.gstin.trim() || undefined,
+          logoBase64: createForm.logoBase64 || undefined,
         }),
       })
       const data = await res.json()
       if (data?.success && data.customer) {
-        const newGroupId = data.customer.id
-        if (createForm.isGroup && createForm.selectedChildIds?.length) {
-          for (const childId of createForm.selectedChildIds) {
-            await fetch("/api/admin/customers", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: childId, parentCustomerId: newGroupId }),
-            })
-          }
-        }
-        const refetchRes = await fetch("/api/admin/customers")
-        const refetchData = await refetchRes.json()
-        if (refetchData?.success) setRows(refetchData.customers || [])
-        setCreateForm(INITIAL_FORM)
+        await load()
+        setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
         setCreateOpen(false)
+        if (data.welcomeEmailSent) {
+          alert(`Customer ${data.customer.id} created.\nWelcome email sent to ${data.customer.email}.`)
+        } else {
+          const reason = data.welcomeEmailError ? `\nReason: ${data.welcomeEmailError}` : ""
+          const tempPw = data.temporaryPassword
+            ? `\n\nUsername: ${data.customer.email}\nPassword: ${data.temporaryPassword}`
+            : ""
+          alert(`Customer ${data.customer.id} created, but welcome email was not sent.${reason}${tempPw}`)
+        }
       } else {
-        setCreateError(data?.error || "Failed to create user")
+        setCreateError(data?.error || "Failed to create customer")
       }
     } catch {
       setCreateError("Network error")
@@ -234,501 +218,291 @@ export default function AdminCustomersPage() {
     }
   }
 
-  const groupCustomers = useMemo(() => rows.filter((r) => r.isGroup), [rows])
-  const selectableClients = useMemo(
-    () => rows.filter((r) => !r.isGroup),
-    [rows]
-  )
+  const exportExcel = async () => {
+    setExporting(true)
+    try {
+      const wb = new ExcelJS.Workbook()
+      const sheet = wb.addWorksheet("Customers")
+      const headers = [
+        ...SHEET_COLUMNS.map((c) => c.label),
+        "Collection POCs",
+        "Basic Kiosk",
+        "Advance Kiosk",
+        "Pan Vendor Kiosk",
+        "Wall Mount Kiosk",
+        "Ops Incharge",
+        "Logo URL",
+      ]
+      sheet.addRow(headers)
+      sheet.getRow(1).font = { bold: true }
+      sheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFC6EFCE" },
+      }
+
+      for (const r of filtered) {
+        let pocSummary = ""
+        try {
+          const pocs = JSON.parse(r.collectionPocs || "[]") as { name?: string; email?: string }[]
+          pocSummary = pocs.map((p) => `${p.name || ""} <${p.email || ""}>`).join("; ")
+        } catch {
+          pocSummary = ""
+        }
+        sheet.addRow([
+          ...SHEET_COLUMNS.map((c) => cellValue(r, c.key)),
+          pocSummary,
+          r.noOfBasicKiosk ?? 0,
+          r.noOfAdvanceKiosk ?? 0,
+          r.noOfPanVendorKiosk ?? 0,
+          r.noOfWallMountKiosk ?? 0,
+          r.operationsIncharge || "",
+          r.logoUrl || "",
+        ])
+      }
+
+      SHEET_COLUMNS.forEach((c, i) => {
+        sheet.getColumn(i + 1).width = Math.max(12, Math.round(c.width / 8))
+      })
+
+      const buffer = await wb.xlsx.writeBuffer()
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `BuffIndia-Customers-${new Date().toISOString().slice(0, 10)}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" />
+          <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
+            <Table2 className="h-3.5 w-3.5" />
+            Spreadsheet view
+          </p>
+          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
             Customers
           </h1>
-          <p className="text-sm text-muted-foreground">Manage customer status, targets, and disposal units</p>
+          <p className="mt-1 text-[14px] text-[#6B6B6B]">
+            Excel-style grid — click a row for the full sheet. Export anytime.
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={exportExcel}
+            disabled={exporting || filtered.length === 0}
+          >
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Export as Excel
+          </Button>
+          <Dialog
+            open={createOpen}
+            onOpenChange={(open) => {
+              setCreateOpen(open)
+              if (!open) {
+                setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
+                setCreateError(null)
+              }
+            }}
+          >
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Create User
+              <Button className="gap-2 rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
+                <Plus className="h-4 w-4" />
+                Create Customer
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[720px]">
               <DialogHeader>
                 <DialogTitle>Create New Customer</DialogTitle>
-                <DialogDescription>Add a new customer with email, company details, and optional group/parent settings.</DialogDescription>
+                <DialogDescription>
+                  Required fields marked *. Customer ID auto-assigned.
+                </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                {createError && (
-                  <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">{createError}</div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="create-id">ID (optional, auto-generated if empty)</Label>
-                  <Input
-                    id="create-id"
-                    value={createForm.id}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, id: e.target.value }))}
-                    placeholder="Leave empty for auto-generated"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-email">Email *</Label>
-                    <Input
-                      id="create-email"
-                      type="email"
-                      required
-                      value={createForm.email}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-                      placeholder="customer@company.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-password">Password *</Label>
-                    <Input
-                      id="create-password"
-                      type="password"
-                      required
-                      value={createForm.password}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-company">Company Name *</Label>
-                  <Input
-                    id="create-company"
-                    required
-                    value={createForm.companyName}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))}
-                    placeholder="Acme Corp"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-contact">Contact Person</Label>
-                    <Input
-                      id="create-contact"
-                      value={createForm.contactPerson}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, contactPerson: e.target.value }))}
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-phone">Phone</Label>
-                    <Input
-                      id="create-phone"
-                      value={createForm.phone}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))}
-                      placeholder="+91 98765 43210"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-address">Address</Label>
-                  <Input
-                    id="create-address"
-                    value={createForm.address}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, address: e.target.value }))}
-                    placeholder="123 Main St, City"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-industry">Industry</Label>
-                    <Input
-                      id="create-industry"
-                      value={createForm.industry}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, industry: e.target.value }))}
-                      placeholder="Manufacturing"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-employees">Employee Count</Label>
-                    <Input
-                      id="create-employees"
-                      type="number"
-                      min={0}
-                      value={createForm.employeeCount}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, employeeCount: e.target.value }))}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={createForm.status} onValueChange={(v) => setCreateForm((p) => ({ ...p, status: v }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-disposal">Disposal Units Installed</Label>
-                    <Input
-                      id="create-disposal"
-                      type="number"
-                      min={0}
-                      value={createForm.disposalUnitInstalled}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, disposalUnitInstalled: e.target.value }))}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3 rounded-lg border border-border/50 p-4">
-                  <p className="text-sm font-medium text-foreground">Impact Metrics</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="create-waste" className="text-xs">Total Waste (kg)</Label>
-                      <Input id="create-waste" type="number" min={0} step="0.01" value={createForm.totalWasteCollected} onChange={(e) => setCreateForm((p) => ({ ...p, totalWasteCollected: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-cigarette" className="text-xs">Cigarette Butts (kg)</Label>
-                      <Input id="create-cigarette" type="number" min={0} step="0.01" value={createForm.cigaretteButtsCollected} onChange={(e) => setCreateForm((p) => ({ ...p, cigaretteButtsCollected: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-micro" className="text-xs">Microplastics (kg)</Label>
-                      <Input id="create-micro" type="number" min={0} step="0.01" value={createForm.microplasticsUpcycled} onChange={(e) => setCreateForm((p) => ({ ...p, microplasticsUpcycled: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-water" className="text-xs">Water Protected (L)</Label>
-                      <Input id="create-water" type="number" min={0} step="0.01" value={createForm.waterResourcesProtected} onChange={(e) => setCreateForm((p) => ({ ...p, waterResourcesProtected: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-pending" className="text-xs">Pending Collection (kg)</Label>
-                      <Input id="create-pending" type="number" min={0} step="0.01" value={createForm.pendingCollection} onChange={(e) => setCreateForm((p) => ({ ...p, pendingCollection: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-certificates" className="text-xs">Certificates Earned</Label>
-                      <Input id="create-certificates" type="number" min={0} value={createForm.certificatesEarned} onChange={(e) => setCreateForm((p) => ({ ...p, certificatesEarned: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-co2" className="text-xs">CO2 Saved (kg)</Label>
-                      <Input id="create-co2" type="number" min={0} step="0.01" value={createForm.co2Saved} onChange={(e) => setCreateForm((p) => ({ ...p, co2Saved: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-kraftreborn" className="text-xs">Kraftreborn Credits</Label>
-                      <Input id="create-kraftreborn" type="number" min={0} step="0.01" value={createForm.kraftrebornCredits} onChange={(e) => setCreateForm((p) => ({ ...p, kraftrebornCredits: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-trees" className="text-xs">Trees Equivalent</Label>
-                      <Input id="create-trees" type="number" min={0} value={createForm.treesEquivalent} onChange={(e) => setCreateForm((p) => ({ ...p, treesEquivalent: e.target.value }))} placeholder="0" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="create-monthly" className="text-xs">Monthly Target (kg)</Label>
-                      <Input id="create-monthly" type="number" min={0} step="0.01" value={createForm.monthlyTarget} onChange={(e) => setCreateForm((p) => ({ ...p, monthlyTarget: e.target.value }))} placeholder="0" />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-profileUrl">Profile Image URL</Label>
-                    <Input
-                      id="create-profileUrl"
-                      type="url"
-                      value={createForm.profileImageUrl}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, profileImageUrl: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-notes">Notes</Label>
-                    <Textarea
-                      id="create-notes"
-                      value={createForm.notes}
-                      onChange={(e) => setCreateForm((p) => ({ ...p, notes: e.target.value }))}
-                      placeholder="Internal notes..."
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3 rounded-lg border border-border/50 p-4">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="create-isGroup"
-                      checked={createForm.isGroup}
-                      onCheckedChange={(c) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          isGroup: Boolean(c),
-                          selectedChildIds: c ? p.selectedChildIds : [],
-                          parentCustomerId: c ? "__none__" : p.parentCustomerId,
-                        }))
-                      }
-                    />
-                    <Label htmlFor="create-isGroup" className="font-normal cursor-pointer">
-                      Group client (can access all child companies in dashboard)
-                    </Label>
-                  </div>
-                  {!createForm.isGroup && groupCustomers.length > 0 && (
-                    <div className="space-y-2 pt-2">
-                      <Label htmlFor="create-parent">Parent Company (optional)</Label>
-                      <Select
-                        value={createForm.parentCustomerId || "__none__"}
-                        onValueChange={(v) => setCreateForm((p) => ({ ...p, parentCustomerId: v }))}
-                      >
-                        <SelectTrigger id="create-parent">
-                          <SelectValue placeholder="None" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {groupCustomers.map((g) => (
-                            <SelectItem key={g.id} value={g.id}>
-                              {g.companyName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  {createForm.isGroup && (
-                    <div className="space-y-2 pt-2">
-                      <Label>Add clients to this group</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between font-normal"
-                          >
-                            <span className="truncate">
-                              {createForm.selectedChildIds?.length
-                                ? `${createForm.selectedChildIds.length} client(s) selected`
-                                : "Search by name or client ID..."}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search by company name or client ID..." />
-                            <CommandList>
-                              <CommandEmpty>No clients found.</CommandEmpty>
-                              <CommandGroup>
-                                {selectableClients.map((c) => {
-                                  const selected = createForm.selectedChildIds?.includes(c.id)
-                                  return (
-                                    <CommandItem
-                                      key={c.id}
-                                      value={`${c.companyName} ${c.id}`}
-                                      onSelect={() => {
-                                        setCreateForm((p) => ({
-                                          ...p,
-                                          selectedChildIds: selected
-                                            ? (p.selectedChildIds || []).filter((id) => id !== c.id)
-                                            : [...(p.selectedChildIds || []), c.id],
-                                        }))
-                                      }}
-                                    >
-                                      <div
-                                        className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
-                                          selected ? "bg-primary text-primary-foreground" : "opacity-50"
-                                        }`}
-                                      >
-                                        {selected ? <Check className="h-3 w-3" /> : null}
-                                      </div>
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="truncate">{c.companyName}</span>
-                                        <span className="text-xs text-muted-foreground truncate">{c.id}</span>
-                                      </div>
-                                    </CommandItem>
-                                  )
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      {createForm.selectedChildIds?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {createForm.selectedChildIds.map((id) => {
-                            const c = selectableClients.find((r) => r.id === id)
-                            return (
-                              <Badge
-                                key={id}
-                                variant="secondary"
-                                className="gap-1 pr-1"
-                              >
-                                {c?.companyName || id}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setCreateForm((p) => ({
-                                      ...p,
-                                      selectedChildIds: (p.selectedChildIds || []).filter((x) => x !== id),
-                                    }))
-                                  }
-                                  className="rounded-full hover:bg-muted p-0.5"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createLoading}>
-                    {createLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Create User
-                  </Button>
-                </DialogFooter>
-              </form>
+              <CreateCustomerForm
+                form={createForm}
+                setForm={setCreateForm}
+                nextId={nextCustomerId}
+                error={createError}
+                loading={createLoading}
+                onSubmit={handleCreateUser}
+                onCancel={() => setCreateOpen(false)}
+              />
             </DialogContent>
           </Dialog>
-          <div className="w-full sm:w-[280px] relative">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by id, email, company..." className="pl-9" />
-          </div>
         </div>
       </div>
 
-      <Card className="glass border-border/50 overflow-hidden">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Customer List</CardTitle>
-          <CardDescription>{filtered.length} customers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="py-12 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="p-4 rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/30 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                  style={{ animationDelay: `${idx * 20}ms`, animationFillMode: "both" }}
-                >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground truncate">{r.companyName}</p>
-                        <Badge variant="outline" className="bg-muted/30">
-                          {r.id}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={
-                            r.status.toLowerCase() === "active"
-                              ? "bg-secondary/10 text-secondary border-secondary/30"
-                              : "bg-primary/10 text-primary border-primary/30"
-                          }
-                        >
-                          {r.status}
-                        </Badge>
-                        {r.isGroup && (
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                            Group
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-                      <p className="text-[11px] text-muted-foreground mt-1">
-                        Updated: {new Date(r.updatedAt).toLocaleString()}
-                      </p>
-                    </div>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]" />
+        <Input
+          value={q}
+          onChange={(e) => startTransition(() => setQ(e.target.value))}
+          placeholder="Filter sheet by ID, brand, GSTIN, city..."
+          className="pl-9"
+        />
+      </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:w-[680px]">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Status</p>
-                        <Select value={r.status} onValueChange={(v) => updateLocal(r.id, { status: v })}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Inactive">Inactive</SelectItem>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+      <div className="overflow-hidden rounded-xl border border-[#C8E6D4] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center justify-between border-b border-[#DCE8DC] bg-[#E8F5E9] px-3 py-2">
+          <p className="text-[12px] font-semibold text-[#1B7339]">
+            <Users className="mr-1.5 inline h-3.5 w-3.5" />
+            {filtered.length} row{filtered.length === 1 ? "" : "s"}
+            {isPending ? " · filtering…" : ""}
+          </p>
+          <p className="text-[11px] text-[#6B6B6B]">Click any row to open full sheet</p>
+        </div>
 
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Disposal Units</p>
-                        <Input
-                          value={r.disposalUnitInstalled ?? 0}
-                          onChange={(e) => updateLocal(r.id, { disposalUnitInstalled: Number(e.target.value) })}
-                          inputMode="numeric"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Monthly Target</p>
-                        <Input
-                          value={r.monthlyTarget ?? 0}
-                          onChange={(e) => updateLocal(r.id, { monthlyTarget: Number(e.target.value) })}
-                          inputMode="decimal"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Kraftreborn Credits</p>
-                        <Input
-                          value={r.kraftrebornCredits ?? 0}
-                          onChange={(e) => updateLocal(r.id, { kraftrebornCredits: Number(e.target.value) })}
-                          inputMode="decimal"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
-                    <p className="text-xs text-muted-foreground">
-                      Total waste (db): <span className="font-medium text-foreground">{Number(r.totalWasteCollected || 0)} kg</span>
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => sendReportEmail(r.id)}
-                        disabled={sendingReportId === r.id}
-                        className="bg-transparent"
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-7 w-7 animate-spin text-[#1B7339]" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="py-16 text-center text-sm text-[#6B6B6B]">No customers found.</p>
+        ) : (
+          <div className="max-h-[min(70vh,720px)] overflow-auto">
+            <table className="w-max min-w-full border-collapse text-left text-[12px]">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[#C8E6D4]">
+                  {SHEET_COLUMNS.map((col) => (
+                    <th
+                      key={col.key}
+                      className="whitespace-nowrap border-b border-r border-[#A5D6A7] px-2.5 py-2 font-semibold text-[#1B4332]"
+                      style={{ minWidth: col.width }}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r, idx) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => setSelected(r)}
+                    className={`cursor-pointer border-b border-[#EAEAEA] transition-colors hover:bg-[#F1F8E9] ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#FAFCFA]"
+                    }`}
+                  >
+                    {SHEET_COLUMNS.map((col) => (
+                      <td
+                        key={col.key}
+                        className="max-w-[220px] truncate border-r border-[#F0F0F0] px-2.5 py-1.5 text-[#141414]"
+                        title={cellValue(r, col.key)}
                       >
-                        {sendingReportId === r.id ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {col.key === "id" ? (
+                          <span className="font-semibold text-[#1B7339]">{cellValue(r, col.key)}</span>
+                        ) : col.key === "status" ? (
+                          <Badge
+                            variant="outline"
+                            className={
+                              String(r.status).toLowerCase() === "active"
+                                ? "border-[#C8E6D4] bg-[#E8F5E9] text-[#1B7339]"
+                                : ""
+                            }
+                          >
+                            {cellValue(r, col.key)}
+                          </Badge>
                         ) : (
-                          <Mail className="w-4 h-4 mr-2" />
+                          cellValue(r, col.key) || "—"
                         )}
-                        Email Report
-                      </Button>
-                      <Button size="sm" onClick={() => save(r)} disabled={savingId === r.id}>
-                      {savingId === r.id ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save
-                    </Button>
-                    </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="font-[family-name:var(--font-display)] text-2xl">
+                  {selected.id} · {selected.companyName}
+                </SheetTitle>
+                <SheetDescription>Full customer sheet (Excel-style fields)</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-3 pb-8">
+                {selected.logoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selected.logoUrl}
+                    alt="Customer logo"
+                    className="h-16 w-auto max-w-[200px] rounded-lg border border-[#E5E5E5] bg-white object-contain p-2"
+                  />
+                )}
+                <table className="w-full border-collapse text-[13px]">
+                  <tbody>
+                    {[
+                      ["Customer ID", selected.id],
+                      ["Brand Name", selected.companyName],
+                      ["Trade Name", selected.tradeName],
+                      ["GSTIN", selected.gstin],
+                      ["State", selected.state],
+                      ["City", selected.city],
+                      ["LSU Name", selected.lsuName],
+                      ["LSU Technician", selected.lsuTechnicianName],
+                      ["Operations Incharge", selected.operationsIncharge],
+                      ["Primary POC", selected.primaryPocName],
+                      ["POC Email", selected.primaryPocEmail],
+                      ["POC Number", selected.primaryPocNumber],
+                      ["POC Designation", selected.primaryPocDesignation],
+                      ["Collection Frequency", selected.collectionFrequency],
+                      ["Service Start", selected.serviceStartDate ? new Date(selected.serviceStartDate).toLocaleDateString("en-IN") : ""],
+                      ["No. of Kiosk", selected.noOfKiosk],
+                      ["Basic / Advance / Pan / Wall", `${selected.noOfBasicKiosk ?? 0} / ${selected.noOfAdvanceKiosk ?? 0} / ${selected.noOfPanVendorKiosk ?? 0} / ${selected.noOfWallMountKiosk ?? 0}`],
+                      ["Login Email", selected.email],
+                      ["Status", selected.status],
+                      ["KR Credits", selected.kraftrebornCredits],
+                      ["Total Waste (kg)", selected.totalWasteCollected],
+                    ].map(([label, value]) => (
+                      <tr key={String(label)} className="border-b border-[#EAEAEA]">
+                        <td className="w-[42%] bg-[#F7FBF7] px-3 py-2 font-semibold text-[#1B7339]">
+                          {label}
+                        </td>
+                        <td className="px-3 py-2 text-[#141414]">{value == null || value === "" ? "—" : String(value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {selected.collectionPocs && (
+                  <div className="rounded-xl border border-[#E2EBE4] p-3">
+                    <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                      Collection POCs
+                    </p>
+                    <pre className="whitespace-pre-wrap text-[12px] text-[#555]">
+                      {(() => {
+                        try {
+                          return JSON.stringify(JSON.parse(selected.collectionPocs), null, 2)
+                        } catch {
+                          return selected.collectionPocs
+                        }
+                      })()}
+                    </pre>
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            </>
           )}
-        </CardContent>
-      </Card>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
-

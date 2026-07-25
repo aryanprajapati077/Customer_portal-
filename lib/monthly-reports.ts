@@ -98,3 +98,42 @@ export async function syncMonthlyReportsForAllActiveCustomers(months = 12) {
 export function getCurrentMonthKey(): string {
   return monthKey(new Date())
 }
+
+/** Ensure a monthly report row exists for one customer + YYYY-MM period */
+export async function ensureMonthlyReportForPeriod(
+  customerId: string,
+  periodKey: string,
+) {
+  if (!/^\d{4}-\d{2}$/.test(periodKey)) {
+    throw new Error("Invalid period. Use YYYY-MM.")
+  }
+
+  const id = reportId(customerId, periodKey)
+  const existing = await sql`
+    SELECT id FROM "Report" WHERE id = ${id} LIMIT 1
+  `
+  if (existing.length > 0) {
+    return { id, created: false }
+  }
+
+  const period = formatReportingPeriod(monthEndDate(periodKey))
+  const end = monthEndDate(periodKey)
+
+  await sql`
+    INSERT INTO "Report" (
+      id, "customerId", name, date, type, period, description, "generatedBy", size
+    ) VALUES (
+      ${id},
+      ${customerId},
+      ${`Monthly ESG Impact Report – ${monthLabel(periodKey)}`},
+      ${end.toISOString()},
+      ${"monthly"},
+      ${period},
+      ${"Auto-generated monthly sustainability and ESG impact summary."},
+      ${"Buffindia System"},
+      ${"~10 KB"}
+    )
+  `
+
+  return { id, created: true }
+}

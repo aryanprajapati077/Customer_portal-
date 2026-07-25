@@ -8,6 +8,7 @@ import { ShopShell } from "@/components/dashboard/shop/shop-shell"
 import { formatInr } from "@/lib/kraftreborn-products"
 import type { ShopProduct } from "@/lib/cart-context"
 import { useCart } from "@/lib/cart-context"
+import { SHOWCASE_PRODUCTS } from "@/lib/portal-showcase-products"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Minus, Plus, ShoppingBag, Loader2, Sparkles } from "lucide-react"
@@ -25,6 +26,22 @@ export default function ProductDetailPage() {
     ;(async () => {
       setLoading(true)
       try {
+        const showcase = SHOWCASE_PRODUCTS.find((p) => p.id === productId)
+        if (showcase) {
+          setProduct({
+            id: showcase.id,
+            name: showcase.name,
+            description: showcase.tagline,
+            price: showcase.price,
+            category: "decor",
+            tagline: showcase.tagline,
+            buttsRescued: Math.round(showcase.price / 2),
+            imageUrl: showcase.image,
+            imageGradient: "from-stone-100 to-emerald-50",
+            allowsLogo: false,
+          })
+          return
+        }
         const res = await fetch("/api/customer/products")
         const data = await res.json()
         if (data?.success) {

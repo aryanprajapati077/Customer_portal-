@@ -56,9 +56,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 })
     }
 
-    const subtotal = items.reduce(
-      (sum: number, i: { price?: number; quantity?: number }) =>
-        sum + (Number(i.price) || 0) * (Number(i.quantity) || 1),
+    // Resolve catalog prices server-side; drop invalid FK productIds (showcase/local ids)
+    const productIds = items
+      .map((i: { productId?: string }) => String(i.productId || "").trim())
+      .filter(Boolean)
+    const dbProducts =
+      productIds.length > 0
+        ? await prisma.product.findMany({
+            where: { id: { in: productIds }, active: true },
+          })
+        : []
+    const byId = new Map(dbProducts.map((p) => [p.id, p]))
+
+    type ResolvedItem = {
+      productId: string | null
+      productName: string
+      price: number
+      quantity: number
+      allowsLogo: boolean
+    }
+
+    const resolvedItems: ResolvedItem[] = items.map(
+      (i: {
+        productId?: string
+        name?: string
+        price?: number
+        quantity?: number
+        allowsLogo?: boolean
+      }) => {
+        const qty = Math.max(1, Math.min(99, Number(i.quantity) || 1))
+        const pid = String(i.productId || "").trim()
+        const db = pid ? byId.get(pid) : undefined
+        return {
+          productId: db ? db.id : null,
+          productName: db?.name || String(i.name || "Product").slice(0, 120),
+          price: db ? Number(db.price) : Math.max(0, Number(i.price) || 0),
+          quantity: qty,
+          allowsLogo: db ? Boolean(db.allowsLogo) : Boolean(i.allowsLogo),
+        }
+      },
+    )
+
+    if (resolvedItems.some((i) => i.price <= 0)) {
+      return NextResponse.json({ success: false, error: "Invalid product pricing" }, { status: 400 })
+    }
+
+    const subtotal = resolvedItems.reduce(
+      (sum: number, i: ResolvedItem) => sum + i.price * i.quantity,
       0,
     )
 
@@ -95,21 +139,7 @@ export async function POST(request: NextRequest) {
         shippingAddress: customer.address,
         notes,
         items: {
-          create: items.map(
-            (i: {
-              productId?: string
-              name?: string
-              price?: number
-              quantity?: number
-              allowsLogo?: boolean
-            }) => ({
-              productId: i.productId || null,
-              productName: String(i.name || "Product"),
-              price: Number(i.price) || 0,
-              quantity: Number(i.quantity) || 1,
-              allowsLogo: Boolean(i.allowsLogo),
-            }),
-          ),
+          create: resolvedItems,
         },
       },
       include: { items: true },
@@ -124,6 +154,24 @@ export async function POST(request: NextRequest) {
         body: `Order ${orderNumber} for ₹${subtotal} received. KR credits will be deducted when your order is completed.`,
       },
     })
+
+    const { sendKrOrderConfirmationEmail } = await import("@/lib/kr-order-email")
+    const { queueEmail } = await import("@/lib/email-queue")
+    queueEmail("kr-order", () =>
+      sendKrOrderConfirmationEmail({
+        to: customer.email,
+        contactName: customer.contactPerson,
+        companyName: customer.companyName,
+        orderNumber,
+        subtotal,
+        items: resolvedItems.map((i) => ({
+          productName: i.productName,
+          quantity: i.quantity,
+          price: i.price,
+        })),
+        useKrCredits,
+      }),
+    )
 
     return NextResponse.json({
       success: true,

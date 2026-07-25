@@ -1,24 +1,95 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { randomBytes } from "crypto"
 import { hashPassword } from "@/lib/password"
+import {
+  COLLECTION_FREQUENCY_OPTIONS,
+  formatCustomerId,
+  parseCustomerIdNumber,
+} from "@/lib/india-locations"
+import { generatePortalPassword, sendWelcomeEmail } from "@/lib/welcome-email"
+import { queueEmail } from "@/lib/email-queue"
+import { saveBase64Image } from "@/lib/upload"
 
-function generateCuid(): string {
-  const timestamp = Date.now().toString(36)
-  const random = randomBytes(10).toString("hex")
-  return `c${timestamp}${random}`.slice(0, 25)
+type CollectionPoc = {
+  name: string
+  email: string
+  number: string
+  designation?: string
 }
 
-export async function GET() {
+async function ensureCustomerColumns() {
+  await sql.query(`
+    ALTER TABLE "Customer"
+      ADD COLUMN IF NOT EXISTS "tradeName" TEXT,
+      ADD COLUMN IF NOT EXISTS "city" TEXT,
+      ADD COLUMN IF NOT EXISTS "state" TEXT,
+      ADD COLUMN IF NOT EXISTS "lsuName" TEXT,
+      ADD COLUMN IF NOT EXISTS "lsuTechnicianName" TEXT,
+      ADD COLUMN IF NOT EXISTS "operationsIncharge" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocName" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocEmail" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocNumber" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocDesignation" TEXT,
+      ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT,
+      ADD COLUMN IF NOT EXISTS "serviceStartDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "noOfKiosk" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "noOfBasicKiosk" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "noOfAdvanceKiosk" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "noOfPanVendorKiosk" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "noOfWallMountKiosk" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "collectionFrequency" TEXT,
+      ADD COLUMN IF NOT EXISTS "gstin" TEXT,
+      ADD COLUMN IF NOT EXISTS "logoUrl" TEXT
+  `)
+}
+
+async function nextCustomerId(): Promise<string> {
+  const rows = await sql`
+    SELECT id FROM "Customer" WHERE id ~ '^BI[0-9]+$'
+  `
+  let max = 0
+  for (const row of rows as { id: string }[]) {
+    const n = parseCustomerIdNumber(row.id)
+    if (n != null && n > max) max = n
+  }
+  return formatCustomerId(max + 1)
+}
+
+function normalizeCollectionPocs(raw: unknown): CollectionPoc[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((p) => ({
+      name: String(p?.name || "").trim(),
+      email: String(p?.email || "").trim().toLowerCase(),
+      number: String(p?.number || "").trim(),
+      designation: String(p?.designation || "").trim() || undefined,
+    }))
+    .filter((p) => p.name || p.email || p.number)
+}
+
+export async function GET(request: NextRequest) {
   try {
+    await ensureCustomerColumns()
+    const nextIdOnly = request.nextUrl.searchParams.get("nextId") === "1"
+    if (nextIdOnly) {
+      const id = await nextCustomerId()
+      return NextResponse.json({ success: true, nextId: id })
+    }
+
     const rows = await sql`
-      SELECT id, email, "companyName", "contactPerson", phone, address, status,
+      SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+             "lsuName", "lsuTechnicianName", "operationsIncharge",
+             "contactPerson", phone, address, status,
+             "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+             "collectionPocs", "collectionFrequency",
+             "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
+             "serviceStartDate",
              "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-             "kraftrebornCredits", "updatedAt",
+             "kraftrebornCredits", "updatedAt", "createdAt",
              "isGroup", "parentCustomerId"
       FROM "Customer"
-      ORDER BY "updatedAt" DESC
-      LIMIT 200
+      ORDER BY id ASC
+      LIMIT 500
     `
     return NextResponse.json({ success: true, customers: rows })
   } catch (error) {
@@ -29,110 +100,193 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureCustomerColumns()
     const body = await request.json()
-    const {
-      id: providedId,
-      email,
-      password,
-      companyName,
-      contactPerson,
-      phone,
-      address,
-      industry,
-      employeeCount,
-      status,
-      disposalUnitInstalled,
-      totalWasteCollected,
-      cigaretteButtsCollected,
-      microplasticsUpcycled,
-      waterResourcesProtected,
-      pendingCollection,
-      certificatesEarned,
-      co2Saved,
-      kraftrebornCredits,
-      treesEquivalent,
-      monthlyTarget,
-      profileImageUrl,
-      notes,
-      isGroup,
-      parentCustomerId,
-    } = body
 
-    if (!email || !password || !companyName) {
-      return NextResponse.json(
-        { success: false, error: "Email, password, and company name are required" },
-        { status: 400 }
-      )
-    }
-
-    const emailLower = String(email).toLowerCase().trim()
-
-    const existing = await sql`
-      SELECT id FROM "Customer" WHERE email = ${emailLower} LIMIT 1
-    `
-    if (Array.isArray(existing) && existing.length > 0) {
-      return NextResponse.json({ success: false, error: "Email already exists" }, { status: 400 })
-    }
+    const brandName = String(body.brandName || body.companyName || "").trim()
+    const tradeName = String(body.tradeName || "").trim()
+    const city = String(body.city || "").trim()
+    const state = String(body.state || "").trim()
+    const lsuName = String(body.lsuName || "").trim()
+    const lsuTechnicianName = String(body.lsuTechnicianName || "").trim()
+    const operationsIncharge = String(body.operationsIncharge || "").trim()
+    const primaryPocName = String(body.primaryPocName || "").trim()
+    const primaryPocEmail = String(body.primaryPocEmail || "").trim().toLowerCase()
+    const primaryPocNumber = String(body.primaryPocNumber || "").trim()
+    const primaryPocDesignation = String(body.primaryPocDesignation || "").trim()
+    const collectionFrequency = String(body.collectionFrequency || "").trim()
+    const serviceStartDateRaw = String(body.serviceStartDate || "").trim()
+    const gstin = String(body.gstin || "").trim().toUpperCase()
+    const collectionPocs = normalizeCollectionPocs(body.collectionPocs)
 
     const num = (v: unknown, def = 0) =>
       v != null && Number.isFinite(Number(v)) ? Number(v) : def
     const int = (v: unknown, def = 0) => Math.floor(num(v, def))
 
-    const id = (providedId && String(providedId).trim()) || generateCuid()
-    if (providedId && String(providedId).trim()) {
-      const idExists = await sql`SELECT id FROM "Customer" WHERE id = ${id} LIMIT 1`
-      if (Array.isArray(idExists) && idExists.length > 0) {
-        return NextResponse.json({ success: false, error: "ID already exists" }, { status: 400 })
-      }
+    const noOfKiosk = int(body.noOfKiosk)
+    const noOfBasicKiosk = int(body.noOfBasicKiosk)
+    const noOfAdvanceKiosk = int(body.noOfAdvanceKiosk)
+    const noOfPanVendorKiosk = int(body.noOfPanVendorKiosk)
+    const noOfWallMountKiosk = int(body.noOfWallMountKiosk)
+
+    const missing: string[] = []
+    if (!brandName) missing.push("Customer Brand Name")
+    if (!tradeName) missing.push("Customer Trade Name")
+    if (!city) missing.push("City")
+    if (!state) missing.push("State")
+    if (!lsuName) missing.push("LSU Name")
+    if (!lsuTechnicianName) missing.push("LSU Technician Name")
+    if (!operationsIncharge) missing.push("Operations Incharge")
+    if (!primaryPocName) missing.push("Primary POC name")
+    if (!primaryPocEmail) missing.push("Primary POC Email")
+    if (!primaryPocNumber) missing.push("Primary POC Number")
+    if (!serviceStartDateRaw) missing.push("Service Start Date")
+    if (!collectionFrequency) missing.push("Collection Frequency")
+    if (body.noOfKiosk === "" || body.noOfKiosk == null || noOfKiosk < 0) {
+      missing.push("No. Of Kiosk")
     }
+    if (!collectionPocs.length) {
+      missing.push("Collection POC details")
+    } else if (collectionPocs.some((p) => !p.name || !p.email || !p.number)) {
+      missing.push("Collection POC name, email, and number (all rows)")
+    }
+
+    if (missing.length) {
+      return NextResponse.json(
+        { success: false, error: `Required: ${missing.join(", ")}` },
+        { status: 400 },
+      )
+    }
+
+    if (
+      !COLLECTION_FREQUENCY_OPTIONS.includes(
+        collectionFrequency as (typeof COLLECTION_FREQUENCY_OPTIONS)[number],
+      )
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid collection frequency" },
+        { status: 400 },
+      )
+    }
+
+    const serviceStartDate = new Date(serviceStartDateRaw)
+    if (Number.isNaN(serviceStartDate.getTime())) {
+      return NextResponse.json(
+        { success: false, error: "Invalid service start date" },
+        { status: 400 },
+      )
+    }
+
+    const emailLower = primaryPocEmail
+    const existing = await sql`
+      SELECT id FROM "Customer" WHERE email = ${emailLower} LIMIT 1
+    `
+    if (Array.isArray(existing) && existing.length > 0) {
+      return NextResponse.json(
+        { success: false, error: "Primary POC email already exists" },
+        { status: 400 },
+      )
+    }
+
+    const id = await nextCustomerId()
+    const tempPassword = generatePortalPassword(10)
+    const passwordHash = await hashPassword(tempPassword)
     const now = new Date().toISOString()
-    const passwordHash = await hashPassword(String(password))
+    const address = [city, state].filter(Boolean).join(", ")
+    const collectionPocsJson = JSON.stringify(collectionPocs)
+
+    let logoUrl: string | null = null
+    if (body.logoBase64 && String(body.logoBase64).startsWith("data:")) {
+      const saved = await saveBase64Image(String(body.logoBase64), "logos", `customer-${id}`)
+      logoUrl = saved.url
+    } else if (body.logoUrl) {
+      logoUrl = String(body.logoUrl).trim() || null
+    }
 
     const rows = await sql`
       INSERT INTO "Customer" (
-        id, email, password, "companyName", "contactPerson", phone, address, industry,
-        "employeeCount", status, "disposalUnitInstalled",
-        "totalWasteCollected", "cigaretteButtsCollected", "microplasticsUpcycled",
-        "waterResourcesProtected", "pendingCollection", "certificatesEarned",
-        "co2Saved", "kraftrebornCredits", "treesEquivalent", "monthlyTarget", "profileImageUrl", notes,
-        "isGroup", "parentCustomerId", "createdAt", "updatedAt"
+        id, email, password, "companyName", "tradeName", city, state, gstin, "logoUrl",
+        "lsuName", "lsuTechnicianName", "operationsIncharge",
+        "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+        "collectionPocs", "serviceStartDate",
+        "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
+        "collectionFrequency",
+        "contactPerson", phone, address, status, "disposalUnitInstalled",
+        "joinDate", "isGroup", "parentCustomerId",
+        "createdAt", "updatedAt"
       ) VALUES (
         ${id},
         ${emailLower},
         ${passwordHash},
-        ${String(companyName).trim()},
-        ${contactPerson ? String(contactPerson).trim() : null},
-        ${phone ? String(phone).trim() : null},
-        ${address ? String(address).trim() : null},
-        ${industry ? String(industry).trim() : null},
-        ${int(employeeCount)},
-        ${status || "Active"},
-        ${int(disposalUnitInstalled)},
-        ${num(totalWasteCollected)},
-        ${num(cigaretteButtsCollected)},
-        ${num(microplasticsUpcycled)},
-        ${num(waterResourcesProtected)},
-        ${num(pendingCollection)},
-        ${int(certificatesEarned)},
-        ${num(co2Saved)},
-        ${num(kraftrebornCredits)},
-        ${int(treesEquivalent)},
-        ${num(monthlyTarget)},
-        ${profileImageUrl ? String(profileImageUrl).trim() : null},
-        ${notes ? String(notes).trim() : null},
-        ${Boolean(isGroup)},
-        ${parentCustomerId ? String(parentCustomerId) : null},
+        ${brandName},
+        ${tradeName},
+        ${city},
+        ${state},
+        ${gstin || null},
+        ${logoUrl},
+        ${lsuName},
+        ${lsuTechnicianName},
+        ${operationsIncharge},
+        ${primaryPocName},
+        ${primaryPocEmail},
+        ${primaryPocNumber},
+        ${primaryPocDesignation || null},
+        ${collectionPocsJson},
+        ${serviceStartDate.toISOString()},
+        ${noOfKiosk},
+        ${noOfBasicKiosk},
+        ${noOfAdvanceKiosk},
+        ${noOfPanVendorKiosk},
+        ${noOfWallMountKiosk},
+        ${collectionFrequency},
+        ${primaryPocName},
+        ${primaryPocNumber},
+        ${address},
+        ${"Active"},
+        ${noOfKiosk},
+        ${serviceStartDate.toISOString()},
+        ${false},
+        ${null},
         ${now},
         ${now}
       )
-      RETURNING id, email, "companyName", "contactPerson", phone, address, status,
-                "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-                "kraftrebornCredits",
-                "isGroup", "parentCustomerId", "createdAt", "updatedAt"
+      RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+                "primaryPocName", "primaryPocEmail", "primaryPocNumber",
+                "collectionFrequency", "noOfKiosk", "serviceStartDate",
+                "contactPerson", phone, address, status,
+                "disposalUnitInstalled", "createdAt", "updatedAt"
     `
 
-    const customerData = Array.isArray(rows) && rows.length > 0 ? rows[0] : { id, email: emailLower, companyName: String(companyName).trim(), contactPerson: contactPerson || null, phone: phone || null, address: address || null, status: status || "Active", totalWasteCollected: num(totalWasteCollected), disposalUnitInstalled: int(disposalUnitInstalled), monthlyTarget: num(monthlyTarget), isGroup: Boolean(isGroup), parentCustomerId: parentCustomerId || null }
-    return NextResponse.json({ success: true, customer: customerData })
+    const customerData =
+      Array.isArray(rows) && rows.length > 0
+        ? rows[0]
+        : {
+            id,
+            email: emailLower,
+            companyName: brandName,
+            tradeName,
+            city,
+            state,
+          }
+
+    queueEmail("welcome", () =>
+      sendWelcomeEmail({
+        to: emailLower,
+        brandName,
+        contactName: primaryPocName,
+        customerId: id,
+        email: emailLower,
+        password: tempPassword,
+      }),
+    )
+
+    return NextResponse.json({
+      success: true,
+      customer: customerData,
+      temporaryPassword: tempPassword,
+      welcomeEmailSent: true,
+      welcomeEmailQueued: true,
+    })
   } catch (error: unknown) {
     console.error("Error creating customer:", error)
     const errMsg = error instanceof Error ? error.message : "Server error"
@@ -142,12 +296,13 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    await ensureCustomerColumns()
     const body = await request.json()
     const id = String(body?.id || "")
     if (!id) return NextResponse.json({ success: false, error: "Customer id required" }, { status: 400 })
 
     const updates: string[] = []
-    const values: any[] = []
+    const values: unknown[] = []
     let i = 1
 
     if (body?.disposalUnitInstalled !== undefined) {
@@ -203,4 +358,3 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }
-

@@ -88,7 +88,7 @@ export default function CheckoutPage() {
           logoRequested: wantLogo && hasLogoEligibleItems,
           logoBase64: wantLogo && logoPreview ? logoPreview : null,
           items: lines.map((l) => ({
-            productId: l.productId,
+            productId: l.productId || null,
             name: l.product.name,
             price: l.product.price,
             quantity: l.quantity,

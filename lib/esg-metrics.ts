@@ -5,6 +5,8 @@ export interface ImpactReportData {
   disposalUnitsInstalled: number
   installationDate: string
   reportingPeriod: string
+  reportingPeriodLabel: string
+  reportingPeriodRange: string
   totalWasteKg: number
   cigaretteButts: number
   totalWasteRecycledKg: number
@@ -14,6 +16,8 @@ export interface ImpactReportData {
   habitChange: number
   employment: number
   womenEmployment: number
+  /** Optional customer logo (local file path, http(s) URL, or data URL) for cover */
+  logoUrl?: string | null
 }
 
 interface CollectionForTotals {
@@ -36,8 +40,50 @@ const PAN_INDIA_SOCIAL = {
   womenEmployment: 22,
 }
 
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+]
+
+const MONTHS_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+]
+
 export function formatReportingPeriod(date = new Date()): string {
-  return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).replace(" ", " ")
+  return `${MONTHS_SHORT[date.getMonth()]} ${String(date.getFullYear()).slice(2)}`
+}
+
+export function formatReportingPeriodLabel(date = new Date()): string {
+  return `${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`
+}
+
+export function formatReportingPeriodRange(date = new Date()): string {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const mon = MONTHS_SHORT[month]
+  return `01 ${mon} ${year} to ${String(lastDay).padStart(2, "0")} ${mon} ${year}`
 }
 
 export function formatCustomerCode(customerId: string): string {
@@ -55,7 +101,9 @@ export function formatInstallDate(joinDate?: string | Date | null): string {
   if (!joinDate) return "N/A"
   const d = new Date(joinDate)
   if (Number.isNaN(d.getTime())) return String(joinDate)
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })
+  const day = String(d.getDate()).padStart(2, "0")
+  const mon = MONTHS_SHORT[d.getMonth()]
+  return `${day} ${mon} ${d.getFullYear()}`
 }
 
 export function computeImpactReportData(
@@ -74,6 +122,7 @@ export function computeImpactReportData(
   const cigaretteButts = Math.round(totalWasteKg * 3000)
   const microplasticUpcycledKg = +(totalWasteKg * 0.8).toFixed(2)
   const waterResourcesProtectedL = Math.round(cigaretteButts * 100)
+  const reportDate = asOfDate ?? new Date()
 
   return {
     customerId: formatCustomerCode(customer.id),
@@ -81,13 +130,16 @@ export function computeImpactReportData(
     location: parseLocation(customer.address),
     disposalUnitsInstalled: Number(customer.disposalUnitInstalled) || 0,
     installationDate: formatInstallDate(customer.joinDate),
-    reportingPeriod: formatReportingPeriod(asOfDate),
+    reportingPeriod: formatReportingPeriod(reportDate),
+    reportingPeriodLabel: formatReportingPeriodLabel(reportDate),
+    reportingPeriodRange: formatReportingPeriodRange(reportDate),
     totalWasteKg: +totalWasteKg.toFixed(2),
     cigaretteButts,
     totalWasteRecycledKg: +totalWasteKg.toFixed(2),
     microplasticUpcycledKg,
     waterResourcesProtectedL,
     kraftrebornCredits: Number(customer.kraftrebornCredits) || 0,
+    logoUrl: null,
     ...PAN_INDIA_SOCIAL,
   }
 }

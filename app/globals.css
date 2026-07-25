@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Keep Next.js floating badge off the sidebar card (bottom-left) */
+nextjs-portal {
+  left: unset !important;
+  right: 12px !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Premium white theme with orange and green accents for Buffindia ESG */
@@ -285,5 +291,132 @@
   .group\/marquee:hover .animate-marquee,
   .group\/marquee:hover .animate-marquee-reverse {
     animation-play-state: paused;
+  }
+}
+
+/* Editorial landing (inspired by buffindia-redesign) */
+.landing-root {
+  --l-bg: #f7f6f2;
+  --l-ink: #141414;
+  --l-muted: #5c5c5c;
+  --l-line: #d9d6cf;
+  --l-green: #1b7339;
+  --l-green-dark: #145a2c;
+  --l-orange: #ef6c00;
+  --l-surface: #ffffff;
+  background: var(--l-bg);
+  color: var(--l-ink);
+}
+
+.landing-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+}
+
+.landing-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--l-muted);
+}
+
+.landing-section-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--l-muted);
+}
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--l-ink);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.landing-btn-primary:hover {
+  background: var(--l-green);
+  transform: translateY(-1px);
+}
+
+.landing-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--l-line);
+  background: transparent;
+  color: var(--l-ink);
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.landing-btn-ghost:hover {
+  border-color: var(--l-ink);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.landing-btn-orange {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--l-orange);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.landing-btn-orange:hover {
+  background: #d45f00;
+  transform: translateY(-1px);
+}
+
+@keyframes landing-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-marquee-track {
+  animation: landing-marquee 28s linear infinite;
+  width: max-content;
+}
+
+.landing-fade-up {
+  animation: landing-fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes landing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee-track,
+  .landing-fade-up {
+    animation: none !important;
   }
 }

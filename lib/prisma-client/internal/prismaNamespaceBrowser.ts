@@ -57,6 +57,8 @@ export const ModelName = {
   Certificate: 'Certificate',
   Report: 'Report',
   GlobalImpact: 'GlobalImpact',
+  EmailTemplate: 'EmailTemplate',
+  LsuTeam: 'LsuTeam',
   Product: 'Product',
   ShopOrder: 'ShopOrder',
   OrderItem: 'OrderItem',
@@ -88,6 +90,26 @@ export const CustomerScalarFieldEnum = {
   email: 'email',
   password: 'password',
   companyName: 'companyName',
+  tradeName: 'tradeName',
+  city: 'city',
+  state: 'state',
+  lsuName: 'lsuName',
+  lsuTechnicianName: 'lsuTechnicianName',
+  operationsIncharge: 'operationsIncharge',
+  primaryPocName: 'primaryPocName',
+  primaryPocEmail: 'primaryPocEmail',
+  primaryPocNumber: 'primaryPocNumber',
+  primaryPocDesignation: 'primaryPocDesignation',
+  collectionPocs: 'collectionPocs',
+  serviceStartDate: 'serviceStartDate',
+  noOfKiosk: 'noOfKiosk',
+  noOfBasicKiosk: 'noOfBasicKiosk',
+  noOfAdvanceKiosk: 'noOfAdvanceKiosk',
+  noOfPanVendorKiosk: 'noOfPanVendorKiosk',
+  noOfWallMountKiosk: 'noOfWallMountKiosk',
+  collectionFrequency: 'collectionFrequency',
+  gstin: 'gstin',
+  logoUrl: 'logoUrl',
   contactPerson: 'contactPerson',
   phone: 'phone',
   address: 'address',
@@ -188,6 +210,29 @@ export const GlobalImpactScalarFieldEnum = {
 } as const
 
 export type GlobalImpactScalarFieldEnum = (typeof GlobalImpactScalarFieldEnum)[keyof typeof GlobalImpactScalarFieldEnum]
+
+
+export const EmailTemplateScalarFieldEnum = {
+  id: 'id',
+  subject: 'subject',
+  payload: 'payload',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EmailTemplateScalarFieldEnum = (typeof EmailTemplateScalarFieldEnum)[keyof typeof EmailTemplateScalarFieldEnum]
+
+
+export const LsuTeamScalarFieldEnum = {
+  id: 'id',
+  lsuName: 'lsuName',
+  technicianName: 'technicianName',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LsuTeamScalarFieldEnum = (typeof LsuTeamScalarFieldEnum)[keyof typeof LsuTeamScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {

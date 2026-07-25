@@ -44,8 +44,6 @@ Add these for **Production**, **Preview**, and **Development**:
 | `RESEND_API_KEY` | From [resend.com](https://resend.com) |
 | `RESEND_FROM` | `Buffindia <noreply@buffindia.com>` (domain must be verified in Resend) |
 
-Optional: `GOOGLE_SHEET_ID`, `GOOGLE_API_KEY`
-
 **Never commit `.env` to Git.**
 
 ---

@@ -403,10 +403,6 @@ export type NotificationUncheckedUpdateManyWithoutCustomerNestedInput = {
   deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type NotificationCreateWithoutCustomerInput = {
   id?: string
   title: string

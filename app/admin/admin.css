@@ -1,0 +1,35 @@
+/* Admin console — Inspire UI surface overrides */
+.admin-root {
+  --admin-green: #1b7339;
+  --admin-green-soft: #e8f5e9;
+  --admin-border: #e5e5e5;
+  --admin-muted: #6b6b6b;
+}
+
+.admin-root .glass,
+.admin-root [data-slot="card"],
+.admin-root .rounded-lg.border.bg-card {
+  background: #fff !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.admin-root [class*="bg-muted/"] {
+  background-color: #f7fbf7 !important;
+}
+
+.admin-root [class*="border-border/"] {
+  border-color: #e2ebe4 !important;
+}
+
+.admin-root .text-primary {
+  color: var(--admin-green);
+}
+
+.admin-root [class*="bg-primary/"] {
+  background-color: var(--admin-green-soft) !important;
+  color: var(--admin-green);
+}

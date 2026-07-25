@@ -1,16 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AuthRecycleBackground } from "@/components/auth/auth-recycle-background"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AdminAuthShell } from "@/components/admin/admin-auth-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
-import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react"
-import { useEffect } from "react"
+import { Loader2, CheckCircle2, ArrowLeft, Lock } from "lucide-react"
 
 export default function AdminResetPasswordPage() {
   const router = useRouter()
@@ -30,20 +28,25 @@ export default function AdminResetPasswordPage() {
   const verify = async () => {
     setLoading(true)
     setError("")
-    const res = await fetch("/api/admin/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ otp, email }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (!data.success) {
-      setError(data.error)
-      return
+    try {
+      const res = await fetch("/api/admin/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp, email }),
+      })
+      const data = await res.json()
+      if (!data.success) {
+        setError(data.error || "Invalid code")
+        return
+      }
+      setResetToken(data.resetToken)
+      if (data.email) setEmail(data.email)
+      setStep("password")
+    } catch {
+      setError("Network error")
+    } finally {
+      setLoading(false)
     }
-    setResetToken(data.resetToken)
-    if (data.email) setEmail(data.email)
-    setStep("password")
   }
 
   const reset = async () => {
@@ -52,50 +55,115 @@ export default function AdminResetPasswordPage() {
       return
     }
     setLoading(true)
-    const res = await fetch("/api/admin/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resetToken, password, email }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (!data.success) { setError(data.error); return }
-    setStep("done")
+    setError("")
+    try {
+      const res = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetToken, password, email }),
+      })
+      const data = await res.json()
+      if (!data.success) {
+        setError(data.error || "Failed")
+        return
+      }
+      setStep("done")
+    } catch {
+      setError("Network error")
+    } finally {
+      setLoading(false)
+    }
   }
 
+  const subtitle =
+    step === "otp"
+      ? "Enter the 6-digit OTP sent to your admin email."
+      : step === "password"
+        ? "Choose a strong new password (at least 8 characters)."
+        : "Your password was updated. You can sign in now."
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <AuthRecycleBackground />
-      <Card className="w-full max-w-md relative z-10 glass">
-        <CardHeader>
-          <CardTitle>Reset admin password</CardTitle>
-          <CardDescription>{step === "otp" ? "Enter OTP from email" : step === "password" ? "New password" : "Done"}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {step === "otp" && (
-            <>
+    <AdminAuthShell title="Set a new" accent="password" subtitle={subtitle}>
+      <div className="space-y-4">
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {step === "otp" && (
+          <>
+            {email && (
+              <p className="text-center text-[13px] text-[#6B6B6B]">
+                Code for <strong className="text-[#1B7339]">{email}</strong>
+              </p>
+            )}
+            <div className="flex justify-center py-2">
               <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup>{[0,1,2,3,4,5].map(i => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-base" />
+                  ))}
+                </InputOTPGroup>
               </InputOTP>
-              <Button className="w-full" onClick={verify} disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : "Verify"}</Button>
-            </>
-          )}
-          {step === "password" && (
-            <>
-              <div><Label>New password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-              <Button className="w-full" onClick={reset} disabled={loading}>Update password</Button>
-            </>
-          )}
-          {step === "done" && (
-            <div className="text-center space-y-3">
-              <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <Button className="w-full" onClick={() => router.push("/admin/login")}>Sign in</Button>
             </div>
-          )}
-          <Link href="/admin/login" className="text-sm text-muted-foreground flex items-center gap-1"><ArrowLeft className="w-4 h-4" />Back</Link>
-        </CardContent>
-      </Card>
-    </div>
+            <Button
+              className="h-12 w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+              onClick={verify}
+              disabled={loading || otp.length !== 6}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify OTP"}
+            </Button>
+          </>
+        )}
+
+        {step === "password" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]" />
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 rounded-xl border-[#E5E7EB] bg-[#FAFAFA] pl-10 focus-visible:ring-[#1B7339]"
+                  placeholder="At least 8 characters"
+                />
+              </div>
+            </div>
+            <Button
+              className="h-12 w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+              onClick={reset}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
+            </Button>
+          </>
+        )}
+
+        {step === "done" && (
+          <div className="space-y-4 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-[#1B7339]" />
+            <p className="text-[14px] text-[#4A4A4A]">Password updated successfully.</p>
+            <Button
+              className="h-12 w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+              onClick={() => router.push("/admin/login")}
+            >
+              Sign in to admin
+            </Button>
+          </div>
+        )}
+
+        <Link
+          href="/admin/login"
+          className="inline-flex items-center gap-1.5 text-[13px] text-[#6B6B6B] hover:text-[#141414]"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to admin login
+        </Link>
+      </div>
+    </AdminAuthShell>
   )
 }

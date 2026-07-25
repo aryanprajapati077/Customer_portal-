@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { AnimatePresence, motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
 import {
   findSupportAnswer,
   QUICK_PROMPTS,
-  SUPPORT_CONTACT,
   SUPPORT_TOPICS,
   type SupportTopic,
 } from "@/lib/support-knowledge"
@@ -16,16 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import {
-  MessageCircle,
-  X,
-  Send,
-  Bot,
-  User,
-  ChevronDown,
-  ExternalLink,
-  Loader2,
-} from "lucide-react"
+import { MessageCircle, X, Send, Leaf, User, ExternalLink, Loader2, Sparkles } from "lucide-react"
 
 type ChatMessage = {
   id: string
@@ -42,7 +33,7 @@ function uid() {
 const WELCOME: ChatMessage = {
   id: "welcome",
   role: "bot",
-  text: "Hi! I'm the Buffindia Help Assistant. Choose a topic below or type your question — I can help with login, credits, orders, reports, and more.",
+  text: "Hi — I'm the BuffIndia Help Guide. Ask about login, credits, orders, reports, or pick a topic below.",
 }
 
 export function HelpChatbot() {
@@ -57,6 +48,7 @@ export function HelpChatbot() {
   const [ticketEmail, setTicketEmail] = useState("")
   const [ticketSending, setTicketSending] = useState(false)
   const [ticketSent, setTicketSent] = useState(false)
+  const [typing, setTyping] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -68,23 +60,18 @@ export function HelpChatbot() {
 
   useEffect(() => {
     if (open) scrollToBottom()
-  }, [messages, open, showTicketForm, scrollToBottom])
+  }, [messages, open, showTicketForm, typing, scrollToBottom])
 
   useEffect(() => {
     if (open && !showTicketForm) inputRef.current?.focus()
   }, [open, showTicketForm])
 
   const addBotReply = (topic: SupportTopic | null, userText: string) => {
+    setTyping(false)
     if (topic) {
       setMessages((prev) => [
         ...prev,
-        {
-          id: uid(),
-          role: "bot",
-          text: topic.answer,
-          topic,
-          links: topic.links,
-        },
+        { id: uid(), role: "bot", text: topic.answer, topic, links: topic.links },
       ])
     } else {
       setMessages((prev) => [
@@ -92,10 +79,11 @@ export function HelpChatbot() {
         {
           id: uid(),
           role: "bot",
-          text: `I couldn't find an exact match for "${userText}". Try one of the quick topics, visit our Support Center, or submit a ticket and our team will reply within 1 business day.`,
+          text: `I couldn't find an exact match for "${userText}". Try a quick topic, visit Support, or submit a ticket.`,
           links: [
-            { label: "Support Center", href: "/support" },
+            { label: "Support Center", href: "/dashboard/support" },
             { label: "Contact us", href: "/contact" },
+            { label: "Submit ticket", href: "#ticket" },
           ],
         },
       ])
@@ -104,35 +92,30 @@ export function HelpChatbot() {
 
   const handleSend = (text?: string) => {
     const trimmed = (text ?? input).trim()
-    if (!trimmed) return
-
+    if (!trimmed || typing) return
     setMessages((prev) => [...prev, { id: uid(), role: "user", text: trimmed }])
     setInput("")
-
+    setTyping(true)
     const topic = findSupportAnswer(trimmed)
-    setTimeout(() => addBotReply(topic, trimmed), 400)
+    setTimeout(() => addBotReply(topic, trimmed), 480)
   }
 
   const handleTopicClick = (topic: SupportTopic) => {
+    if (typing) return
     setMessages((prev) => [...prev, { id: uid(), role: "user", text: topic.label }])
+    setTyping(true)
     setTimeout(() => {
+      setTyping(false)
       setMessages((prev) => [
         ...prev,
-        {
-          id: uid(),
-          role: "bot",
-          text: topic.answer,
-          topic,
-          links: topic.links,
-        },
+        { id: uid(), role: "bot", text: topic.answer, topic, links: topic.links },
       ])
-    }, 300)
+    }, 400)
   }
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ticketSubject.trim() || !ticketMessage.trim()) return
-
     setTicketSending(true)
     try {
       const res = await fetch("/api/support/ticket", {
@@ -154,7 +137,7 @@ export function HelpChatbot() {
         {
           id: uid(),
           role: "bot",
-          text: "Your support ticket has been submitted. We'll email you at the address on file (or the one you provided) within 1 business day.",
+          text: "Ticket submitted. We'll reply within 1 business day.",
         },
       ])
       setShowTicketForm(false)
@@ -166,7 +149,7 @@ export function HelpChatbot() {
         {
           id: uid(),
           role: "bot",
-          text: "Couldn't submit the ticket right now. Please email us at support@buffindia.com or call +91-9512120366.",
+          text: "Couldn't submit right now. Email support@buffindia.com or call +91-9512120366.",
         },
       ])
     } finally {
@@ -177,98 +160,133 @@ export function HelpChatbot() {
   if (pathname?.startsWith("/admin")) return null
 
   return (
-    <>
-      {/* Floating launcher */}
-      <div className="fixed bottom-5 right-5 z-[100] flex flex-col items-end gap-3">
+    <div className="fixed bottom-5 right-5 z-[100] flex flex-col items-end gap-3">
+      <AnimatePresence>
         {open && (
-          <div
+          <motion.div
+            key="panel"
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.97 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              "w-[min(100vw-2rem,380px)] h-[min(85vh,560px)] flex flex-col",
-              "rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl shadow-black/10",
-              "animate-in slide-in-from-bottom-4 fade-in duration-300",
+              "flex h-[min(88vh,640px)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden",
+              "rounded-[24px] border border-[#DCE8DC] bg-[#F7F6F2] shadow-[0_24px_60px_rgba(15,40,20,0.22)]",
             )}
             role="dialog"
-            aria-label="Help chat"
+            aria-label="BuffIndia help chat"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/50 bg-primary/5 rounded-t-2xl">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <Bot className="w-5 h-5 text-primary-foreground" />
+            <div className="relative overflow-hidden bg-[#1B7339] px-4 py-3.5 text-white">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-30"
+                style={{
+                  background:
+                    "radial-gradient(circle at 20% 0%, #C8F000 0%, transparent 45%), radial-gradient(circle at 100% 100%, #EF6C00 0%, transparent 40%)",
+                }}
+              />
+              <div className="relative flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+                    <Leaf className="h-5 w-5 text-[#C8F000]" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-semibold tracking-tight">BuffIndia Help</p>
+                    <p className="flex items-center gap-1 text-[11px] text-white/75">
+                      <Sparkles className="h-3 w-3 text-[#C8F000]" />
+                      Instant answers · tickets welcome
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">Buffindia Help</p>
-                  <p className="text-xs text-muted-foreground">Usually replies instantly</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+                  aria-label="Close chat"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 h-8 w-8 rounded-full"
-                onClick={() => setOpen(false)}
-                aria-label="Close chat"
-              >
-                <X className="w-4 h-4" />
-              </Button>
             </div>
 
-            {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
               {messages.map((msg) => (
-                <div
+                <motion.div
                   key={msg.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}
                 >
                   <div
                     className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5",
-                      msg.role === "bot" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                      msg.role === "bot"
+                        ? "bg-[#E8F5E9] text-[#1B7339]"
+                        : "bg-[#FFF3E0] text-[#EF6C00]",
                     )}
                   >
-                    {msg.role === "bot" ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                    {msg.role === "bot" ? <Leaf className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
                   </div>
                   <div
                     className={cn(
-                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted/80 text-foreground rounded-bl-md",
+                        ? "rounded-br-md bg-[#1B7339] text-white"
+                        : "rounded-bl-md border border-[#E2EBE4] bg-white text-[#1A1A1A] shadow-sm",
                     )}
                   >
                     <p>{msg.text}</p>
                     {msg.links && msg.links.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {msg.links.map((link) => (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            className={cn(
-                              "inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
-                              msg.role === "user"
-                                ? "bg-primary-foreground/20 hover:bg-primary-foreground/30"
-                                : "bg-background hover:bg-background/80 text-primary border border-border/50",
-                            )}
-                            onClick={() => setOpen(false)}
-                          >
-                            {link.label}
-                            <ExternalLink className="w-3 h-3" />
-                          </Link>
-                        ))}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {msg.links.map((link) =>
+                          link.href === "#ticket" ? (
+                            <button
+                              key={link.label}
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded-full border border-[#C8E6D4] bg-[#E8F5E9] px-2 py-1 text-[11px] font-medium text-[#1B7339]"
+                              onClick={() => {
+                                setShowTicketForm(true)
+                                setTicketSent(false)
+                              }}
+                            >
+                              {link.label}
+                            </button>
+                          ) : (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              className="inline-flex items-center gap-1 rounded-full border border-[#E5E5E5] bg-[#F7F7F7] px-2 py-1 text-[11px] font-medium text-[#1B7339] hover:bg-[#E8F5E9]"
+                              onClick={() => setOpen(false)}
+                            >
+                              {link.label}
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          ),
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
 
-              {/* Topic chips (show after welcome if few messages) */}
-              {messages.length <= 2 && !showTicketForm && (
+              {typing && (
+                <div className="flex items-center gap-2 pl-9">
+                  <div className="flex gap-1 rounded-2xl border border-[#E2EBE4] bg-white px-3 py-2">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1B7339]/50 [animation-delay:0ms]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1B7339]/50 [animation-delay:120ms]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1B7339]/50 [animation-delay:240ms]" />
+                  </div>
+                </div>
+              )}
+
+              {messages.length <= 2 && !showTicketForm && !typing && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {SUPPORT_TOPICS.slice(0, 6).map((topic) => (
                     <button
                       key={topic.id}
                       type="button"
                       onClick={() => handleTopicClick(topic)}
-                      className="text-xs px-2.5 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted/60 transition-colors"
+                      className="rounded-full border border-[#DCE8DC] bg-white px-2.5 py-1.5 text-[11.5px] text-[#2A2A2A] transition-colors hover:border-[#1B7339]/40 hover:bg-[#E8F5E9]"
                     >
                       {topic.icon} {topic.label}
                     </button>
@@ -276,10 +294,12 @@ export function HelpChatbot() {
                 </div>
               )}
 
-              {/* Ticket form */}
               {showTicketForm && !ticketSent && (
-                <form onSubmit={handleSubmitTicket} className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-3">
-                  <p className="text-xs font-medium text-foreground">Submit a support ticket</p>
+                <form
+                  onSubmit={handleSubmitTicket}
+                  className="space-y-3 rounded-2xl border border-[#DCE8DC] bg-white p-3"
+                >
+                  <p className="text-xs font-semibold text-[#1B7339]">Submit a support ticket</p>
                   <div className="space-y-1.5">
                     <Label htmlFor="chat-ticket-subject" className="text-xs">
                       Subject
@@ -289,7 +309,7 @@ export function HelpChatbot() {
                       value={ticketSubject}
                       onChange={(e) => setTicketSubject(e.target.value)}
                       placeholder="Brief summary"
-                      className="h-8 text-sm bg-background"
+                      className="h-8 text-sm"
                       required
                     />
                   </div>
@@ -303,7 +323,7 @@ export function HelpChatbot() {
                       onChange={(e) => setTicketMessage(e.target.value)}
                       placeholder="Describe your issue..."
                       rows={3}
-                      className="text-sm bg-background resize-none"
+                      className="resize-none text-sm"
                       required
                     />
                   </div>
@@ -318,19 +338,14 @@ export function HelpChatbot() {
                         value={ticketEmail}
                         onChange={(e) => setTicketEmail(e.target.value)}
                         placeholder="you@company.com"
-                        className="h-8 text-sm bg-background"
+                        className="h-8 text-sm"
                         required
                       />
                     </div>
                   )}
-                  {!customer?.email && (
-                    <p className="text-xs text-muted-foreground">
-                      Sign in so we can reply to your registered email automatically.
-                    </p>
-                  )}
                   <div className="flex gap-2">
-                    <Button type="submit" size="sm" disabled={ticketSending} className="flex-1">
-                      {ticketSending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send ticket"}
+                    <Button type="submit" size="sm" disabled={ticketSending} className="flex-1 bg-[#1B7339]">
+                      {ticketSending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send ticket"}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowTicketForm(false)}>
                       Cancel
@@ -340,15 +355,14 @@ export function HelpChatbot() {
               )}
             </div>
 
-            {/* Quick prompts */}
             {!showTicketForm && (
-              <div className="px-3 pb-2 flex gap-1 overflow-x-auto scrollbar-none">
+              <div className="flex gap-1 overflow-x-auto px-3 pb-2 scrollbar-none">
                 {QUICK_PROMPTS.slice(0, 4).map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
                     onClick={() => handleSend(prompt)}
-                    className="shrink-0 text-[11px] px-2 py-1 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                    className="shrink-0 whitespace-nowrap rounded-full bg-[#E8F5E9] px-2 py-1 text-[11px] text-[#1B7339] hover:bg-[#D4EDD8]"
                   >
                     {prompt}
                   </button>
@@ -356,8 +370,7 @@ export function HelpChatbot() {
               </div>
             )}
 
-            {/* Input area */}
-            <div className="p-3 border-t border-border/50 space-y-2">
+            <div className="space-y-2 border-t border-[#E2EBE4] bg-white/70 p-3">
               {!showTicketForm && (
                 <div className="flex gap-2">
                   <Input
@@ -365,24 +378,24 @@ export function HelpChatbot() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                    placeholder="Type your question..."
-                    className="h-9 text-sm rounded-full bg-muted/40 border-border/50"
+                    placeholder="Ask anything..."
+                    className="h-10 rounded-full border-[#C8E6D4] bg-white text-sm focus-visible:ring-[#1B7339]"
                   />
                   <Button
                     size="icon"
-                    className="h-9 w-9 rounded-full shrink-0"
+                    className="h-10 w-10 shrink-0 rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
                     onClick={() => handleSend()}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() || typing}
                     aria-label="Send message"
                   >
-                    <Send className="w-4 h-4" />
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
               )}
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <div className="flex items-center justify-between text-[11px] text-[#7A7A7A]">
                 <button
                   type="button"
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-[#1B7339]"
                   onClick={() => {
                     setShowTicketForm(true)
                     setTicketSent(false)
@@ -390,48 +403,52 @@ export function HelpChatbot() {
                 >
                   Submit ticket
                 </button>
-                <Link href="/support" className="hover:text-primary transition-colors flex items-center gap-0.5" onClick={() => setOpen(false)}>
-                  Support center
-                  <ChevronDown className="w-3 h-3 -rotate-90" />
+                <Link
+                  href="/dashboard/support"
+                  className="hover:text-[#1B7339]"
+                  onClick={() => setOpen(false)}
+                >
+                  Support center →
                 </Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        <div className="relative">
-          <Button
-            size="lg"
-            className={cn(
-              "h-14 w-14 rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300",
-              open && "scale-90 opacity-0 pointer-events-none absolute",
-            )}
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close help chat" : "Open help chat"}
-            aria-expanded={open}
-          >
-            {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-          </Button>
+      <motion.button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? "Close help chat" : "Open help chat"}
+        aria-expanded={open}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.96 }}
+        className={cn(
+          "relative flex h-14 w-14 items-center justify-center rounded-full bg-[#1B7339] text-white shadow-[0_12px_28px_rgba(27,115,57,0.4)]",
+          open && "ring-2 ring-[#C8F000]/50",
+        )}
+      >
+        <motion.span
+          aria-hidden
+          className="absolute inset-0 rounded-full bg-[#C8F000]/25"
+          animate={{ scale: [1, 1.35, 1], opacity: [0.45, 0, 0.45] }}
+          transition={{ duration: 2.4, repeat: Infinity }}
+        />
+        {open ? <X className="relative h-6 w-6" /> : <MessageCircle className="relative h-6 w-6" />}
+      </motion.button>
 
-          {!open && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 pointer-events-none">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-40" />
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-primary text-[10px] text-primary-foreground items-center justify-center font-bold">
-                ?
-              </span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Mini hint when closed */}
       {!open && (
-        <div className="fixed bottom-[4.5rem] right-5 z-[99] pointer-events-none hidden sm:block">
-          <div className="rounded-lg bg-background border border-border/60 shadow-md px-3 py-1.5 text-xs text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-500 delay-1000">
+        <motion.div
+          initial={{ opacity: 0, x: 8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 }}
+          className="pointer-events-none absolute bottom-[4.25rem] right-0 hidden sm:block"
+        >
+          <div className="rounded-full border border-[#DCE8DC] bg-white px-3 py-1.5 text-xs font-medium text-[#1A1A1A] shadow-md">
             Need help?
           </div>
-        </div>
+        </motion.div>
       )}
-    </>
+    </div>
   )
 }

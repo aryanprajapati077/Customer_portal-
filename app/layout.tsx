@@ -1,10 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Geist_Mono } from "next/font/google"
+import { Inter, Geist_Mono, Instrument_Serif } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/lib/theme-provider"
-import { PreferencesProvider } from "@/lib/preferences-context"
 import { SupportProvider } from "@/components/support/support-provider"
 import { SITE_URL, SITE_NAME } from "@/lib/site-config"
 import "./globals.css"
@@ -23,6 +22,14 @@ const geistMono = Geist_Mono({
   display: "swap",
   fallback: ["Courier New", "monospace"],
   adjustFontFallback: true,
+})
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -56,12 +63,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${geistMono.variable} ${instrumentSerif.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <PreferencesProvider>
-              <SupportProvider>{children}</SupportProvider>
-            </PreferencesProvider>
+            <SupportProvider>{children}</SupportProvider>
           </AuthProvider>
         </ThemeProvider>
         <Analytics />

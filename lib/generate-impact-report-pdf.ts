@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer"
 import { sql } from "@/lib/db"
 import { computeImpactReportData } from "@/lib/esg-metrics"
 import { ImpactReportPdfDocument } from "@/lib/impact-report-pdf"
+import { resolveLogoForPdf } from "@/lib/resolve-logo"
 
 export function parsePeriodMonth(period?: string | null): Date | undefined {
   if (!period?.trim()) return undefined
@@ -16,14 +17,14 @@ export function parsePeriodMonth(period?: string | null): Date | undefined {
 
 export async function generateImpactReportPdf(
   customerId: string,
-  options?: { period?: string },
+  options?: { period?: string; logoUrl?: string | null },
 ) {
   const asOfDate = parsePeriodMonth(options?.period)
 
   const [customerRows, collectionRows] = await Promise.all([
     sql`
       SELECT id, "companyName", address, "joinDate", "disposalUnitInstalled",
-             "totalWasteCollected", "kraftrebornCredits", "contactPerson", email
+             "totalWasteCollected", "kraftrebornCredits", "contactPerson", email, "logoUrl"
       FROM "Customer"
       WHERE id = ${customerId}
       LIMIT 1
@@ -62,6 +63,9 @@ export async function generateImpactReportPdf(
     collectionRows as { weight?: number | string | null }[],
     asOfDate,
   )
+
+  reportData.logoUrl =
+    resolveLogoForPdf(options?.logoUrl) || resolveLogoForPdf(customer.logoUrl as string | null)
 
   const pdfBuffer = await renderToBuffer(
     React.createElement(ImpactReportPdfDocument, { data: reportData }) as React.ReactElement,

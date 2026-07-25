@@ -1,8 +1,17 @@
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { sql } from "@/lib/db"
-import { Sparkles, Users, Package, Bell, FileBarChart, Mail, TrendingUp } from "lucide-react"
+import {
+  Users,
+  Package,
+  Bell,
+  FileBarChart,
+  Mail,
+  TrendingUp,
+  ArrowRight,
+  ListTree,
+  Sparkles,
+} from "lucide-react"
 
 export default async function AdminOverviewPage() {
   let customers = 0
@@ -46,129 +55,160 @@ export default async function AdminOverviewPage() {
     console.error("[admin] Database connection failed:", error)
   }
 
+  const stats = [
+    { label: "Total Clients", value: customers, icon: Users, desc: "Registered accounts" },
+    { label: "Active Clients", value: activeCustomers, icon: TrendingUp, desc: "Eligible for reports" },
+    { label: "Collections", value: collections, icon: Package, desc: "Pickup records" },
+    { label: "Monthly Reports", value: monthlyReports, icon: FileBarChart, desc: "Generated reports" },
+    { label: "Unread Alerts", value: unread, icon: Bell, desc: "Notifications pending" },
+    {
+      label: "Total Waste (kg)",
+      value: totalWaste.toFixed(1),
+      icon: Sparkles,
+      desc: "Across all clients",
+    },
+  ]
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+    <div className="space-y-7">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
+          <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
+            <Sparkles className="h-3.5 w-3.5" />
             Command Center
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">Admin Overview</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage clients, generate monthly ESG reports, and send impact updates at scale.
+          </p>
+          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.9rem,3vw,2.6rem)] leading-tight tracking-tight text-[#141414]">
+            Admin <em className="italic text-[#1B7339]">Overview</em>
+          </h1>
+          <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
+            Clients, collections, shop orders, ESG reports, and support — one place.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="bg-transparent">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full border-[#DCE8DC] bg-white text-[#1B7339] hover:bg-[#E8F5E9]"
+          >
             <Link href="/admin/reports">
-              <Mail className="w-4 h-4 mr-2" />
+              <Mail className="mr-2 h-4 w-4" />
               Reports & Email
             </Link>
           </Button>
-          <Button asChild>
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full border-[#DCE8DC] bg-white text-[#1B7339] hover:bg-[#E8F5E9]"
+          >
+            <Link href="/admin/shop/orders">
+              <Package className="mr-2 h-4 w-4" />
+              Shop Orders
+            </Link>
+          </Button>
+          <Button asChild className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
             <Link href="/admin/customers">
-              <Users className="w-4 h-4 mr-2" />
+              <Users className="mr-2 h-4 w-4" />
               Manage Clients
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {[
-          { label: "Total Clients", value: customers, icon: Users, desc: "Registered accounts" },
-          { label: "Active Clients", value: activeCustomers, icon: TrendingUp, desc: "Eligible for reports" },
-          { label: "Collections", value: collections, icon: Package, desc: "Pickup records" },
-          { label: "Monthly Reports", value: monthlyReports, icon: FileBarChart, desc: "Generated reports" },
-          { label: "Unread Alerts", value: unread, icon: Bell, desc: "Notifications pending" },
-          {
-            label: "Total Waste (kg)",
-            value: totalWaste.toFixed(1),
-            icon: Sparkles,
-            desc: "Across all clients",
-          },
-        ].map((item) => (
-          <Card key={item.label} className="glass border-border/50 hover-lift">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                <item.icon className="w-4 h-4 text-primary" />
-                {item.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{item.value}</div>
-              <p className="text-[11px] text-muted-foreground mt-1">{item.desc}</p>
-            </CardContent>
-          </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {stats.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+          >
+            <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#7A7A7A]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
+                <item.icon className="h-3.5 w-3.5" />
+              </span>
+              {item.label}
+            </div>
+            <div className="text-[1.65rem] font-bold tracking-tight text-[#141414]">{item.value}</div>
+            <p className="mt-1 text-[11px] text-[#8A8A8A]">{item.desc}</p>
+          </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <Card className="glass border-primary/20 lg:col-span-2 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Most common admin workflows</CardDescription>
-          </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-3">
-            <Button asChild variant="outline" className="justify-start h-auto py-4 bg-background/60">
-              <Link href="/admin/reports">
-                <div className="text-left">
-                  <p className="font-medium flex items-center gap-2">
-                    <FileBarChart className="w-4 h-4 text-primary" />
-                    Generate Monthly Reports
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="rounded-2xl border border-[#DCE8DC] bg-gradient-to-br from-[#E8F5E9] to-white p-5 lg:col-span-2">
+          <h2 className="text-[16px] font-semibold text-[#141414]">Quick Actions</h2>
+          <p className="mt-0.5 text-[13px] text-[#6B6B6B]">Most common admin workflows</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                href: "/admin/reports",
+                icon: FileBarChart,
+                title: "Generate Monthly Reports",
+                desc: "Create report entries for all clients",
+              },
+              {
+                href: "/admin/reports",
+                icon: Mail,
+                title: "Email ESG PDFs",
+                desc: "Send reports with attachments",
+              },
+              {
+                href: "/admin/customers",
+                icon: Users,
+                title: "Client Management",
+                desc: "Edit profiles, credits, and targets",
+              },
+              {
+                href: "/admin/dropdowns",
+                icon: ListTree,
+                title: "Manage Dropdowns",
+                desc: "LSU names & technicians for forms",
+              },
+            ].map((a) => (
+              <Link
+                key={a.title}
+                href={a.href}
+                className="group flex items-start justify-between gap-3 rounded-xl border border-[#E2EBE4] bg-white px-4 py-3.5 transition-all hover:border-[#1B7339]/30 hover:shadow-sm"
+              >
+                <div>
+                  <p className="flex items-center gap-2 text-[13.5px] font-semibold text-[#141414]">
+                    <a.icon className="h-4 w-4 text-[#1B7339]" />
+                    {a.title}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Create report entries for all clients</p>
+                  <p className="mt-1 text-[12px] text-[#7A7A7A]">{a.desc}</p>
                 </div>
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[#A0A0A0] transition-transform group-hover:translate-x-0.5 group-hover:text-[#1B7339]" />
               </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start h-auto py-4 bg-background/60">
-              <Link href="/admin/reports">
-                <div className="text-left">
-                  <p className="font-medium flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-primary" />
-                    Email ESG PDFs
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Send reports with attachments to all clients</p>
-                </div>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start h-auto py-4 bg-background/60">
-              <Link href="/admin/customers">
-                <div className="text-left">
-                  <p className="font-medium flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    Client Management
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Edit profiles, credits, and targets</p>
-                </div>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start h-auto py-4 bg-background/60">
-              <Link href="/admin/homepage">
-                <div className="text-left">
-                  <p className="font-medium flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Homepage Metrics
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Update public impact numbers</p>
-                </div>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
 
-        <Card className="glass border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base">Monthly Report Workflow</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>1. Generate monthly reports for all active clients.</p>
-            <p>2. Review entries in Reports & Email.</p>
-            <p>3. Send branded emails with PDF attachments.</p>
-            <p>4. Clients see reports in their dashboard and get in-app notifications.</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5">
+          <h2 className="text-[16px] font-semibold text-[#141414]">Monthly Report Workflow</h2>
+          <ol className="mt-4 space-y-3 text-[13px] leading-relaxed text-[#5A5A5A]">
+            <li className="flex gap-2">
+              <span className="font-semibold text-[#1B7339]">1.</span>
+              Generate monthly reports for all active clients.
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold text-[#1B7339]">2.</span>
+              Review entries in Reports & Email.
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold text-[#1B7339]">3.</span>
+              Send branded emails with PDF attachments.
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold text-[#1B7339]">4.</span>
+              Clients see reports in dashboard + notifications.
+            </li>
+          </ol>
+          <Link
+            href="/admin/security"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#1B7339] hover:underline"
+          >
+            Manage authenticator
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
     </div>
   )

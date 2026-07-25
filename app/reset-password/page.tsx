@@ -91,11 +91,15 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <AuthRecycleBackground />
       <div className="w-full max-w-md relative z-10">
-        <Link href="/" className="flex items-center justify-center gap-3 mb-8">
-          <Image src="/logo.svg" alt="Buffindia" width={48} height={48} />
-          <span className="text-2xl font-bold">
-            Buff<span className="text-primary">india</span>
-          </span>
+        <Link href="/" className="flex justify-center mb-8">
+          <Image
+            src="/logo.svg"
+            alt="BuffIndia"
+            width={160}
+            height={52}
+            className="h-11 w-auto object-contain"
+            priority
+          />
         </Link>
 
         <Card className="glass border-border/50 shadow-2xl">

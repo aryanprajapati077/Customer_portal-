@@ -1,199 +1,263 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { StatsOverview } from "@/components/dashboard/stats-overview"
-import { CollectionHistory } from "@/components/dashboard/collection-history"
-import { CertificatesSection } from "@/components/dashboard/certificates-section"
-import { ReportsSection } from "@/components/dashboard/reports-section"
-import { ImpactVisualization } from "@/components/dashboard/impact-visualization"
-import { CustomerProfile } from "@/components/dashboard/customer-profile"
-import { GroupWasteBreakdown } from "@/components/dashboard/group-waste-breakdown"
-import { Loader2, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { DownloadReportButton } from "@/components/dashboard/download-report-button"
+import Link from "next/link"
+import Image from "next/image"
+import {
+  Cigarette,
+  Download,
+  Droplets,
+  FileText,
+  Leaf,
+  Recycle,
+  RefreshCw,
+  Sparkles,
+  HeartPulse,
+  Waves,
+} from "lucide-react"
+import { PortalShell } from "@/components/portal/portal-shell"
+import { WhatsNewBanner } from "@/components/portal/whats-new-banner"
+import { MetricCard } from "@/components/portal/metric-card"
+import { MotionItem, MotionPage, fadeUp, scaleIn, staggerFast } from "@/components/portal/motion"
+import { motion } from "framer-motion"
+import { usePortalData } from "@/hooks/use-portal-data"
+import { DownloadImpactReport } from "@/components/portal/download-impact-report"
+import { ReportThumb, reportPeriodFromDate } from "@/components/portal/report-thumb"
+import {
+  firstName,
+  formatIndianNumber,
+  formatKg,
+  formatWaterL,
+} from "@/lib/portal-metrics"
 
 export default function DashboardPage() {
-  const { customer, isLoading } = useAuth()
-  const router = useRouter()
-  const [customerView, setCustomerView] = useState(customer)
-  const [viewingAsId, setViewingAsId] = useState<string | null>(null)
-  const [childCompanies, setChildCompanies] = useState<{ id: string; companyName: string; email: string }[]>([])
-  const [collections, setCollections] = useState([])
-  const [certificates, setCertificates] = useState([])
-  const [reports, setReports] = useState([])
-  const [dataLoading, setDataLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const {
+    customer,
+    authLoading,
+    dataLoading,
+    isRefreshing,
+    lastRefresh,
+    reports,
+    metrics,
+    handleRefresh,
+  } = usePortalData()
 
-  const effectiveCustomerId = viewingAsId || customer?.id
+  const latestReport = reports[0]
+  const name = firstName(customer?.contactPerson)
+  const waterLakh = Math.max(1, Math.round(metrics.waterProtectedL / 100000))
+  const period = reportPeriodFromDate(latestReport?.date || latestReport?.period || null)
+  const reportTitle =
+    latestReport?.name || `Monthly ESG Impact Report – ${period.monthLabel} ${period.year}`
+  const reportDateLine = period.dateLabel
+  const reportPeriodKey =
+    latestReport?.period ||
+    `${period.year}-${String(new Date(latestReport?.date || Date.now()).getMonth() + 1).padStart(2, "0")}`
 
-  useEffect(() => {
-    if (!isLoading && !customer) {
-      router.push("/login")
-    }
-  }, [customer, isLoading, router])
-
-  useEffect(() => {
-    setCustomerView(customer)
-    setViewingAsId(null)
-  }, [customer])
-
-  useEffect(() => {
-    const isGroup = customerView?.isGroup || customer?.isGroup
-    if (!isGroup || !customer?.id) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch(`/api/customer/children?customerId=${customer.id}`)
-        const data = await res.json()
-        if (cancelled) return
-        if (data?.success && data.children) setChildCompanies(data.children)
-      } catch {
-        // ignore
-      }
-    })()
-    return () => { cancelled = true }
-  }, [customer?.id, customer?.isGroup, customerView?.isGroup])
-
-  const fetchCustomerData = useCallback(async () => {
-    if (!effectiveCustomerId) return
-
-    setDataLoading(true)
-    try {
-      const [collectionsRes, certificatesRes, reportsRes, profileRes] = await Promise.all([
-        fetch(`/api/customer/collections?customerId=${effectiveCustomerId}`),
-        fetch(`/api/customer/certificates?customerId=${effectiveCustomerId}`),
-        fetch(`/api/customer/reports?customerId=${effectiveCustomerId}`),
-        fetch(`/api/customer/profile?customerId=${effectiveCustomerId}`),
-      ])
-
-      const [collectionsData, certificatesData, reportsData, profileData] = await Promise.all([
-        collectionsRes.json(),
-        certificatesRes.json(),
-        reportsRes.json(),
-        profileRes.json(),
-      ])
-
-      if (collectionsData.success) setCollections(collectionsData.collections)
-      if (certificatesData.success) setCertificates(certificatesData.certificates)
-      if (reportsData.success) setReports(reportsData.reports)
-      if (profileData.success && profileData.customer) {
-        setCustomerView(profileData.customer)
-        if (effectiveCustomerId === customer?.id) {
-          localStorage.setItem("buffindia_customer", JSON.stringify(profileData.customer))
-        }
-      }
-      setLastRefresh(new Date())
-    } catch (error) {
-      console.error("Error fetching customer data:", error)
-    }
-    setDataLoading(false)
-  }, [effectiveCustomerId, customer?.id])
-
-  useEffect(() => {
-    if (effectiveCustomerId) {
-      fetchCustomerData()
-    }
-  }, [effectiveCustomerId, fetchCustomerData])
-
-  const handleCompanySwitch = useCallback((customerId: string) => {
-    setViewingAsId(customerId === customer?.id ? null : customerId)
-  }, [customer?.id])
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await fetchCustomerData()
-    setIsRefreshing(false)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-full bg-primary/20 animate-ping" />
-            <Loader2 className="w-12 h-12 animate-spin text-primary relative" />
-          </div>
-          <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!customerView) {
-    return null
-  }
+  const metricItems = [
+    {
+      key: "waste",
+      icon: Leaf,
+      iconBg: "bg-[#E8F5E9]",
+      iconColor: "text-[#1B7339]",
+      label: "Total Waste Collected",
+      value: formatKg(metrics.totalWasteKg),
+      description: "Total waste processed",
+    },
+    {
+      key: "butts",
+      icon: Cigarette,
+      iconBg: "bg-[#FFF3E0]",
+      iconColor: "text-[#EF6C00]",
+      label: "Cigarette Butts Rescued",
+      value: formatIndianNumber(metrics.cigaretteButts),
+      description: "Total butts collected",
+    },
+    {
+      key: "micro",
+      icon: Recycle,
+      iconBg: "bg-[#E8F5E9]",
+      iconColor: "text-[#1B7339]",
+      label: "Microplastics Upcycled",
+      value: formatKg(metrics.microplasticsKg),
+      description: "Microplastics converted to products",
+    },
+    {
+      key: "water",
+      icon: Droplets,
+      iconBg: "bg-[#E3F2FD]",
+      iconColor: "text-[#1565C0]",
+      label: "Water Resources Protected",
+      value: formatWaterL(metrics.waterProtectedL),
+      description: "Water protected through recycling",
+    },
+    {
+      key: "credits",
+      icon: Sparkles,
+      iconBg: "bg-[#FFF3E0]",
+      iconColor: "text-[#EF6C00]",
+      label: "KraftReborn Credits",
+      value: formatIndianNumber(metrics.kraftrebornCredits),
+      description: "1 credit = ₹1",
+      footer: (
+        <Link href="/dashboard/shop" className="inline-block mt-2 text-[12px] font-semibold text-[#1565C0]">
+          Shop KraftReborn →
+        </Link>
+      ),
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-to-r from-primary/3 to-secondary/3 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10">
-        <DashboardHeader
-          customer={(customerView || customer)!}
-          childCompanies={childCompanies}
-          viewingAsId={viewingAsId ?? undefined}
-          onCompanySwitch={(customerView?.isGroup || customer?.isGroup) ? handleCompanySwitch : undefined}
-        />
-
-        <main className="container mx-auto px-4 lg:px-8 py-8 space-y-8">
-          {/* Refresh Bar */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-sm text-muted-foreground">
-              {lastRefresh && <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>}
+    <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)}>
+      <MotionPage className="space-y-5">
+        <MotionItem>
+          <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-3 pt-1">
+            <div>
+              <h1 className="text-[28px] md:text-[30px] font-bold text-[#1A1A1A] tracking-[-0.02em] leading-tight">
+                Welcome back, {name}! 👋
+              </h1>
+              <p className="text-[13.5px] text-[#7A7A7A] mt-1">
+                Here&apos;s your sustainability impact overview
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <DownloadReportButton customerId={effectiveCustomerId!} variant="outline" size="sm" />
-              <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="bg-transparent"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-              {isRefreshing ? "Refreshing..." : "Refresh Data"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[12px] text-[#8A8A8A] mr-1">
+                Last updated:{" "}
+                {lastRefresh
+                  ? lastRefresh.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                  : "—"}
+              </span>
+              <DownloadImpactReport customerId={customer?.id}>
+                <button type="button" className="portal-btn-outline">
+                  <Download className="w-4 h-4" />
+                  Download ESG Report
+                </button>
+              </DownloadImpactReport>
+              <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="portal-btn-outline-green"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh Data
+              </button>
             </div>
           </div>
+        </MotionItem>
 
-          {/* Stats Overview */}
-          <StatsOverview customer={customerView} collections={collections} />
+        <MotionItem variants={scaleIn}>
+          <WhatsNewBanner variant="home" />
+        </MotionItem>
 
-          {/* Group Waste by Client (when group views "My company") */}
-          {customer?.isGroup && !viewingAsId && (
-            <GroupWasteBreakdown groupCustomerId={customer.id} />
-          )}
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3"
+          variants={staggerFast}
+          initial="hidden"
+          animate="show"
+        >
+          {metricItems.map((item) => (
+            <MotionItem key={item.key} variants={fadeUp} className="h-full">
+              <MetricCard
+                icon={item.icon}
+                iconBg={item.iconBg}
+                iconColor={item.iconColor}
+                label={item.label}
+                value={item.value}
+                description={item.description}
+                footer={item.footer}
+              />
+            </MotionItem>
+          ))}
+        </motion.div>
 
-          {/* Customer Profile Card */}
-          <CustomerProfile customer={customerView} collections={collections} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+          <MotionItem>
+            <div className="portal-card p-5 h-full">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-4 h-4 text-[#1B7339]" />
+                <h2 className="text-[15px] font-semibold text-[#1A1A1A]">Latest Report</h2>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-[92px] h-[118px] rounded-lg border border-[#E5E5E5] bg-[#F7F9F6] overflow-hidden shrink-0">
+                  <ReportThumb
+                    monthLabel={period.monthLabel}
+                    year={period.year}
+                    className="h-full w-full"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-semibold text-[#1A1A1A] leading-snug">{reportTitle}</p>
+                  <p className="text-[12px] text-[#8A8A8A] mt-1">
+                    {reportDateLine} | {latestReport?.size || "~10 KB"}
+                  </p>
+                  <p className="text-[12.5px] text-[#5A5A5A] mt-2 leading-relaxed">
+                    {latestReport?.description ||
+                      "Auto-generated monthly sustainability and ESG impact summary."}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <DownloadImpactReport customerId={customer?.id} period={reportPeriodKey}>
+                      <button type="button" className="portal-btn-solid">
+                        <Download className="w-4 h-4" />
+                        Download Report
+                      </button>
+                    </DownloadImpactReport>
+                    <Link href="/dashboard/reports" className="portal-btn-outline-green">
+                      View All Reports
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </MotionItem>
 
-          {/* Impact Visualization */}
-          <ImpactVisualization customer={customerView} collections={collections} />
-
-          {/* Two Column Layout for Collections and Certificates */}
-          <div className="grid lg:grid-cols-2 gap-8">
-            <CollectionHistory collections={collections} isLoading={dataLoading} />
-            <CertificatesSection
-              certificates={certificates}
-              isLoading={dataLoading}
-              customerId={effectiveCustomerId!}
-              contactName={customerView.contactPerson?.split(" ")[0] || customerView.companyName}
-            />
-          </div>
-
-          {/* Reports Section */}
-          <ReportsSection reports={reports} isLoading={dataLoading} customerId={effectiveCustomerId!} />
-        </main>
-      </div>
-    </div>
+          <MotionItem>
+            <div className="portal-card p-5 h-full">
+              <div className="flex items-center gap-2 mb-3">
+                <Leaf className="w-4 h-4 text-[#1B7339]" />
+                <h2 className="text-[15px] font-semibold text-[#1A1A1A]">Your Impact at a Glance</h2>
+              </div>
+              <div className="flex gap-3 items-start">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13.5px] font-semibold text-[#1B7339]">
+                    You have made a real difference!
+                  </p>
+                  <p className="text-[12.5px] text-[#4A4A4A] mt-2 leading-relaxed">
+                    You have helped prevent{" "}
+                    <strong>{formatIndianNumber(metrics.cigaretteButts)} cigarette butts</strong> from
+                    entering the environment and protected{" "}
+                    <strong>{waterLakh} lakh liters</strong> of water.
+                  </p>
+                </div>
+                <motion.div
+                  className="relative w-[140px] h-[110px] shrink-0"
+                  animate={{ y: [0, -4, 0], rotate: [0, 1.5, 0, -1.5, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Image
+                    src="/portal/impact-globe.svg"
+                    alt="Green earth impact"
+                    fill
+                    className="object-contain"
+                    sizes="140px"
+                    priority
+                  />
+                </motion.div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#F0F0F0]">
+                {[
+                  { icon: Leaf, label: "Cleaner Environment" },
+                  { icon: Waves, label: "Water Protected" },
+                  { icon: HeartPulse, label: "Healthier Communities" },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col items-center gap-1.5 text-center">
+                    <item.icon className="w-4 h-4 text-[#1B7339]" strokeWidth={1.75} />
+                    <span className="text-[11px] text-[#5A5A5A] leading-tight">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </MotionItem>
+        </div>
+      </MotionPage>
+    </PortalShell>
   )
 }

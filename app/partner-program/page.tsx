@@ -1,183 +1,237 @@
-import type { Metadata } from "next"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+"use client"
+
 import Link from "next/link"
 import { Users, Award, Gift, TrendingUp, Target, ArrowRight, CheckCircle2 } from "lucide-react"
+import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
 
-export const metadata: Metadata = {
-  title: "Partner Program | BuffIndia – Become an Affiliate Partner",
-  description:
-    "Join the BuffIndia Affiliate Partner Program. Spread awareness, earn commissions, and drive nationwide sustainability. Sign up today.",
-}
+const whyPartner = [
+  {
+    title: "Promote Transformation",
+    text: "Inspire businesses and individuals to adopt end-to-end cigarette waste solutions—from kiosk installation to EcoArt upcycling.",
+  },
+  {
+    title: "Expand Our Reach",
+    text: "Introduce BuffIndia to hotels, corporates, bars, restaurants, cafés, campuses, and facility managers in your network.",
+  },
+  {
+    title: "Raise Awareness",
+    text: "Advocate for responsible cigarette waste disposal and help grow the Butt Free India campaign in your community.",
+  },
+]
+
+const benefits = [
+  {
+    icon: Target,
+    text: "Exclusive Training: Weekly onboarding sessions and ongoing support so you can pitch with confidence.",
+  },
+  {
+    icon: TrendingUp,
+    text: "Real-Time Updates: Stay informed about the progress of every lead you provide.",
+  },
+  {
+    icon: Award,
+    text: "Certification of Affiliation: Official recognition of your commitment to sustainability.",
+  },
+  {
+    icon: Gift,
+    text: "Complimentary Products: Free vouchers for BuffIndia's upcycled sustainable décor and gifting.",
+  },
+  {
+    icon: Users,
+    text: "Financial Rewards: Earn commissions for every lead that converts into a client.",
+  },
+]
+
+const steps = [
+  {
+    step: "1",
+    title: "Sign Up",
+    desc: "Express your interest via our partner form. We'll review and onboard you quickly.",
+  },
+  {
+    step: "2",
+    title: "Promote",
+    desc: "Use BuffIndia's video content and resources to raise awareness in your local area.",
+  },
+  {
+    step: "3",
+    title: "Source Leads",
+    desc: "Share details of potential clients—hotels, corporates, venues—with our sales team.",
+  },
+  {
+    step: "4",
+    title: "Earn Rewards",
+    desc: "Receive commissions and exclusive perks for every successful lead conversion.",
+  },
+]
+
+const whoCanJoin = [
+  "Organizations & individuals passionate about environmental impact",
+  "Facility management providers catering to businesses & campuses",
+  "NGOs and community groups focused on sustainability",
+  "Hospitality & corporate consultants with active client networks",
+]
+
+const stats = [
+  { value: "22", label: "States Engaged" },
+  { value: "84+", label: "Cities Reached" },
+  { value: "12,000+", label: "Businesses Engaged" },
+  { value: "12", label: "Affiliated Partners" },
+]
 
 export default function PartnerProgramPage() {
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
-      <section className="pt-28 pb-16 sm:pt-32 sm:pb-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block">
-            Home / Partner Program
-          </Link>
-
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              Partner with BuffIndia
-            </h1>
-            <h2 className="text-2xl font-semibold text-muted-foreground mb-8">
-              Join the Movement for a Cleaner, Greener India
-            </h2>
-            <h3 className="text-xl font-semibold text-primary mb-6">Become a BuffIndia Affiliate Partner Today!</h3>
-            <p className="text-muted-foreground mb-8">
-              Together, let&apos;s create awareness, transform waste, and drive nationwide sustainability.
-            </p>
-            <a href="https://form.jotform.com/250602909519459" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="rounded-full px-8">
-                Sign Up Now
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </a>
-          </div>
-
-          <div className="max-w-4xl mx-auto space-y-16">
-            <section>
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Why Partner with BuffIndia?</h2>
-              <p className="text-center text-muted-foreground mb-8">Make an Impact in Your Community</p>
-              <p className="text-muted-foreground text-center mb-8">
-                As a BuffIndia Affiliate Partner, you&apos;ll play a crucial role in spreading awareness about cigarette
-                waste management while empowering your community to adopt sustainable practices. Here&apos;s how you can
-                help:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  "Promote Transformation: Inspire businesses and individuals to adopt sustainable solutions.",
-                  "Expand Our Reach: Introduce BuffIndia's solutions to hotels, corporates, bars, restaurants, cafes, and more.",
-                  "Raise Awareness: Advocate for responsible cigarette waste disposal in your network.",
-                ].map((item) => (
-                  <Card key={item} className="p-6 bg-card border-border/50">
-                    <CheckCircle2 className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-muted-foreground">{item}</p>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Affiliate Partner Benefits</h2>
-              <p className="text-center text-muted-foreground mb-8">Make an Impact in Your Community</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  { icon: Target, text: "Exclusive Training: Weekly onboarding sessions and support to help you succeed." },
-                  { icon: TrendingUp, text: "Real-Time Updates: Stay informed about the progress of leads you provide." },
-                  { icon: Award, text: "Certification of Affiliation: Official recognition of your commitment to sustainability." },
-                  { icon: Gift, text: "Complimentary Products: Free vouchers for BuffIndia's upcycled sustainable decor and gifting." },
-                  { icon: Users, text: "Financial Rewards: Earn commissions for every lead that converts into a client." },
-                ].map((item) => (
-                  <Card key={item.text} className="p-6 bg-card border-border/50">
-                    <item.icon className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-muted-foreground">{item.text}</p>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">How It Works</h2>
-              <p className="text-center text-muted-foreground mb-8">Becoming a Partner Is Simple</p>
-              <div className="flex flex-col md:flex-row gap-6 justify-center items-stretch">
-                {[
-                  { step: "1", title: "Sign Up", desc: "Express your interest by contacting us via the form below." },
-                  { step: "2", title: "Promote", desc: "Use BuffIndia's video content and resources to raise awareness in your local area." },
-                  { step: "3", title: "Source Leads", desc: "Share the details of potential clients with our sales team." },
-                  { step: "4", title: "Earn Rewards", desc: "Receive commissions and exclusive perks for every successful lead conversion." },
-                ].map((item) => (
-                  <Card key={item.step} className="p-6 bg-card border-border/50 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold mb-4">
-                      {item.step}
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground text-sm">{item.desc}</p>
-                  </Card>
-                ))}
-              </div>
-              <div className="text-center mt-8">
-                <a href="https://form.jotform.com/250602909519459" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" className="rounded-full px-8">
-                    Sign Up as a Partner
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </a>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Who Can Join</h2>
-              <p className="text-center text-muted-foreground mb-8">Calling All Change-Makers!</p>
-              <p className="text-muted-foreground text-center mb-6">
-                We&apos;re looking for individuals and organizations who share our vision for a cleaner, greener India:
-              </p>
-              <ul className="space-y-3 max-w-md mx-auto">
-                {[
-                  "Organizations & Individuals passionate about environmental impact",
-                  "Facility Management Service Providers catering to businesses",
-                  "NGOs with a focus on sustainability",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-muted-foreground">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section>
-              <Card className="p-8 sm:p-12 bg-primary/5 border-primary/20">
-                <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Highlighting Impact</h2>
-                <p className="text-center text-muted-foreground mb-8">
-                  Together, We&apos;ve Already Made a Difference
-                </p>
-                <p className="text-muted-foreground text-center mb-8">
-                  Join a growing community of partners who are transforming cigarette waste management across India.
-                  Here&apos;s what we&apos;ve accomplished so far:
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                  {[
-                    { value: "22", label: "States Engaged" },
-                    { value: "84+", label: "Cities Reached" },
-                    { value: "12,000+", label: "Businesses Engaged" },
-                    { value: "12", label: "Affiliated Partners" },
-                  ].map((stat) => (
-                    <div key={stat.label}>
-                      <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                      <div className="text-sm text-muted-foreground">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-center text-muted-foreground mt-8">
-                  Be part of this incredible journey and contribute to even greater impact!
-                </p>
-              </Card>
-            </section>
-
-            <section className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Get Started</h2>
-              <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join the BuffIndia Partner Program Today. Take the first step towards becoming a BuffIndia Affiliate
-                Partner. Fill out the form below to express your interest, and we&apos;ll be in touch with more details.
-              </p>
-              <a href="https://form.jotform.com/250602909519459" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="rounded-full px-8">
-                  Sign Up Now
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </a>
-            </section>
-          </div>
+    <InspirePage
+      eyebrow="Affiliate partner program"
+      title="Partner with"
+      accent="BuffIndia"
+      subtitle="Join the movement for a cleaner, greener India. As an affiliate partner, you help businesses catch waste at the source, route it into BuffIndia's recovery loop, and turn litter into EcoArt—while earning meaningful rewards."
+      cta={{ href: "https://form.jotform.com/250602909519459", label: "Sign Up Now" }}
+    >
+      <section className="mb-14">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
+          Why partner with BuffIndia?
+        </h2>
+        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[#5A5A5A]">
+          Make an impact in your community. You&apos;ll spread awareness about cigarette waste management while
+          empowering others to adopt sustainable practices.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {whyPartner.map((item, i) => (
+            <InspireCard key={item.title} delay={i * 0.04}>
+              <CheckCircle2 className="mb-4 h-7 w-7 text-[#1B7339]" strokeWidth={1.7} />
+              <h3 className="text-[17px] font-semibold tracking-tight text-[#141414]">{item.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#5A5A5A]">{item.text}</p>
+            </InspireCard>
+          ))}
         </div>
       </section>
-      <Footer />
-    </main>
+
+      <section className="mb-14">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
+          Affiliate partner benefits
+        </h2>
+        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[#5A5A5A]">
+          Training, tools, recognition, and rewards—built for change-makers.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {benefits.map((item, i) => (
+            <InspireCard key={item.text} delay={i * 0.04}>
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
+                <item.icon className="h-5 w-5" strokeWidth={1.7} />
+              </div>
+              <p className="text-[14px] leading-relaxed text-[#5A5A5A]">{item.text}</p>
+            </InspireCard>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-14">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
+          How it works
+        </h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#5A5A5A]">Becoming a partner is simple.</p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((item, i) => (
+            <InspireCard key={item.step} delay={i * 0.04}>
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#EF6C00]/15 text-[15px] font-bold text-[#EF6C00]">
+                {item.step}
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight text-[#141414]">{item.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#5A5A5A]">{item.desc}</p>
+            </InspireCard>
+          ))}
+        </div>
+        <div className="mt-8">
+          <a
+            href="https://form.jotform.com/250602909519459"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#145a2c]"
+          >
+            Sign Up as a Partner
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
+
+      <section className="mb-14">
+        <InspireCard>
+          <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.5rem,3vw,2rem)] tracking-tight text-[#141414]">
+            Who can join
+          </h2>
+          <p className="mt-2 text-[15px] text-[#5A5A5A]">
+            Calling all change-makers! We&apos;re looking for individuals and organizations who share our vision:
+          </p>
+          <ul className="mt-6 space-y-3">
+            {whoCanJoin.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-[14px] text-[#5A5A5A]">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1B7339]" strokeWidth={1.7} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </InspireCard>
+      </section>
+
+      <section className="mb-14">
+        <InspireCard className="border-[#1B7339]/15 bg-[#E8F5E9]/40">
+          <h2 className="text-center font-[family-name:var(--font-display)] text-[clamp(1.5rem,3vw,2rem)] tracking-tight text-[#141414]">
+            Highlighting impact
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-[15px] text-[#5A5A5A]">
+            Together, we&apos;ve already made a difference. Join a growing community transforming cigarette waste
+            management across India.
+          </p>
+          <div className="mt-8 grid grid-cols-2 gap-6 text-center md:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <div className="font-[family-name:var(--font-display)] text-3xl tracking-tight text-[#1B7339]">
+                  {stat.value}
+                </div>
+                <div className="mt-1 text-[13px] text-[#5A5A5A]">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 text-center text-[14px] text-[#5A5A5A]">
+            Be part of this journey—and help us reach even more cities and sites.
+          </p>
+        </InspireCard>
+      </section>
+
+      <div className="rounded-[28px] bg-[#141414] px-6 py-10 text-center text-white sm:px-10">
+        <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,4vw,2.6rem)] leading-tight">
+          Ready to get <em className="italic text-[#C8F000]">started</em>?
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-[14px] leading-relaxed text-white/70">
+          Learn more about our{" "}
+          <Link href="/services" className="text-[#C8F000] hover:underline">
+            end-to-end services
+          </Link>
+          , meet our{" "}
+          <Link href="/supporter-page" className="text-[#C8F000] hover:underline">
+            valued partners
+          </Link>
+          , or fill out the signup form.
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="https://form.jotform.com/250602909519459"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-[#C8F000] px-5 py-2.5 text-[14px] font-semibold text-[#141414] hover:bg-[#d4f53a]"
+          >
+            Sign Up Now
+            <ArrowRight className="h-4 w-4" />
+          </a>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-white/10"
+          >
+            Talk to Our Team
+          </Link>
+        </div>
+      </div>
+    </InspirePage>
   )
 }

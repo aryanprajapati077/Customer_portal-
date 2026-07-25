@@ -70,6 +70,16 @@ export type Report = Prisma.ReportModel
  */
 export type GlobalImpact = Prisma.GlobalImpactModel
 /**
+ * Model EmailTemplate
+ * Editable email copy (ESG report, etc.)
+ */
+export type EmailTemplate = Prisma.EmailTemplateModel
+/**
+ * Model LsuTeam
+ * LSU Name + Technician pairs for customer form dropdowns
+ */
+export type LsuTeam = Prisma.LsuTeamModel
+/**
  * Model Product
  * 
  */

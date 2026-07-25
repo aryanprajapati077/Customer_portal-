@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,7 +40,9 @@ export default function AdminSecurityPage() {
       if (!res.ok) throw new Error(data.error || "Setup failed")
       setSetupUri(data.uri)
       setSetupSecret(data.secret)
-      setMessage("Scan the QR code or enter the secret manually in your authenticator app, then enter the code below.")
+      setMessage(
+        "Scan the QR code or enter the secret manually in your authenticator app, then enter the code below.",
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : "Setup failed")
     } finally {
@@ -96,57 +97,72 @@ export default function AdminSecurityPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#1B7339]" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-          <ShieldCheck className="w-3.5 h-3.5" />
+        <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
+          <ShieldCheck className="h-3.5 w-3.5" />
           Security
-        </div>
-        <h1 className="text-3xl font-bold">Authenticator (2FA)</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        </p>
+        <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
+          Authenticator <em className="italic text-[#1B7339]">(2FA)</em>
+        </h1>
+        <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
           Use Google Authenticator, Authy, or 1Password for an extra layer of security on admin sign-in.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Smartphone className="w-5 h-5" />
-            Status: {totpEnabled ? "Enabled" : "Not enabled"}
-          </CardTitle>
-          <CardDescription>
-            {totpEnabled
-              ? "A 6-digit code is required after your password when signing in."
-              : "Recommended for super admins. Set up in under a minute."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
+            <Smartphone className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-[16px] font-semibold text-[#141414]">
+              Status:{" "}
+              <span className={totpEnabled ? "text-[#1B7339]" : "text-[#EF6C00]"}>
+                {totpEnabled ? "Enabled" : "Not enabled"}
+              </span>
+            </h2>
+            <p className="mt-1 text-[13px] text-[#6B6B6B]">
+              {totpEnabled
+                ? "A 6-digit code is required after your password when signing in."
+                : "Recommended for super admins. Set up in under a minute."}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-4">
           {!totpEnabled && !setupUri && (
-            <Button onClick={startSetup} disabled={busy}>
-              {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            <Button
+              onClick={startSetup}
+              disabled={busy}
+              className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+            >
+              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Set up authenticator
             </Button>
           )}
 
           {setupUri && setupSecret && !totpEnabled && (
-            <div className="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-4">
+            <div className="space-y-4 rounded-2xl border border-[#DCE8DC] bg-[#F7FBF7] p-4">
               <div className="flex justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(setupUri)}`}
                   alt="Authenticator QR code"
                   width={180}
                   height={180}
-                  className="rounded-lg border bg-white p-2"
+                  className="rounded-lg border border-[#E5E5E5] bg-white p-2"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Manual entry key</Label>
+                <Label className="text-xs text-[#6B6B6B]">Manual entry key</Label>
                 <Input readOnly value={setupSecret} className="font-mono text-xs" />
               </div>
               <div className="space-y-2">
@@ -155,13 +171,17 @@ export default function AdminSecurityPage() {
                   <InputOTP maxLength={6} value={code} onChange={setCode}>
                     <InputOTPGroup>
                       {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <InputOTPSlot key={i} index={i} />
+                        <InputOTPSlot key={i} index={i} className="h-11 w-10" />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
               </div>
-              <Button className="w-full" onClick={enableTotp} disabled={busy || code.length !== 6}>
+              <Button
+                className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                onClick={enableTotp}
+                disabled={busy || code.length !== 6}
+              >
                 Enable authenticator
               </Button>
             </div>
@@ -175,22 +195,35 @@ export default function AdminSecurityPage() {
                   <InputOTP maxLength={6} value={code} onChange={setCode}>
                     <InputOTPGroup>
                       {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <InputOTPSlot key={i} index={i} />
+                        <InputOTPSlot key={i} index={i} className="h-11 w-10" />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
               </div>
-              <Button variant="destructive" onClick={disableTotp} disabled={busy || code.length !== 6}>
+              <Button
+                variant="destructive"
+                className="rounded-full"
+                onClick={disableTotp}
+                disabled={busy || code.length !== 6}
+              >
                 Disable authenticator
               </Button>
             </div>
           )}
 
-          {message && <p className="text-sm text-green-700 dark:text-green-400">{message}</p>}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </CardContent>
-      </Card>
+          {message && (
+            <p className="rounded-xl border border-[#C8E6D4] bg-[#E8F5E9] px-3 py-2 text-sm text-[#1B7339]">
+              {message}
+            </p>
+          )}
+          {error && (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -390,6 +390,8 @@ export const ModelName = {
   Certificate: 'Certificate',
   Report: 'Report',
   GlobalImpact: 'GlobalImpact',
+  EmailTemplate: 'EmailTemplate',
+  LsuTeam: 'LsuTeam',
   Product: 'Product',
   ShopOrder: 'ShopOrder',
   OrderItem: 'OrderItem',
@@ -413,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "customer" | "notification" | "collection" | "certificate" | "report" | "globalImpact" | "product" | "shopOrder" | "orderItem" | "passwordResetOtp" | "adminCredential" | "adminUser" | "verifiedCertificate" | "supportTicket"
+    modelProps: "customer" | "notification" | "collection" | "certificate" | "report" | "globalImpact" | "emailTemplate" | "lsuTeam" | "product" | "shopOrder" | "orderItem" | "passwordResetOtp" | "adminCredential" | "adminUser" | "verifiedCertificate" | "supportTicket"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -858,6 +860,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.GlobalImpactCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.GlobalImpactCountAggregateOutputType> | number
+        }
+      }
+    }
+    EmailTemplate: {
+      payload: Prisma.$EmailTemplatePayload<ExtArgs>
+      fields: Prisma.EmailTemplateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EmailTemplateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EmailTemplateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        findFirst: {
+          args: Prisma.EmailTemplateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EmailTemplateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        findMany: {
+          args: Prisma.EmailTemplateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>[]
+        }
+        create: {
+          args: Prisma.EmailTemplateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        createMany: {
+          args: Prisma.EmailTemplateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EmailTemplateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>[]
+        }
+        delete: {
+          args: Prisma.EmailTemplateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        update: {
+          args: Prisma.EmailTemplateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        deleteMany: {
+          args: Prisma.EmailTemplateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EmailTemplateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EmailTemplateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>[]
+        }
+        upsert: {
+          args: Prisma.EmailTemplateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EmailTemplatePayload>
+        }
+        aggregate: {
+          args: Prisma.EmailTemplateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEmailTemplate>
+        }
+        groupBy: {
+          args: Prisma.EmailTemplateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EmailTemplateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EmailTemplateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EmailTemplateCountAggregateOutputType> | number
+        }
+      }
+    }
+    LsuTeam: {
+      payload: Prisma.$LsuTeamPayload<ExtArgs>
+      fields: Prisma.LsuTeamFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LsuTeamFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LsuTeamFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        findFirst: {
+          args: Prisma.LsuTeamFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LsuTeamFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        findMany: {
+          args: Prisma.LsuTeamFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>[]
+        }
+        create: {
+          args: Prisma.LsuTeamCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        createMany: {
+          args: Prisma.LsuTeamCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LsuTeamCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>[]
+        }
+        delete: {
+          args: Prisma.LsuTeamDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        update: {
+          args: Prisma.LsuTeamUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        deleteMany: {
+          args: Prisma.LsuTeamDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LsuTeamUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LsuTeamUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>[]
+        }
+        upsert: {
+          args: Prisma.LsuTeamUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LsuTeamPayload>
+        }
+        aggregate: {
+          args: Prisma.LsuTeamAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLsuTeam>
+        }
+        groupBy: {
+          args: Prisma.LsuTeamGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LsuTeamGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LsuTeamCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LsuTeamCountAggregateOutputType> | number
         }
       }
     }
@@ -1497,6 +1647,26 @@ export const CustomerScalarFieldEnum = {
   email: 'email',
   password: 'password',
   companyName: 'companyName',
+  tradeName: 'tradeName',
+  city: 'city',
+  state: 'state',
+  lsuName: 'lsuName',
+  lsuTechnicianName: 'lsuTechnicianName',
+  operationsIncharge: 'operationsIncharge',
+  primaryPocName: 'primaryPocName',
+  primaryPocEmail: 'primaryPocEmail',
+  primaryPocNumber: 'primaryPocNumber',
+  primaryPocDesignation: 'primaryPocDesignation',
+  collectionPocs: 'collectionPocs',
+  serviceStartDate: 'serviceStartDate',
+  noOfKiosk: 'noOfKiosk',
+  noOfBasicKiosk: 'noOfBasicKiosk',
+  noOfAdvanceKiosk: 'noOfAdvanceKiosk',
+  noOfPanVendorKiosk: 'noOfPanVendorKiosk',
+  noOfWallMountKiosk: 'noOfWallMountKiosk',
+  collectionFrequency: 'collectionFrequency',
+  gstin: 'gstin',
+  logoUrl: 'logoUrl',
   contactPerson: 'contactPerson',
   phone: 'phone',
   address: 'address',
@@ -1597,6 +1767,29 @@ export const GlobalImpactScalarFieldEnum = {
 } as const
 
 export type GlobalImpactScalarFieldEnum = (typeof GlobalImpactScalarFieldEnum)[keyof typeof GlobalImpactScalarFieldEnum]
+
+
+export const EmailTemplateScalarFieldEnum = {
+  id: 'id',
+  subject: 'subject',
+  payload: 'payload',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EmailTemplateScalarFieldEnum = (typeof EmailTemplateScalarFieldEnum)[keyof typeof EmailTemplateScalarFieldEnum]
+
+
+export const LsuTeamScalarFieldEnum = {
+  id: 'id',
+  lsuName: 'lsuName',
+  technicianName: 'technicianName',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LsuTeamScalarFieldEnum = (typeof LsuTeamScalarFieldEnum)[keyof typeof LsuTeamScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -1778,20 +1971,6 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -1802,6 +1981,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -1926,6 +2119,8 @@ export type GlobalOmitConfig = {
   certificate?: Prisma.CertificateOmit
   report?: Prisma.ReportOmit
   globalImpact?: Prisma.GlobalImpactOmit
+  emailTemplate?: Prisma.EmailTemplateOmit
+  lsuTeam?: Prisma.LsuTeamOmit
   product?: Prisma.ProductOmit
   shopOrder?: Prisma.ShopOrderOmit
   orderItem?: Prisma.OrderItemOmit

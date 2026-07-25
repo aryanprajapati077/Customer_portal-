@@ -3,12 +3,11 @@
 import { Suspense, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { AuthRecycleBackground } from "@/components/auth/auth-recycle-background"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AdminAuthShell } from "@/components/admin/admin-auth-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Loader2, ArrowLeft, KeyRound } from "lucide-react"
+import { Loader2, Mail, Lock, Shield, KeyRound } from "lucide-react"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 
 function AdminLoginForm() {
@@ -77,109 +76,113 @@ function AdminLoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
-      <AuthRecycleBackground />
-
-      <div className="w-full max-w-md relative z-10">
-        <Card className="glass border-border/50 shadow-2xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                {step === "totp" ? <KeyRound className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-primary" />}
-              </div>
-              <div>
-                <CardTitle className="font-serif">Admin Panel</CardTitle>
-                <CardDescription>
-                  {step === "totp" ? "Enter authenticator code" : "Sign in with email and password"}
-                </CardDescription>
+    <AdminAuthShell
+      title={step === "totp" ? "Verify your" : "Sign in"}
+      accent={step === "totp" ? "authenticator" : "admin"}
+      subtitle={
+        step === "totp"
+          ? "Enter the 6-digit code from Google Authenticator, Authy, or 1Password."
+          : "Use your admin email and password. 2FA is required when enabled."
+      }
+    >
+      <div className="space-y-4">
+        {step === "credentials" ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]" />
+                <Input
+                  id="admin-email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@buffindia.com"
+                  className="h-12 rounded-xl border-[#E5E7EB] bg-[#FAFAFA] pl-10 focus-visible:ring-[#1B7339]"
+                />
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {step === "credentials" ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">Email</Label>
-                  <Input
-                    id="admin-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@buffindia.com"
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-password">Password</Label>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && onSubmitCredentials()}
-                    placeholder="Enter password"
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <Button
-                  className="w-full h-12 rounded-xl"
-                  onClick={onSubmitCredentials}
-                  disabled={isSubmitting || !email || !password}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="admin-password">Password</Label>
+                <Link
+                  href="/admin/forgot-password"
+                  className="text-xs font-medium text-[#1B7339] hover:underline"
                 >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  {isSubmitting ? "Signing in..." : "Sign in"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground text-center">
-                  Open Google Authenticator, Authy, or 1Password and enter the 6-digit code for <strong>{email}</strong>.
-                </p>
-                <div className="flex justify-center py-2">
-                  <InputOTP maxLength={6} value={totpCode} onChange={setTotpCode}>
-                    <InputOTPGroup>
-                      {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <InputOTPSlot key={i} index={i} />
-                      ))}
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-                <Button
-                  className="w-full h-12 rounded-xl"
-                  onClick={onSubmitTotp}
-                  disabled={isSubmitting || totpCode.length !== 6}
-                >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Verify & sign in
-                </Button>
-                <Button variant="ghost" className="w-full" onClick={() => { setStep("credentials"); setTotpCode(""); setError(null) }}>
-                  ← Back to sign in
-                </Button>
-              </>
-            )}
-
-            {error && <div className="text-sm text-destructive text-center">{error}</div>}
-
-            {step === "credentials" && (
-              <div className="text-center">
-                <Link href="/admin/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]" />
+                <Input
+                  id="admin-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && onSubmitCredentials()}
+                  placeholder="Enter password"
+                  className="h-12 rounded-xl border-[#E5E7EB] bg-[#FAFAFA] pl-10 focus-visible:ring-[#1B7339]"
+                />
+              </div>
+            </div>
+            <Button
+              className="h-12 w-full rounded-full bg-[#1B7339] text-[15px] font-semibold hover:bg-[#145a2c]"
+              onClick={onSubmitCredentials}
+              disabled={isSubmitting || !email || !password}
+            >
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
+              {isSubmitting ? "Signing in..." : "Sign in to admin"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="rounded-2xl border border-[#E2EBE4] bg-[#F7FBF7] px-4 py-3 text-center text-[13px] text-[#4A4A4A]">
+              Code for <strong className="text-[#1B7339]">{email}</strong>
+            </div>
+            <div className="flex justify-center py-2">
+              <InputOTP maxLength={6} value={totpCode} onChange={setTotpCode}>
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-base" />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <Button
+              className="h-12 w-full rounded-full bg-[#1B7339] text-[15px] font-semibold hover:bg-[#145a2c]"
+              onClick={onSubmitTotp}
+              disabled={isSubmitting || totpCode.length !== 6}
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="mr-2 h-4 w-4" />
+              )}
+              Verify & sign in
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full text-[#6B6B6B]"
+              onClick={() => {
+                setStep("credentials")
+                setTotpCode("")
+                setError(null)
+              }}
+            >
+              ← Back to sign in
+            </Button>
+          </>
+        )}
 
-        <div className="mt-6 text-center">
-          <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" />
-            Customer portal sign in
-          </Link>
-        </div>
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-center text-sm text-red-700">
+            {error}
+          </div>
+        )}
       </div>
-    </div>
+    </AdminAuthShell>
   )
 }
 
@@ -187,8 +190,8 @@ export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex min-h-screen items-center justify-center bg-white">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1B7339]" />
         </div>
       }
     >

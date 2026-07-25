@@ -123,7 +123,7 @@ export const SUPPORT_TOPICS: SupportTopic[] = [
     answer:
       "Our team is available Mon–Sat, 9 AM – 6 PM IST. Phone: +91-9512120366 · Email: support@buffindia.com. You can also submit a ticket from this chat — we typically respond within 1 business day.",
     links: [
-      { label: "Support center", href: "/support" },
+      { label: "Support center", href: "/dashboard/support" },
       { label: "Contact page", href: "/contact" },
     ],
   },

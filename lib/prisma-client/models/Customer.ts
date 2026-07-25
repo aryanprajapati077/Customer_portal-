@@ -27,6 +27,11 @@ export type AggregateCustomer = {
 }
 
 export type CustomerAvgAggregateOutputType = {
+  noOfKiosk: number | null
+  noOfBasicKiosk: number | null
+  noOfAdvanceKiosk: number | null
+  noOfPanVendorKiosk: number | null
+  noOfWallMountKiosk: number | null
   employeeCount: number | null
   disposalUnitInstalled: number | null
   totalWasteCollected: number | null
@@ -42,6 +47,11 @@ export type CustomerAvgAggregateOutputType = {
 }
 
 export type CustomerSumAggregateOutputType = {
+  noOfKiosk: number | null
+  noOfBasicKiosk: number | null
+  noOfAdvanceKiosk: number | null
+  noOfPanVendorKiosk: number | null
+  noOfWallMountKiosk: number | null
   employeeCount: number | null
   disposalUnitInstalled: number | null
   totalWasteCollected: number | null
@@ -61,6 +71,26 @@ export type CustomerMinAggregateOutputType = {
   email: string | null
   password: string | null
   companyName: string | null
+  tradeName: string | null
+  city: string | null
+  state: string | null
+  lsuName: string | null
+  lsuTechnicianName: string | null
+  operationsIncharge: string | null
+  primaryPocName: string | null
+  primaryPocEmail: string | null
+  primaryPocNumber: string | null
+  primaryPocDesignation: string | null
+  collectionPocs: string | null
+  serviceStartDate: Date | null
+  noOfKiosk: number | null
+  noOfBasicKiosk: number | null
+  noOfAdvanceKiosk: number | null
+  noOfPanVendorKiosk: number | null
+  noOfWallMountKiosk: number | null
+  collectionFrequency: string | null
+  gstin: string | null
+  logoUrl: string | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -92,6 +122,26 @@ export type CustomerMaxAggregateOutputType = {
   email: string | null
   password: string | null
   companyName: string | null
+  tradeName: string | null
+  city: string | null
+  state: string | null
+  lsuName: string | null
+  lsuTechnicianName: string | null
+  operationsIncharge: string | null
+  primaryPocName: string | null
+  primaryPocEmail: string | null
+  primaryPocNumber: string | null
+  primaryPocDesignation: string | null
+  collectionPocs: string | null
+  serviceStartDate: Date | null
+  noOfKiosk: number | null
+  noOfBasicKiosk: number | null
+  noOfAdvanceKiosk: number | null
+  noOfPanVendorKiosk: number | null
+  noOfWallMountKiosk: number | null
+  collectionFrequency: string | null
+  gstin: string | null
+  logoUrl: string | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -123,6 +173,26 @@ export type CustomerCountAggregateOutputType = {
   email: number
   password: number
   companyName: number
+  tradeName: number
+  city: number
+  state: number
+  lsuName: number
+  lsuTechnicianName: number
+  operationsIncharge: number
+  primaryPocName: number
+  primaryPocEmail: number
+  primaryPocNumber: number
+  primaryPocDesignation: number
+  collectionPocs: number
+  serviceStartDate: number
+  noOfKiosk: number
+  noOfBasicKiosk: number
+  noOfAdvanceKiosk: number
+  noOfPanVendorKiosk: number
+  noOfWallMountKiosk: number
+  collectionFrequency: number
+  gstin: number
+  logoUrl: number
   contactPerson: number
   phone: number
   address: number
@@ -152,6 +222,11 @@ export type CustomerCountAggregateOutputType = {
 
 
 export type CustomerAvgAggregateInputType = {
+  noOfKiosk?: true
+  noOfBasicKiosk?: true
+  noOfAdvanceKiosk?: true
+  noOfPanVendorKiosk?: true
+  noOfWallMountKiosk?: true
   employeeCount?: true
   disposalUnitInstalled?: true
   totalWasteCollected?: true
@@ -167,6 +242,11 @@ export type CustomerAvgAggregateInputType = {
 }
 
 export type CustomerSumAggregateInputType = {
+  noOfKiosk?: true
+  noOfBasicKiosk?: true
+  noOfAdvanceKiosk?: true
+  noOfPanVendorKiosk?: true
+  noOfWallMountKiosk?: true
   employeeCount?: true
   disposalUnitInstalled?: true
   totalWasteCollected?: true
@@ -186,6 +266,26 @@ export type CustomerMinAggregateInputType = {
   email?: true
   password?: true
   companyName?: true
+  tradeName?: true
+  city?: true
+  state?: true
+  lsuName?: true
+  lsuTechnicianName?: true
+  operationsIncharge?: true
+  primaryPocName?: true
+  primaryPocEmail?: true
+  primaryPocNumber?: true
+  primaryPocDesignation?: true
+  collectionPocs?: true
+  serviceStartDate?: true
+  noOfKiosk?: true
+  noOfBasicKiosk?: true
+  noOfAdvanceKiosk?: true
+  noOfPanVendorKiosk?: true
+  noOfWallMountKiosk?: true
+  collectionFrequency?: true
+  gstin?: true
+  logoUrl?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -217,6 +317,26 @@ export type CustomerMaxAggregateInputType = {
   email?: true
   password?: true
   companyName?: true
+  tradeName?: true
+  city?: true
+  state?: true
+  lsuName?: true
+  lsuTechnicianName?: true
+  operationsIncharge?: true
+  primaryPocName?: true
+  primaryPocEmail?: true
+  primaryPocNumber?: true
+  primaryPocDesignation?: true
+  collectionPocs?: true
+  serviceStartDate?: true
+  noOfKiosk?: true
+  noOfBasicKiosk?: true
+  noOfAdvanceKiosk?: true
+  noOfPanVendorKiosk?: true
+  noOfWallMountKiosk?: true
+  collectionFrequency?: true
+  gstin?: true
+  logoUrl?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -248,6 +368,26 @@ export type CustomerCountAggregateInputType = {
   email?: true
   password?: true
   companyName?: true
+  tradeName?: true
+  city?: true
+  state?: true
+  lsuName?: true
+  lsuTechnicianName?: true
+  operationsIncharge?: true
+  primaryPocName?: true
+  primaryPocEmail?: true
+  primaryPocNumber?: true
+  primaryPocDesignation?: true
+  collectionPocs?: true
+  serviceStartDate?: true
+  noOfKiosk?: true
+  noOfBasicKiosk?: true
+  noOfAdvanceKiosk?: true
+  noOfPanVendorKiosk?: true
+  noOfWallMountKiosk?: true
+  collectionFrequency?: true
+  gstin?: true
+  logoUrl?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -366,6 +506,26 @@ export type CustomerGroupByOutputType = {
   email: string
   password: string
   companyName: string
+  tradeName: string | null
+  city: string | null
+  state: string | null
+  lsuName: string | null
+  lsuTechnicianName: string | null
+  operationsIncharge: string | null
+  primaryPocName: string | null
+  primaryPocEmail: string | null
+  primaryPocNumber: string | null
+  primaryPocDesignation: string | null
+  collectionPocs: string | null
+  serviceStartDate: Date | null
+  noOfKiosk: number
+  noOfBasicKiosk: number
+  noOfAdvanceKiosk: number
+  noOfPanVendorKiosk: number
+  noOfWallMountKiosk: number
+  collectionFrequency: string | null
+  gstin: string | null
+  logoUrl: string | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -420,6 +580,26 @@ export type CustomerWhereInput = {
   email?: Prisma.StringFilter<"Customer"> | string
   password?: Prisma.StringFilter<"Customer"> | string
   companyName?: Prisma.StringFilter<"Customer"> | string
+  tradeName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  city?: Prisma.StringNullableFilter<"Customer"> | string | null
+  state?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuTechnicianName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  operationsIncharge?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmail?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
+  collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
+  noOfKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfAdvanceKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfPanVendorKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfWallMountKiosk?: Prisma.IntFilter<"Customer"> | number
+  collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
+  gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
+  logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -458,6 +638,26 @@ export type CustomerOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
+  tradeName?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  state?: Prisma.SortOrderInput | Prisma.SortOrder
+  lsuName?: Prisma.SortOrderInput | Prisma.SortOrder
+  lsuTechnicianName?: Prisma.SortOrderInput | Prisma.SortOrder
+  operationsIncharge?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocName?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocDesignation?: Prisma.SortOrderInput | Prisma.SortOrder
+  collectionPocs?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
+  collectionFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  gstin?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   contactPerson?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -499,6 +699,26 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   password?: Prisma.StringFilter<"Customer"> | string
   companyName?: Prisma.StringFilter<"Customer"> | string
+  tradeName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  city?: Prisma.StringNullableFilter<"Customer"> | string | null
+  state?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuTechnicianName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  operationsIncharge?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmail?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
+  collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
+  noOfKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfAdvanceKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfPanVendorKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfWallMountKiosk?: Prisma.IntFilter<"Customer"> | number
+  collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
+  gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
+  logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -537,6 +757,26 @@ export type CustomerOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
+  tradeName?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  state?: Prisma.SortOrderInput | Prisma.SortOrder
+  lsuName?: Prisma.SortOrderInput | Prisma.SortOrder
+  lsuTechnicianName?: Prisma.SortOrderInput | Prisma.SortOrder
+  operationsIncharge?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocName?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocDesignation?: Prisma.SortOrderInput | Prisma.SortOrder
+  collectionPocs?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
+  collectionFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  gstin?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   contactPerson?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -576,6 +816,26 @@ export type CustomerScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"Customer"> | string
   password?: Prisma.StringWithAggregatesFilter<"Customer"> | string
   companyName?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  tradeName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  city?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  state?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  lsuName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  lsuTechnicianName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  operationsIncharge?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  primaryPocName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  primaryPocEmail?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  primaryPocNumber?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  primaryPocDesignation?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  collectionPocs?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  serviceStartDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
+  noOfKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  noOfBasicKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  noOfAdvanceKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  noOfPanVendorKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  noOfWallMountKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  collectionFrequency?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  gstin?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  logoUrl?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   contactPerson?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   address?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
@@ -607,6 +867,26 @@ export type CustomerCreateInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -644,6 +924,26 @@ export type CustomerUncheckedCreateInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -681,6 +981,26 @@ export type CustomerUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -718,6 +1038,26 @@ export type CustomerUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -755,6 +1095,26 @@ export type CustomerCreateManyInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -786,6 +1146,26 @@ export type CustomerUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -816,6 +1196,26 @@ export type CustomerUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -862,6 +1262,26 @@ export type CustomerCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
+  tradeName?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  lsuName?: Prisma.SortOrder
+  lsuTechnicianName?: Prisma.SortOrder
+  operationsIncharge?: Prisma.SortOrder
+  primaryPocName?: Prisma.SortOrder
+  primaryPocEmail?: Prisma.SortOrder
+  primaryPocNumber?: Prisma.SortOrder
+  primaryPocDesignation?: Prisma.SortOrder
+  collectionPocs?: Prisma.SortOrder
+  serviceStartDate?: Prisma.SortOrder
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
+  collectionFrequency?: Prisma.SortOrder
+  gstin?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -889,6 +1309,11 @@ export type CustomerCountOrderByAggregateInput = {
 }
 
 export type CustomerAvgOrderByAggregateInput = {
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
   employeeCount?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   totalWasteCollected?: Prisma.SortOrder
@@ -908,6 +1333,26 @@ export type CustomerMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
+  tradeName?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  lsuName?: Prisma.SortOrder
+  lsuTechnicianName?: Prisma.SortOrder
+  operationsIncharge?: Prisma.SortOrder
+  primaryPocName?: Prisma.SortOrder
+  primaryPocEmail?: Prisma.SortOrder
+  primaryPocNumber?: Prisma.SortOrder
+  primaryPocDesignation?: Prisma.SortOrder
+  collectionPocs?: Prisma.SortOrder
+  serviceStartDate?: Prisma.SortOrder
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
+  collectionFrequency?: Prisma.SortOrder
+  gstin?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -939,6 +1384,26 @@ export type CustomerMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
+  tradeName?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  lsuName?: Prisma.SortOrder
+  lsuTechnicianName?: Prisma.SortOrder
+  operationsIncharge?: Prisma.SortOrder
+  primaryPocName?: Prisma.SortOrder
+  primaryPocEmail?: Prisma.SortOrder
+  primaryPocNumber?: Prisma.SortOrder
+  primaryPocDesignation?: Prisma.SortOrder
+  collectionPocs?: Prisma.SortOrder
+  serviceStartDate?: Prisma.SortOrder
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
+  collectionFrequency?: Prisma.SortOrder
+  gstin?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -966,6 +1431,11 @@ export type CustomerMinOrderByAggregateInput = {
 }
 
 export type CustomerSumOrderByAggregateInput = {
+  noOfKiosk?: Prisma.SortOrder
+  noOfBasicKiosk?: Prisma.SortOrder
+  noOfAdvanceKiosk?: Prisma.SortOrder
+  noOfPanVendorKiosk?: Prisma.SortOrder
+  noOfWallMountKiosk?: Prisma.SortOrder
   employeeCount?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   totalWasteCollected?: Prisma.SortOrder
@@ -1013,6 +1483,18 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type NullableIntFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
@@ -1023,14 +1505,6 @@ export type NullableIntFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type BoolFieldUpdateOperationsInput = {
@@ -1158,6 +1632,26 @@ export type CustomerCreateWithoutChildCustomersInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1194,6 +1688,26 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1235,6 +1749,26 @@ export type CustomerCreateWithoutParentCustomerInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1271,6 +1805,26 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1328,6 +1882,26 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1364,6 +1938,26 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1419,6 +2013,26 @@ export type CustomerScalarWhereInput = {
   email?: Prisma.StringFilter<"Customer"> | string
   password?: Prisma.StringFilter<"Customer"> | string
   companyName?: Prisma.StringFilter<"Customer"> | string
+  tradeName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  city?: Prisma.StringNullableFilter<"Customer"> | string | null
+  state?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  lsuTechnicianName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  operationsIncharge?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocName?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmail?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
+  collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
+  noOfKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfAdvanceKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfPanVendorKiosk?: Prisma.IntFilter<"Customer"> | number
+  noOfWallMountKiosk?: Prisma.IntFilter<"Customer"> | number
+  collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
+  gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
+  logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -1450,6 +2064,26 @@ export type CustomerCreateWithoutNotificationsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1486,6 +2120,26 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1538,6 +2192,26 @@ export type CustomerUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1574,6 +2248,26 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1610,6 +2304,26 @@ export type CustomerCreateWithoutCollectionsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1646,6 +2360,26 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1698,6 +2432,26 @@ export type CustomerUpdateWithoutCollectionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1734,6 +2488,26 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1770,6 +2544,26 @@ export type CustomerCreateWithoutCertificatesInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1806,6 +2600,26 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1858,6 +2672,26 @@ export type CustomerUpdateWithoutCertificatesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1894,6 +2728,26 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1930,6 +2784,26 @@ export type CustomerCreateWithoutReportsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1966,6 +2840,26 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2018,6 +2912,26 @@ export type CustomerUpdateWithoutReportsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2054,6 +2968,26 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2090,6 +3024,26 @@ export type CustomerCreateWithoutShopOrdersInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2126,6 +3080,26 @@ export type CustomerUncheckedCreateWithoutShopOrdersInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2178,6 +3152,26 @@ export type CustomerUpdateWithoutShopOrdersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2214,6 +3208,26 @@ export type CustomerUncheckedUpdateWithoutShopOrdersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2250,6 +3264,26 @@ export type CustomerCreateManyParentCustomerInput = {
   email: string
   password: string
   companyName: string
+  tradeName?: string | null
+  city?: string | null
+  state?: string | null
+  lsuName?: string | null
+  lsuTechnicianName?: string | null
+  operationsIncharge?: string | null
+  primaryPocName?: string | null
+  primaryPocEmail?: string | null
+  primaryPocNumber?: string | null
+  primaryPocDesignation?: string | null
+  collectionPocs?: string | null
+  serviceStartDate?: Date | string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  collectionFrequency?: string | null
+  gstin?: string | null
+  logoUrl?: string | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2280,6 +3314,26 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2316,6 +3370,26 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2352,6 +3426,26 @@ export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   companyName?: Prisma.StringFieldUpdateOperationsInput | string
+  tradeName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lsuTechnicianName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operationsIncharge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfAdvanceKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfPanVendorKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  noOfWallMountKiosk?: Prisma.IntFieldUpdateOperationsInput | number
+  collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2458,6 +3552,26 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   email?: boolean
   password?: boolean
   companyName?: boolean
+  tradeName?: boolean
+  city?: boolean
+  state?: boolean
+  lsuName?: boolean
+  lsuTechnicianName?: boolean
+  operationsIncharge?: boolean
+  primaryPocName?: boolean
+  primaryPocEmail?: boolean
+  primaryPocNumber?: boolean
+  primaryPocDesignation?: boolean
+  collectionPocs?: boolean
+  serviceStartDate?: boolean
+  noOfKiosk?: boolean
+  noOfBasicKiosk?: boolean
+  noOfAdvanceKiosk?: boolean
+  noOfPanVendorKiosk?: boolean
+  noOfWallMountKiosk?: boolean
+  collectionFrequency?: boolean
+  gstin?: boolean
+  logoUrl?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -2497,6 +3611,26 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   email?: boolean
   password?: boolean
   companyName?: boolean
+  tradeName?: boolean
+  city?: boolean
+  state?: boolean
+  lsuName?: boolean
+  lsuTechnicianName?: boolean
+  operationsIncharge?: boolean
+  primaryPocName?: boolean
+  primaryPocEmail?: boolean
+  primaryPocNumber?: boolean
+  primaryPocDesignation?: boolean
+  collectionPocs?: boolean
+  serviceStartDate?: boolean
+  noOfKiosk?: boolean
+  noOfBasicKiosk?: boolean
+  noOfAdvanceKiosk?: boolean
+  noOfPanVendorKiosk?: boolean
+  noOfWallMountKiosk?: boolean
+  collectionFrequency?: boolean
+  gstin?: boolean
+  logoUrl?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -2529,6 +3663,26 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   email?: boolean
   password?: boolean
   companyName?: boolean
+  tradeName?: boolean
+  city?: boolean
+  state?: boolean
+  lsuName?: boolean
+  lsuTechnicianName?: boolean
+  operationsIncharge?: boolean
+  primaryPocName?: boolean
+  primaryPocEmail?: boolean
+  primaryPocNumber?: boolean
+  primaryPocDesignation?: boolean
+  collectionPocs?: boolean
+  serviceStartDate?: boolean
+  noOfKiosk?: boolean
+  noOfBasicKiosk?: boolean
+  noOfAdvanceKiosk?: boolean
+  noOfPanVendorKiosk?: boolean
+  noOfWallMountKiosk?: boolean
+  collectionFrequency?: boolean
+  gstin?: boolean
+  logoUrl?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -2561,6 +3715,26 @@ export type CustomerSelectScalar = {
   email?: boolean
   password?: boolean
   companyName?: boolean
+  tradeName?: boolean
+  city?: boolean
+  state?: boolean
+  lsuName?: boolean
+  lsuTechnicianName?: boolean
+  operationsIncharge?: boolean
+  primaryPocName?: boolean
+  primaryPocEmail?: boolean
+  primaryPocNumber?: boolean
+  primaryPocDesignation?: boolean
+  collectionPocs?: boolean
+  serviceStartDate?: boolean
+  noOfKiosk?: boolean
+  noOfBasicKiosk?: boolean
+  noOfAdvanceKiosk?: boolean
+  noOfPanVendorKiosk?: boolean
+  noOfWallMountKiosk?: boolean
+  collectionFrequency?: boolean
+  gstin?: boolean
+  logoUrl?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -2587,7 +3761,7 @@ export type CustomerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentCustomer?: boolean | Prisma.Customer$parentCustomerArgs<ExtArgs>
   childCustomers?: boolean | Prisma.Customer$childCustomersArgs<ExtArgs>
@@ -2621,6 +3795,26 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     email: string
     password: string
     companyName: string
+    tradeName: string | null
+    city: string | null
+    state: string | null
+    lsuName: string | null
+    lsuTechnicianName: string | null
+    operationsIncharge: string | null
+    primaryPocName: string | null
+    primaryPocEmail: string | null
+    primaryPocNumber: string | null
+    primaryPocDesignation: string | null
+    collectionPocs: string | null
+    serviceStartDate: Date | null
+    noOfKiosk: number
+    noOfBasicKiosk: number
+    noOfAdvanceKiosk: number
+    noOfPanVendorKiosk: number
+    noOfWallMountKiosk: number
+    collectionFrequency: string | null
+    gstin: string | null
+    logoUrl: string | null
     contactPerson: string | null
     phone: string | null
     address: string | null
@@ -3079,6 +4273,26 @@ export interface CustomerFieldRefs {
   readonly email: Prisma.FieldRef<"Customer", 'String'>
   readonly password: Prisma.FieldRef<"Customer", 'String'>
   readonly companyName: Prisma.FieldRef<"Customer", 'String'>
+  readonly tradeName: Prisma.FieldRef<"Customer", 'String'>
+  readonly city: Prisma.FieldRef<"Customer", 'String'>
+  readonly state: Prisma.FieldRef<"Customer", 'String'>
+  readonly lsuName: Prisma.FieldRef<"Customer", 'String'>
+  readonly lsuTechnicianName: Prisma.FieldRef<"Customer", 'String'>
+  readonly operationsIncharge: Prisma.FieldRef<"Customer", 'String'>
+  readonly primaryPocName: Prisma.FieldRef<"Customer", 'String'>
+  readonly primaryPocEmail: Prisma.FieldRef<"Customer", 'String'>
+  readonly primaryPocNumber: Prisma.FieldRef<"Customer", 'String'>
+  readonly primaryPocDesignation: Prisma.FieldRef<"Customer", 'String'>
+  readonly collectionPocs: Prisma.FieldRef<"Customer", 'String'>
+  readonly serviceStartDate: Prisma.FieldRef<"Customer", 'DateTime'>
+  readonly noOfKiosk: Prisma.FieldRef<"Customer", 'Int'>
+  readonly noOfBasicKiosk: Prisma.FieldRef<"Customer", 'Int'>
+  readonly noOfAdvanceKiosk: Prisma.FieldRef<"Customer", 'Int'>
+  readonly noOfPanVendorKiosk: Prisma.FieldRef<"Customer", 'Int'>
+  readonly noOfWallMountKiosk: Prisma.FieldRef<"Customer", 'Int'>
+  readonly collectionFrequency: Prisma.FieldRef<"Customer", 'String'>
+  readonly gstin: Prisma.FieldRef<"Customer", 'String'>
+  readonly logoUrl: Prisma.FieldRef<"Customer", 'String'>
   readonly contactPerson: Prisma.FieldRef<"Customer", 'String'>
   readonly phone: Prisma.FieldRef<"Customer", 'String'>
   readonly address: Prisma.FieldRef<"Customer", 'String'>

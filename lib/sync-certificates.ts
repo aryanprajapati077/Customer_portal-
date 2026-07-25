@@ -26,13 +26,11 @@ export async function syncServiceCertificate(customerId: string) {
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
-  if (!customer) return { created: false }
+  if (!customer) return { created: false as const }
 
   const totalFromCollections = Number((collectionRows[0] as { total?: number })?.total) || 0
   const totalWaste =
     totalFromCollections > 0 ? totalFromCollections : Number(customer.totalWasteCollected) || 0
-
-  if (totalWaste <= 0) return { created: false }
 
   const id = serviceCertificateId(customerId)
   const existing = await sql`SELECT id FROM "Certificate" WHERE id = ${id} LIMIT 1`
@@ -42,7 +40,10 @@ export async function syncServiceCertificate(customerId: string) {
   const fy = getIndianFiscalYear()
   const certNum = certificateNumber(customerId)
   const name = "Certificate of Services"
-  const description = `In recognition of commitment to Buffindia - Cigarette Waste Litter Free India Campaign. Cumulative waste ${totalWaste.toFixed(2)} kg (${fy}) upcycled into eco-friendly products.`
+  const description =
+    totalWaste > 0
+      ? `In recognition of commitment to Buffindia - Cigarette Waste Litter Free India Campaign. Cumulative waste ${totalWaste.toFixed(2)} kg (${fy}) upcycled into eco-friendly products.`
+      : `In recognition of partnership with Buffindia - Cigarette Waste Litter Free India Campaign (${fy}).`
   const certNumber = `BUFF-COS-${certNum}-${customerId}`
 
   if (existing.length > 0) {
@@ -57,7 +58,7 @@ export async function syncServiceCertificate(customerId: string) {
           "issuedBy" = ${"Buffindia Receptacles Pvt Ltd"}
       WHERE id = ${id}
     `
-    return { created: false, updated: true, id, totalWaste, companyName, address, fy, certNumber }
+    return { created: false as const, updated: true as const, id, totalWaste, companyName, address, fy, certNumber }
   }
 
   await sql`
@@ -77,7 +78,7 @@ export async function syncServiceCertificate(customerId: string) {
     )
   `
 
-  return { created: true, id, totalWaste, companyName, address, fy, certNumber }
+  return { created: true as const, id, totalWaste, companyName, address, fy, certNumber }
 }
 
 export async function syncKraftRebornCertificate(

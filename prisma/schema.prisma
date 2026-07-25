@@ -12,51 +12,75 @@ datasource db {
 }
 
 model Customer {
-  id                  String        @id @default(cuid())
-  email               String        @unique
-  password            String
-  companyName         String
-  contactPerson       String?
-  phone               String?
-  address             String?
-  industry            String?
-  employeeCount       Int?          @default(0)
-  joinDate            DateTime      @default(now())
-  status              String        @default("Active")
-  disposalUnitInstalled Int         @default(0)
-  
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  password              String
+  companyName           String // Brand Name
+  tradeName             String?
+  city                  String?
+  state                 String?
+  lsuName               String?
+  lsuTechnicianName     String?
+  operationsIncharge    String?
+  primaryPocName        String?
+  primaryPocEmail       String?
+  primaryPocNumber      String?
+  primaryPocDesignation String?
+  collectionPocs        String? // JSON: [{name,email,number,designation}]
+  serviceStartDate      DateTime?
+  noOfKiosk             Int      @default(0)
+  noOfBasicKiosk        Int      @default(0)
+  noOfAdvanceKiosk      Int      @default(0)
+  noOfPanVendorKiosk    Int      @default(0)
+  noOfWallMountKiosk    Int      @default(0)
+  collectionFrequency   String?
+
+  gstin   String?
+  logoUrl String?
+
+  contactPerson String?
+  phone         String?
+  address       String?
+  industry      String?
+  employeeCount Int?     @default(0)
+  joinDate      DateTime @default(now())
+  status        String   @default("Active")
+  disposalUnitInstalled Int @default(0)
+
   // Group / Parent-Child: Group clients can access all child companies
-  isGroup             Boolean       @default(false)
-  parentCustomerId    String?
-  parentCustomer      Customer?     @relation("CustomerHierarchy", fields: [parentCustomerId], references: [id], onDelete: SetNull)
-  childCustomers      Customer[]    @relation("CustomerHierarchy")
-  
+  isGroup          Boolean   @default(false)
+  parentCustomerId String?
+  parentCustomer   Customer? @relation("CustomerHierarchy", fields: [parentCustomerId], references: [id], onDelete: SetNull)
+  childCustomers   Customer[] @relation("CustomerHierarchy")
+
   // Impact Metrics
-  totalWasteCollected Float         @default(0)
-  cigaretteButtsCollected Float     @default(0)
-  microplasticsUpcycled Float       @default(0)
-  waterResourcesProtected Float     @default(0)
-  pendingCollection   Float         @default(0)
-  certificatesEarned  Int           @default(0)
-  co2Saved            Float         @default(0)
-  kraftrebornCredits  Float         @default(0)
-  treesEquivalent     Int           @default(0)
-  monthlyTarget       Float         @default(0)
-  
-  profileImageUrl     String?
-  notes               String?
-  
+  totalWasteCollected     Float @default(0)
+  cigaretteButtsCollected Float @default(0)
+  microplasticsUpcycled   Float @default(0)
+  waterResourcesProtected Float @default(0)
+  pendingCollection       Float @default(0)
+  certificatesEarned      Int   @default(0)
+  co2Saved                Float @default(0)
+  kraftrebornCredits      Float @default(0)
+  treesEquivalent         Int   @default(0)
+  monthlyTarget           Float @default(0)
+
+  profileImageUrl String?
+  notes           String?
+
   // Relations
-  collections         Collection[]
-  certificates        Certificate[]
-  reports             Report[]
-  notifications       Notification[]
-  shopOrders          ShopOrder[]
-  
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  collections   Collection[]
+  certificates  Certificate[]
+  reports       Report[]
+  notifications Notification[]
+  shopOrders    ShopOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
+  @@index([state])
+  @@index([city])
 }
 
 model Notification {
@@ -132,6 +156,27 @@ model GlobalImpact {
   treesEquivalent  Int      @default(0)
   co2Prevented     Float    @default(0)
   updatedAt        DateTime @updatedAt
+}
+
+/// Editable email copy (ESG report, etc.)
+model EmailTemplate {
+  id        String   @id // e.g. "esg_report"
+  subject   String
+  payload   String // JSON of editable text blocks
+  updatedAt DateTime @updatedAt
+}
+
+/// LSU Name + Technician pairs for customer form dropdowns
+model LsuTeam {
+  id             String   @id @default(cuid())
+  lsuName        String   @unique
+  technicianName String
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([active])
 }
 
 model Product {

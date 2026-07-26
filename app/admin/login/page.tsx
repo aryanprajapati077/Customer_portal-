@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { AdminAuthShell } from "@/components/admin/admin-auth-shell"
@@ -21,6 +21,7 @@ function AdminLoginForm() {
   const [step, setStep] = useState<"credentials" | "totp">("credentials")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const autoSubmitted = useRef("")
 
   const finishLogin = () => {
     router.push(nextPath)
@@ -53,25 +54,37 @@ function AdminLoginForm() {
     }
   }
 
-  const onSubmitTotp = async () => {
+  const onSubmitTotp = async (overrideCode?: string) => {
+    const code = (overrideCode ?? totpCode).trim()
+    if (code.length !== 6 || isSubmitting) return
     setIsSubmitting(true)
     setError(null)
     try {
       const res = await fetch("/api/admin/verify-2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ totpCode }),
+        body: JSON.stringify({ totpCode: code }),
       })
       const data = await res.json()
       if (!data?.success) {
         setError(data?.error || "Invalid code")
+        autoSubmitted.current = ""
         return
       }
       finishLogin()
     } catch {
       setError("Network error")
+      autoSubmitted.current = ""
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const onTotpChange = (value: string) => {
+    setTotpCode(value)
+    if (value.length === 6 && autoSubmitted.current !== value) {
+      autoSubmitted.current = value
+      void onSubmitTotp(value)
     }
   }
 
@@ -142,7 +155,7 @@ function AdminLoginForm() {
               Code for <strong className="text-[#1B7339]">{email}</strong>
             </div>
             <div className="flex justify-center py-2">
-              <InputOTP maxLength={6} value={totpCode} onChange={setTotpCode}>
+              <InputOTP maxLength={6} value={totpCode} onChange={onTotpChange} autoFocus>
                 <InputOTPGroup>
                   {[0, 1, 2, 3, 4, 5].map((i) => (
                     <InputOTPSlot key={i} index={i} className="h-12 w-10 text-base" />
@@ -152,7 +165,7 @@ function AdminLoginForm() {
             </div>
             <Button
               className="h-12 w-full rounded-full bg-[#1B7339] text-[15px] font-semibold hover:bg-[#145a2c]"
-              onClick={onSubmitTotp}
+              onClick={() => onSubmitTotp()}
               disabled={isSubmitting || totpCode.length !== 6}
             >
               {isSubmitting ? (
@@ -169,6 +182,7 @@ function AdminLoginForm() {
                 setStep("credentials")
                 setTotpCode("")
                 setError(null)
+                autoSubmitted.current = ""
               }}
             >
               ← Back to sign in

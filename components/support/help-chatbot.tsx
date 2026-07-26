@@ -170,7 +170,7 @@ export function HelpChatbot() {
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              "flex h-[min(88vh,640px)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden",
+              "flex h-[min(88vh,640px)] w-[min(calc(100%-2rem),400px)] flex-col overflow-hidden",
               "rounded-[24px] border border-[#DCE8DC] bg-[#F7F6F2] shadow-[0_24px_60px_rgba(15,40,20,0.22)]",
             )}
             role="dialog"

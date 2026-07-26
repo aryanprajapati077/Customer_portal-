@@ -33,7 +33,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-[#D9D6CF] bg-[#141414] py-12 text-white sm:py-16 lg:py-20">
+    <footer className="overflow-x-clip border-t border-[#D9D6CF] bg-[#141414] py-12 text-white sm:py-16 lg:py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 grid grid-cols-1 gap-8 sm:mb-16 sm:grid-cols-2 lg:grid-cols-6 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-2">
@@ -162,8 +162,8 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-8 w-screen border-t border-white/10 px-4 pt-10 sm:mt-10 sm:px-6 sm:pt-12 lg:px-8">
-        <span className="block font-[family-name:var(--font-display)] text-[18vw] font-normal leading-[0.85] tracking-tight text-white/90 sm:text-[16vw] lg:text-[14vw]">
+      <div className="mt-8 overflow-hidden border-t border-white/10 px-4 pt-10 sm:mt-10 sm:px-6 sm:pt-12 lg:px-8">
+        <span className="block max-w-full truncate font-[family-name:var(--font-display)] text-[clamp(2.75rem,12vw,11rem)] font-normal leading-[0.85] tracking-tight text-white/90">
           Buff<em className="italic text-[#C8F000]">India</em>
         </span>
       </div>

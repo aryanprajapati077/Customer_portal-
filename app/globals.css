@@ -7,6 +7,16 @@ nextjs-portal {
   right: 12px !important;
 }
 
+/* Prevent slight horizontal scroll on Windows laptops (100vw includes scrollbar gutter) */
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Premium white theme with orange and green accents for Buffindia ESG */
@@ -308,6 +318,8 @@ nextjs-portal {
   --l-soft: #e8f5e9;
   background: var(--l-bg);
   color: var(--l-ink);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .landing-display {

@@ -10,7 +10,7 @@ import { Footer } from "@/components/footer"
 
 export default function Home() {
   return (
-    <main className="landing-root min-h-screen overflow-x-hidden">
+    <main className="landing-root min-h-screen overflow-x-clip">
       <Navbar />
       <LandingHero />
       <LandingPartners />

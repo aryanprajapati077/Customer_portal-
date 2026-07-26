@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAdminSession } from "@/lib/admin-auth-server"
-import { generateTotpSecret, getTotpUri, verifyTotp } from "@/lib/admin-totp"
+import { generateTotpSecret, getTotpUri, totpQrDataUrl, verifyTotp } from "@/lib/admin-totp"
 
 export async function GET(request: NextRequest) {
   const session = await requireAdminSession(request)
@@ -11,14 +11,20 @@ export async function GET(request: NextRequest) {
 
   const user = await prisma.adminUser.findUnique({
     where: { id: session.id },
-    select: { totpEnabled: true, email: true, name: true },
+    select: { totpEnabled: true },
   })
 
-  return NextResponse.json({
-    success: true,
-    totpEnabled: user?.totpEnabled ?? false,
-    email: user?.email,
-  })
+  return NextResponse.json(
+    {
+      success: true,
+      totpEnabled: user?.totpEnabled ?? false,
+    },
+    {
+      headers: {
+        "Cache-Control": "private, max-age=5",
+      },
+    },
+  )
 }
 
 export async function POST(request: NextRequest) {
@@ -33,17 +39,23 @@ export async function POST(request: NextRequest) {
 
     if (action === "setup") {
       const secret = generateTotpSecret()
-      await prisma.adminUser.update({
-        where: { id: session.id },
-        data: { totpSecret: secret, totpEnabled: false },
-      })
       const uri = getTotpUri(secret, session.email)
-      return NextResponse.json({ success: true, secret, uri })
+      const [qrDataUrl] = await Promise.all([
+        totpQrDataUrl(uri),
+        prisma.adminUser.update({
+          where: { id: session.id },
+          data: { totpSecret: secret, totpEnabled: false },
+        }),
+      ])
+      return NextResponse.json({ success: true, secret, uri, qrDataUrl })
     }
 
     if (action === "enable") {
       const code = String(body.code || "").trim()
-      const user = await prisma.adminUser.findUnique({ where: { id: session.id } })
+      const user = await prisma.adminUser.findUnique({
+        where: { id: session.id },
+        select: { totpSecret: true },
+      })
       if (!user?.totpSecret) {
         return NextResponse.json({ success: false, error: "Run setup first" }, { status: 400 })
       }
@@ -59,7 +71,10 @@ export async function POST(request: NextRequest) {
 
     if (action === "disable") {
       const code = String(body.code || "").trim()
-      const user = await prisma.adminUser.findUnique({ where: { id: session.id } })
+      const user = await prisma.adminUser.findUnique({
+        where: { id: session.id },
+        select: { totpSecret: true, totpEnabled: true },
+      })
       if (!user?.totpSecret || !user.totpEnabled) {
         return NextResponse.json({ success: false, error: "Authenticator not enabled" }, { status: 400 })
       }

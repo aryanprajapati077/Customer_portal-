@@ -22,7 +22,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Session expired. Sign in again." }, { status: 401 })
     }
 
-    const admin = await prisma.adminUser.findUnique({ where: { id: adminId } })
+    const admin = await prisma.adminUser.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        active: true,
+        totpEnabled: true,
+        totpSecret: true,
+      },
+    })
     if (!admin || !admin.active || !admin.totpEnabled || !admin.totpSecret) {
       return NextResponse.json({ success: false, error: "Invalid session" }, { status: 401 })
     }
@@ -32,10 +43,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid authenticator code" }, { status: 401 })
     }
 
-    await prisma.adminUser.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
-    })
+    // Don't block 2FA response on last-login bookkeeping
+    void prisma.adminUser
+      .update({
+        where: { id: admin.id },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch(() => {})
 
     const token = await signAdminSession(admin.id, admin.role)
     const response = NextResponse.json({

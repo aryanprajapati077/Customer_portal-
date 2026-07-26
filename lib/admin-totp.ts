@@ -1,3 +1,5 @@
+import QRCode from "qrcode"
+
 const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 
 function base32Decode(input: string): Uint8Array {
@@ -24,10 +26,9 @@ function randomBase32(length = 32): string {
   return [...arr].map((b) => BASE32[b % 32]).join("")
 }
 
-async function hotp(secret: Uint8Array, counter: bigint): Promise<string> {
+async function hotpWithKey(key: CryptoKey, counter: bigint): Promise<string> {
   const buf = new ArrayBuffer(8)
   new DataView(buf).setBigUint64(0, counter, false)
-  const key = await crypto.subtle.importKey("raw", secret, { name: "HMAC", hash: "SHA-1" }, false, ["sign"])
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, buf))
   const offset = sig[sig.length - 1]! & 0x0f
   const code =
@@ -54,13 +55,29 @@ export function getTotpUri(secret: string, email: string, issuer = "Buffindia Ad
   return `otpauth://totp/${label}?${params.toString()}`
 }
 
+export async function totpQrDataUrl(uri: string): Promise<string> {
+  return QRCode.toDataURL(uri, {
+    width: 180,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#141414", light: "#FFFFFF" },
+  })
+}
+
 export async function verifyTotp(secret: string, token: string, window = 1): Promise<boolean> {
   const code = token.replace(/\s/g, "")
   if (!/^\d{6}$/.test(code)) return false
-  const key = base32Decode(secret)
+  const keyBytes = base32Decode(secret)
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"],
+  )
   const step = BigInt(Math.floor(Date.now() / 30_000))
   for (let w = -window; w <= window; w++) {
-    const expected = await hotp(key, step + BigInt(w))
+    const expected = await hotpWithKey(cryptoKey, step + BigInt(w))
     if (expected === code) return true
   }
   return false

@@ -108,37 +108,33 @@ export function ImpactCircular({ metrics }: ImpactCircularProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4">
-        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 items-start">
+        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
           <h3 className="text-[15px] font-semibold text-[#1A1A1A] mb-4">
             Circular Journey: From Cigarette Waste to Sustainable Products
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 relative flex-1 content-start">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-4 relative">
             {JOURNEY.map((step, idx) => (
               <motion.div
                 key={step.title}
-                className="relative flex flex-col items-center text-center h-full min-h-[132px]"
-                initial={{ opacity: 0, y: 12 }}
+                className="relative flex flex-col items-center text-center"
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.08, duration: 0.45 }}
-                whileHover={{ y: -3 }}
+                transition={{ delay: idx * 0.06, duration: 0.35 }}
+                whileHover={{ y: -2 }}
               >
                 {idx < JOURNEY.length - 1 && (
                   <div className="hidden sm:block absolute top-5 left-[60%] w-[80%] h-px bg-[#C8E6C9]" />
                 )}
-                <motion.div
-                  className="relative z-10 w-10 h-10 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] flex items-center justify-center mb-2"
-                  animate={{ scale: [1, 1.06, 1] }}
-                  transition={{ duration: 2.8, delay: idx * 0.25, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <div className="relative z-10 w-10 h-10 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] flex items-center justify-center mb-2">
                   <step.icon className="w-4 h-4 text-[#2E7D32]" />
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#2E7D32] text-white text-[9px] font-bold flex items-center justify-center">
                     {step.n}
                   </span>
-                </motion.div>
+                </div>
                 <p className="text-[13px] font-semibold text-[#1A1A1A]">{step.title}</p>
-                <p className="text-[11px] text-[#7A7A7A] mt-1 leading-snug flex-1">{step.desc}</p>
+                <p className="text-[11px] text-[#7A7A7A] mt-1 leading-snug">{step.desc}</p>
               </motion.div>
             ))}
           </div>

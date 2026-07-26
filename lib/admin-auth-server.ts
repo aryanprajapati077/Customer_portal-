@@ -46,8 +46,22 @@ export async function ensureSuperAdmin() {
 }
 
 export async function findAdminByEmail(email: string) {
+  const normalized = email.toLowerCase().trim()
+  const select = {
+    id: true,
+    email: true,
+    name: true,
+    role: true,
+    active: true,
+    passwordHash: true,
+    totpEnabled: true,
+    totpSecret: true,
+  } as const
+  const existing = await prisma.adminUser.findUnique({ where: { email: normalized }, select })
+  if (existing) return existing
+  // Only bootstrap super-admin when the account is missing (first boot).
   await ensureSuperAdmin()
-  return prisma.adminUser.findUnique({ where: { email: email.toLowerCase().trim() } })
+  return prisma.adminUser.findUnique({ where: { email: normalized }, select })
 }
 
 export async function requireAdminSession(request: Request): Promise<AdminSession | null> {

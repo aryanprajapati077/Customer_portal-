@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,18 +12,26 @@ export default function AdminSecurityPage() {
   const [loading, setLoading] = useState(true)
   const [setupUri, setSetupUri] = useState<string | null>(null)
   const [setupSecret, setSetupSecret] = useState<string | null>(null)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const autoSubmitted = useRef("")
 
   useEffect(() => {
+    let cancelled = false
     fetch("/api/admin/totp")
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setTotpEnabled(d.totpEnabled)
+        if (!cancelled && d.success) setTotpEnabled(Boolean(d.totpEnabled))
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const startSetup = async () => {
@@ -40,6 +48,7 @@ export default function AdminSecurityPage() {
       if (!res.ok) throw new Error(data.error || "Setup failed")
       setSetupUri(data.uri)
       setSetupSecret(data.secret)
+      setQrDataUrl(data.qrDataUrl || null)
       setMessage(
         "Scan the QR code or enter the secret manually in your authenticator app, then enter the code below.",
       )
@@ -50,37 +59,43 @@ export default function AdminSecurityPage() {
     }
   }
 
-  const enableTotp = async () => {
+  const enableTotp = async (overrideCode?: string) => {
+    const useCode = (overrideCode ?? code).trim()
+    if (useCode.length !== 6 || busy) return
     setBusy(true)
     setError("")
     try {
       const res = await fetch("/api/admin/totp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "enable", code }),
+        body: JSON.stringify({ action: "enable", code: useCode }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Invalid code")
       setTotpEnabled(true)
       setSetupUri(null)
       setSetupSecret(null)
+      setQrDataUrl(null)
       setCode("")
       setMessage("Authenticator is now enabled. You will need a code each time you sign in.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed")
+      autoSubmitted.current = ""
     } finally {
       setBusy(false)
     }
   }
 
-  const disableTotp = async () => {
+  const disableTotp = async (overrideCode?: string) => {
+    const useCode = (overrideCode ?? code).trim()
+    if (useCode.length !== 6 || busy) return
     setBusy(true)
     setError("")
     try {
       const res = await fetch("/api/admin/totp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "disable", code }),
+        body: JSON.stringify({ action: "disable", code: useCode }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Invalid code")
@@ -89,15 +104,26 @@ export default function AdminSecurityPage() {
       setMessage("Authenticator disabled.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed")
+      autoSubmitted.current = ""
     } finally {
       setBusy(false)
     }
   }
 
+  const onCodeChange = (value: string) => {
+    setCode(value)
+    if (value.length !== 6 || busy) return
+    if (autoSubmitted.current === value) return
+    autoSubmitted.current = value
+    if (setupUri && !totpEnabled) void enableTotp(value)
+    else if (totpEnabled) void disableTotp(value)
+  }
+
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1B7339]" />
+      <div className="mx-auto max-w-xl space-y-6 animate-pulse">
+        <div className="h-8 w-48 rounded bg-[#E8EEE9]" />
+        <div className="h-40 rounded-2xl border border-[#E5E5E5] bg-white" />
       </div>
     )
   }
@@ -154,7 +180,10 @@ export default function AdminSecurityPage() {
               <div className="flex justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(setupUri)}`}
+                  src={
+                    qrDataUrl ||
+                    `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(setupUri)}`
+                  }
                   alt="Authenticator QR code"
                   width={180}
                   height={180}
@@ -168,7 +197,7 @@ export default function AdminSecurityPage() {
               <div className="space-y-2">
                 <Label>Verification code</Label>
                 <div className="flex justify-center">
-                  <InputOTP maxLength={6} value={code} onChange={setCode}>
+                  <InputOTP maxLength={6} value={code} onChange={onCodeChange}>
                     <InputOTPGroup>
                       {[0, 1, 2, 3, 4, 5].map((i) => (
                         <InputOTPSlot key={i} index={i} className="h-11 w-10" />
@@ -179,9 +208,10 @@ export default function AdminSecurityPage() {
               </div>
               <Button
                 className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
-                onClick={enableTotp}
+                onClick={() => enableTotp()}
                 disabled={busy || code.length !== 6}
               >
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Enable authenticator
               </Button>
             </div>
@@ -192,7 +222,7 @@ export default function AdminSecurityPage() {
               <div className="space-y-2">
                 <Label>Enter current code to disable</Label>
                 <div className="flex justify-center">
-                  <InputOTP maxLength={6} value={code} onChange={setCode}>
+                  <InputOTP maxLength={6} value={code} onChange={onCodeChange}>
                     <InputOTPGroup>
                       {[0, 1, 2, 3, 4, 5].map((i) => (
                         <InputOTPSlot key={i} index={i} className="h-11 w-10" />
@@ -204,9 +234,10 @@ export default function AdminSecurityPage() {
               <Button
                 variant="destructive"
                 className="rounded-full"
-                onClick={disableTotp}
+                onClick={() => disableTotp()}
                 disabled={busy || code.length !== 6}
               >
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Disable authenticator
               </Button>
             </div>

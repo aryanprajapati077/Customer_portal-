@@ -57,10 +57,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await prisma.adminUser.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
-    })
+    // Don't block login response on last-login bookkeeping
+    void prisma.adminUser
+      .update({
+        where: { id: admin.id },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch(() => {})
 
     const token = await signAdminSession(admin.id, admin.role)
     const response = NextResponse.json({

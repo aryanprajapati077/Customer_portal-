@@ -57,8 +57,8 @@ export async function generateServiceCertificatePdf(customerId: string, certific
 
   const data = {
     certificateNumber,
-    companyName: customer.companyName,
-    location,
+    companyName: customer.companyName?.trim() || customer.tradeName?.trim() || "Partner Organization",
+    location: location || "India",
     fiscalYear: getIndianFiscalYear(),
     totalWasteKg: totalWaste,
     co2PreventedKg,
@@ -66,9 +66,9 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     recycledPercent: 99,
     peopleImpacted,
     issuedBy: "Ketan Prajapati",
-    issueDate: formatInstallDate(new Date().toISOString()),
+    issueDate: formatInstallDate(new Date().toISOString()) || new Date().toLocaleDateString("en-IN"),
     validTill: "Lifetime",
-    customerId: formatCustomerCode(customer.id),
+    customerId: formatCustomerCode(customer.id) || customer.id,
     logoUrl: resolveLogoForPdf(customer.logoUrl),
     verifyUrl,
     phone: customer.phone || "+91 63595 66528",

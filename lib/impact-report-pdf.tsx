@@ -356,24 +356,40 @@ function Brain({ size = 14, color = GREEN }: { size?: number; color?: string }) 
 function GlobeArt({ size = 48 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 64 64">
-      <Circle cx="32" cy="32" r="18" stroke={GREEN} strokeWidth={1.6} fill="none" />
-      <Path d="M14 32h36M32 14c5 5 5 31 0 36M32 14c-5 5-5 31 0 36" stroke={GREEN} strokeWidth={1.3} fill="none" />
-      <Path d="M24 48c2-6 6-9 8-10 2 1 6 4 8 10" stroke={GREEN} strokeWidth={1.4} fill="none" />
-      <Path d="M28 42c0-4 2-7 4-8 2 1 4 4 4 8" stroke={GREEN_MID} strokeWidth={1.2} fill="none" />
-      <Path d="M22 50h20" stroke={GREEN} strokeWidth={1.3} fill="none" />
-      <Path d="M40 22c3-1 6 0 8 2M18 26c2-3 5-4 8-3" stroke={GREEN_MID} strokeWidth={1.1} fill="none" />
+      {/* soft fill */}
+      <Circle cx="32" cy="32" r="22" fill="#E8F5E9" />
+      <Circle cx="32" cy="32" r="22" stroke={GREEN} strokeWidth={1.8} fill="none" />
+      {/* longitude */}
+      <Path d="M32 10c6 8 6 36 0 44M32 10c-6 8-6 36 0 44" stroke="#81C784" strokeWidth={1.1} fill="none" />
+      <Path d="M10 32h44" stroke="#81C784" strokeWidth={1.1} fill="none" />
+      {/* latitudes */}
+      <Path d="M14 22c6-4 30-4 36 0" stroke="#81C784" strokeWidth={1} fill="none" />
+      <Path d="M14 42c6 4 30 4 36 0" stroke="#81C784" strokeWidth={1} fill="none" />
+      {/* simplified continents */}
+      <Path
+        d="M18 24c3-4 8-5 12-2 2 2 3 5 2 8-1 3 1 5 4 6-4 1-8-1-11-4-3-3-5-6-7-8z"
+        fill={GREEN}
+      />
+      <Path
+        d="M34 20c5-2 10 0 12 4 2 3 1 7-1 9-3 3-2 7 1 9-4 2-9 1-12-3-3-4-4-12 0-19z"
+        fill={GREEN_MID}
+      />
+      <Path
+        d="M22 40c3 1 6 1 8-1 2 3 5 5 9 4-1 4-5 7-9 6-5 0-8-4-8-9z"
+        fill={GREEN}
+      />
     </Svg>
   )
 }
 
-function Brand({ width = 88 }: { width?: number }) {
+function Brand({ width = 108 }: { width?: number }) {
   return (
     <View style={{ alignItems: "flex-end" }}>
       <Image
         src={asset("buffindia-logo-clear.png")}
-        style={{ width, height: width * 0.24, objectFit: "contain" }}
+        style={{ width, height: width * 0.34, objectFit: "contain" }}
       />
-      <Text style={[styles.brandSub, { marginTop: 3 }]}>CIGARETTE WASTE MANAGEMENT</Text>
+      <Text style={[styles.brandSub, { marginTop: 2 }]}>CIGARETTE WASTE MANAGEMENT</Text>
     </View>
   )
 }

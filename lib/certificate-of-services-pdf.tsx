@@ -449,7 +449,7 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
               <View>
                 <Image
                   src={asset("buffindia-logo-clear.png")}
-                  style={{ width: 120, height: 28, objectFit: "contain" }}
+                  style={{ width: 148, height: 50, objectFit: "contain" }}
                 />
                 <Text style={styles.brandSub}>CIGARETTE WASTE MANAGEMENT</Text>
               </View>
@@ -493,13 +493,13 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
                 ) : null}
 
                 <Text style={styles.metaLabel}>CERTIFICATE NO.</Text>
-                <Text style={styles.metaValue}>{data.certificateNumber}</Text>
+                <Text style={styles.metaValue}>{data.certificateNumber || "BUFF-CEP-000"}</Text>
                 <Text style={styles.metaLabel}>DATE OF ISSUE</Text>
-                <Text style={styles.metaValue}>{data.issueDate}</Text>
+                <Text style={styles.metaValue}>{data.issueDate || "—"}</Text>
                 <Text style={styles.metaLabel}>VALID TILL</Text>
-                <Text style={styles.metaValue}>{data.validTill}</Text>
+                <Text style={styles.metaValue}>{data.validTill || "Lifetime"}</Text>
                 <Text style={styles.metaLabel}>CUSTOMER ID</Text>
-                <Text style={styles.metaValue}>{data.customerId}</Text>
+                <Text style={styles.metaValue}>{data.customerId || "—"}</Text>
                 <Text style={styles.metaLabel}>LOCATION(S)</Text>
                 <Text style={styles.metaValue}>{data.location || "India"}</Text>
               </View>
@@ -509,7 +509,7 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
                 <View style={styles.goldRule} />
                 <Text style={styles.subtitle}>OF CLEAN ENVIRONMENTAL PARTNERSHIP</Text>
                 <Text style={styles.certify}>This is to certify that</Text>
-                <Text style={styles.orgName}>{data.companyName}</Text>
+                <Text style={styles.orgName}>{data.companyName || "Partner Organization"}</Text>
                 <Text style={styles.narrative}>
                   is an esteemed partner of Buffindia Receptacles Pvt. Ltd. for responsible cigarette
                   waste management. Through this partnership, they have contributed to a cleaner

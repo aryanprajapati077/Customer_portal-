@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Resend } from "resend"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
+import { sql } from "@/lib/db"
+import { saveBase64Image } from "@/lib/upload"
 
 function mapStatus(status: string) {
   const s = (status || "").toLowerCase()
@@ -11,8 +13,13 @@ function mapStatus(status: string) {
   return status || "Open"
 }
 
+async function ensureSupportAttachmentColumn() {
+  await sql.query(`ALTER TABLE "SupportTicket" ADD COLUMN IF NOT EXISTS "attachmentUrl" TEXT`)
+}
+
 export async function GET(request: Request) {
   try {
+    await ensureSupportAttachmentColumn()
     const { searchParams } = new URL(request.url)
     const email = String(searchParams.get("email") || "")
       .trim()
@@ -33,14 +40,18 @@ export async function GET(request: Request) {
       take: 50,
     })
 
+    // attachmentUrl may exist in DB even if older Prisma client types omit it
+    const withAttachments = tickets as Array<(typeof tickets)[number] & { attachmentUrl?: string | null }>
+
     return NextResponse.json({
       ok: true,
-      tickets: tickets.map((t) => ({
+      tickets: withAttachments.map((t) => ({
         id: t.id,
         displayId: `#SUP-${t.id.slice(-4).toUpperCase()}`,
         subject: t.subject,
         status: mapStatus(t.status),
         createdAt: t.createdAt.toISOString(),
+        attachmentUrl: t.attachmentUrl || null,
       })),
     })
   } catch (err) {
@@ -51,6 +62,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureSupportAttachmentColumn()
     const body = await request.json()
     const subject = String(body.subject || "").trim()
     const message = String(body.message || "").trim()
@@ -59,6 +71,8 @@ export async function POST(request: Request) {
     let name = String(body.name || "Portal User").trim()
     let email = String(body.email || "").trim()
     const customerId = body.customerId ? String(body.customerId) : null
+    const attachmentBase64 = body.attachmentBase64 ? String(body.attachmentBase64) : ""
+    const attachmentName = body.attachmentName ? String(body.attachmentName) : "attachment"
 
     if (!subject || !message) {
       return NextResponse.json({ error: "Subject and message are required" }, { status: 400 })
@@ -79,22 +93,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
+    let attachmentUrl: string | null = null
+    if (attachmentBase64.startsWith("data:")) {
+      try {
+        if (attachmentBase64.startsWith("data:image/")) {
+          const saved = await saveBase64Image(attachmentBase64, "logos", `ticket-${Date.now()}`)
+          attachmentUrl = saved.url
+        } else {
+          // PDF / other: keep data URL (capped) so admin can still download
+          attachmentUrl =
+            attachmentBase64.length > 900_000 ? attachmentBase64.slice(0, 900_000) : attachmentBase64
+        }
+      } catch (err) {
+        console.error("Ticket attachment save failed:", err)
+        attachmentUrl = attachmentBase64.length > 900_000 ? attachmentBase64.slice(0, 900_000) : attachmentBase64
+      }
+    }
+
     const ticket = await prisma.supportTicket.create({
       data: {
         customerId,
         name,
         email,
         subject,
-        message,
+        message: attachmentUrl
+          ? `${message}\n\n[Attachment: ${attachmentName}]`
+          : message,
         category,
         source,
         status: "open",
       },
     })
 
+    if (attachmentUrl) {
+      await sql.query(`UPDATE "SupportTicket" SET "attachmentUrl" = $1 WHERE id = $2`, [
+        attachmentUrl,
+        ticket.id,
+      ])
+    }
+
     const ticketId = ticket.id.slice(-8).toUpperCase()
 
-    // Customer confirmation
     await sendNotificationEmail({
       templateId: "support_ticket_received",
       to: email,
@@ -107,7 +146,6 @@ export async function POST(request: Request) {
       },
     }).catch((err) => console.error("Support received email failed:", err))
 
-    // Admin notify (simple text)
     const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_FROM
     const resendKey = process.env.RESEND_API_KEY
     if (resendKey && adminEmail) {
@@ -119,7 +157,7 @@ export async function POST(request: Request) {
           to: adminEmail,
           replyTo: email,
           subject: `[Support] ${subject}`,
-          text: `New support ticket (#${ticketId})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\n\n${message}`,
+          text: `New support ticket (#${ticketId})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\nAttachment: ${attachmentUrl ? "Yes" : "No"}\n\n${message}`,
         })
         .catch(() => {})
     }

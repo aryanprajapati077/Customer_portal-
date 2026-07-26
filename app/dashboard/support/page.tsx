@@ -43,6 +43,9 @@ export default function SupportPage() {
   const [submitted, setSubmitted] = useState(false)
   const [tickets, setTickets] = useState<TicketRow[]>([])
   const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [attachmentName, setAttachmentName] = useState("")
+  const [attachmentBase64, setAttachmentBase64] = useState("")
+  const [attachmentError, setAttachmentError] = useState("")
 
   const loadTickets = useCallback(async () => {
     if (!customer?.email && !customer?.id) return
@@ -79,12 +82,17 @@ export default function SupportPage() {
           message,
           category: "general",
           source: "portal-support",
+          attachmentBase64: attachmentBase64 || undefined,
+          attachmentName: attachmentName || undefined,
         }),
       })
       if (!res.ok) throw new Error("Failed")
       setSubmitted(true)
       setSubject("")
       setMessage("")
+      setAttachmentName("")
+      setAttachmentBase64("")
+      setAttachmentError("")
       await loadTickets()
     } catch {
       alert("Could not submit ticket. Please try again or email support@buffindia.com.")
@@ -147,14 +155,58 @@ export default function SupportPage() {
                     required
                   />
                 </div>
-                <div className="rounded-xl border border-dashed border-[#C8C8C8] bg-[#FAFAFA] px-4 py-4 flex items-center gap-3">
-                  <Paperclip className="w-4 h-4 text-[#1B7339]" />
-                  <div>
-                    <p className="text-[12px] font-medium text-[#4A4A4A]">
-                      Attach file or image (optional)
-                    </p>
-                    <p className="text-[11px] text-[#8A8A8A]">JPG, PNG, PDF up to 5MB</p>
-                  </div>
+                <div>
+                  <label className="text-[12px] font-medium text-[#4A4A4A]">Attachment (optional)</label>
+                  <label className="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#C8C8C8] bg-[#FAFAFA] px-4 py-4 hover:border-[#1B7339]/50 hover:bg-[#F4F9F5]">
+                    <Paperclip className="w-4 h-4 text-[#1B7339]" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-medium text-[#4A4A4A]">
+                        {attachmentName || "Attach file or image"}
+                      </p>
+                      <p className="text-[11px] text-[#8A8A8A]">JPG, PNG, WEBP, PDF up to 5MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="sr-only"
+                      onChange={(e) => {
+                        setAttachmentError("")
+                        const file = e.target.files?.[0]
+                        if (!file) {
+                          setAttachmentName("")
+                          setAttachmentBase64("")
+                          return
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          setAttachmentError("File must be under 5MB")
+                          e.target.value = ""
+                          return
+                        }
+                        const reader = new FileReader()
+                        reader.onload = () => {
+                          setAttachmentName(file.name)
+                          setAttachmentBase64(String(reader.result || ""))
+                        }
+                        reader.onerror = () => setAttachmentError("Could not read file")
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {attachmentError ? (
+                    <p className="mt-1 text-[12px] text-red-600">{attachmentError}</p>
+                  ) : null}
+                  {attachmentName ? (
+                    <button
+                      type="button"
+                      className="mt-1 text-[12px] text-[#1B7339] hover:underline"
+                      onClick={() => {
+                        setAttachmentName("")
+                        setAttachmentBase64("")
+                      }}
+                    >
+                      Remove attachment
+                    </button>
+                  ) : null}
                 </div>
                 <button
                   type="submit"

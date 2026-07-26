@@ -121,7 +121,7 @@ export default function CheckoutPage() {
       )
 
       clearCart()
-      router.push(`/dashboard/shop/success?order=${encodeURIComponent(data.order.orderNumber)}`)
+      router.push(`/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`)
     } catch {
       setError("Network error. Please try again.")
     } finally {

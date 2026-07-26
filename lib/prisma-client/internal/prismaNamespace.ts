@@ -1674,6 +1674,8 @@ export const CustomerScalarFieldEnum = {
   employeeCount: 'employeeCount',
   joinDate: 'joinDate',
   status: 'status',
+  serviceStatus: 'serviceStatus',
+  contractEndDate: 'contractEndDate',
   disposalUnitInstalled: 'disposalUnitInstalled',
   isGroup: 'isGroup',
   parentCustomerId: 'parentCustomerId',
@@ -1802,6 +1804,7 @@ export const ProductScalarFieldEnum = {
   buttsRescued: 'buttsRescued',
   imageUrl: 'imageUrl',
   imageGradient: 'imageGradient',
+  availableColors: 'availableColors',
   allowsLogo: 'allowsLogo',
   active: 'active',
   sortOrder: 'sortOrder',
@@ -1919,6 +1922,7 @@ export const SupportTicketScalarFieldEnum = {
   category: 'category',
   status: 'status',
   source: 'source',
+  attachmentUrl: 'attachmentUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

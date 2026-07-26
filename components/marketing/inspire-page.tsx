@@ -23,15 +23,16 @@ export function InspirePage({
   cta?: { href: string; label: string }
 }) {
   return (
-    <div className="landing-root min-h-screen bg-[var(--l-cream,#F7F6F2)] text-[var(--l-ink,#141414)]">
+    <div className="landing-root relative min-h-screen overflow-x-clip bg-[var(--l-cream,#F7F6F2)] text-[var(--l-ink,#141414)]">
       <Navbar />
-      <main className="pt-24 pb-20">
-        <section className="relative overflow-hidden border-b border-black/5">
+      <main className="relative pb-20">
+        {/* Hero bleeds under the transparent fixed navbar (same as homepage) */}
+        <section className="relative overflow-hidden border-b border-black/5 pt-28 sm:pt-32">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(200,240,0,0.18),_transparent_55%),radial-gradient(ellipse_at_80%_20%,_rgba(239,108,0,0.12),_transparent_40%)]"
           />
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-14 sm:pb-20">
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}

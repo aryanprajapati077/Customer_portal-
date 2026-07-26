@@ -34,6 +34,7 @@ export type SupportTicketMinAggregateOutputType = {
   category: string | null
   status: string | null
   source: string | null
+  attachmentUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -48,6 +49,7 @@ export type SupportTicketMaxAggregateOutputType = {
   category: string | null
   status: string | null
   source: string | null
+  attachmentUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +64,7 @@ export type SupportTicketCountAggregateOutputType = {
   category: number
   status: number
   source: number
+  attachmentUrl: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +81,7 @@ export type SupportTicketMinAggregateInputType = {
   category?: true
   status?: true
   source?: true
+  attachmentUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -92,6 +96,7 @@ export type SupportTicketMaxAggregateInputType = {
   category?: true
   status?: true
   source?: true
+  attachmentUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +111,7 @@ export type SupportTicketCountAggregateInputType = {
   category?: true
   status?: true
   source?: true
+  attachmentUrl?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -193,6 +199,7 @@ export type SupportTicketGroupByOutputType = {
   category: string
   status: string
   source: string
+  attachmentUrl: string | null
   createdAt: Date
   updatedAt: Date
   _count: SupportTicketCountAggregateOutputType | null
@@ -228,6 +235,7 @@ export type SupportTicketWhereInput = {
   category?: Prisma.StringFilter<"SupportTicket"> | string
   status?: Prisma.StringFilter<"SupportTicket"> | string
   source?: Prisma.StringFilter<"SupportTicket"> | string
+  attachmentUrl?: Prisma.StringNullableFilter<"SupportTicket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"SupportTicket"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SupportTicket"> | Date | string
 }
@@ -242,6 +250,7 @@ export type SupportTicketOrderByWithRelationInput = {
   category?: Prisma.SortOrder
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -259,6 +268,7 @@ export type SupportTicketWhereUniqueInput = Prisma.AtLeast<{
   category?: Prisma.StringFilter<"SupportTicket"> | string
   status?: Prisma.StringFilter<"SupportTicket"> | string
   source?: Prisma.StringFilter<"SupportTicket"> | string
+  attachmentUrl?: Prisma.StringNullableFilter<"SupportTicket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"SupportTicket"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SupportTicket"> | Date | string
 }, "id">
@@ -273,6 +283,7 @@ export type SupportTicketOrderByWithAggregationInput = {
   category?: Prisma.SortOrder
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SupportTicketCountOrderByAggregateInput
@@ -293,6 +304,7 @@ export type SupportTicketScalarWhereWithAggregatesInput = {
   category?: Prisma.StringWithAggregatesFilter<"SupportTicket"> | string
   status?: Prisma.StringWithAggregatesFilter<"SupportTicket"> | string
   source?: Prisma.StringWithAggregatesFilter<"SupportTicket"> | string
+  attachmentUrl?: Prisma.StringNullableWithAggregatesFilter<"SupportTicket"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SupportTicket"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SupportTicket"> | Date | string
 }
@@ -307,6 +319,7 @@ export type SupportTicketCreateInput = {
   category?: string
   status?: string
   source?: string
+  attachmentUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -321,6 +334,7 @@ export type SupportTicketUncheckedCreateInput = {
   category?: string
   status?: string
   source?: string
+  attachmentUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -335,6 +349,7 @@ export type SupportTicketUpdateInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -349,6 +364,7 @@ export type SupportTicketUncheckedUpdateInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -363,6 +379,7 @@ export type SupportTicketCreateManyInput = {
   category?: string
   status?: string
   source?: string
+  attachmentUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -377,6 +394,7 @@ export type SupportTicketUpdateManyMutationInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -391,6 +409,7 @@ export type SupportTicketUncheckedUpdateManyInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -405,6 +424,7 @@ export type SupportTicketCountOrderByAggregateInput = {
   category?: Prisma.SortOrder
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -419,6 +439,7 @@ export type SupportTicketMaxOrderByAggregateInput = {
   category?: Prisma.SortOrder
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -433,6 +454,7 @@ export type SupportTicketMinOrderByAggregateInput = {
   category?: Prisma.SortOrder
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -449,6 +471,7 @@ export type SupportTicketSelect<ExtArgs extends runtime.Types.Extensions.Interna
   category?: boolean
   status?: boolean
   source?: boolean
+  attachmentUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["supportTicket"]>
@@ -463,6 +486,7 @@ export type SupportTicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   category?: boolean
   status?: boolean
   source?: boolean
+  attachmentUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["supportTicket"]>
@@ -477,6 +501,7 @@ export type SupportTicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   category?: boolean
   status?: boolean
   source?: boolean
+  attachmentUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["supportTicket"]>
@@ -491,11 +516,12 @@ export type SupportTicketSelectScalar = {
   category?: boolean
   status?: boolean
   source?: boolean
+  attachmentUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SupportTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customerId" | "name" | "email" | "subject" | "message" | "category" | "status" | "source" | "createdAt" | "updatedAt", ExtArgs["result"]["supportTicket"]>
+export type SupportTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customerId" | "name" | "email" | "subject" | "message" | "category" | "status" | "source" | "attachmentUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["supportTicket"]>
 
 export type $SupportTicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SupportTicket"
@@ -510,6 +536,7 @@ export type $SupportTicketPayload<ExtArgs extends runtime.Types.Extensions.Inter
     category: string
     status: string
     source: string
+    attachmentUrl: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["supportTicket"]>
@@ -944,6 +971,7 @@ export interface SupportTicketFieldRefs {
   readonly category: Prisma.FieldRef<"SupportTicket", 'String'>
   readonly status: Prisma.FieldRef<"SupportTicket", 'String'>
   readonly source: Prisma.FieldRef<"SupportTicket", 'String'>
+  readonly attachmentUrl: Prisma.FieldRef<"SupportTicket", 'String'>
   readonly createdAt: Prisma.FieldRef<"SupportTicket", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SupportTicket", 'DateTime'>
 }

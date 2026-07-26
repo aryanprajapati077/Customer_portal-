@@ -98,6 +98,8 @@ export type CustomerMinAggregateOutputType = {
   employeeCount: number | null
   joinDate: Date | null
   status: string | null
+  serviceStatus: string | null
+  contractEndDate: Date | null
   disposalUnitInstalled: number | null
   isGroup: boolean | null
   parentCustomerId: string | null
@@ -149,6 +151,8 @@ export type CustomerMaxAggregateOutputType = {
   employeeCount: number | null
   joinDate: Date | null
   status: string | null
+  serviceStatus: string | null
+  contractEndDate: Date | null
   disposalUnitInstalled: number | null
   isGroup: boolean | null
   parentCustomerId: string | null
@@ -200,6 +204,8 @@ export type CustomerCountAggregateOutputType = {
   employeeCount: number
   joinDate: number
   status: number
+  serviceStatus: number
+  contractEndDate: number
   disposalUnitInstalled: number
   isGroup: number
   parentCustomerId: number
@@ -293,6 +299,8 @@ export type CustomerMinAggregateInputType = {
   employeeCount?: true
   joinDate?: true
   status?: true
+  serviceStatus?: true
+  contractEndDate?: true
   disposalUnitInstalled?: true
   isGroup?: true
   parentCustomerId?: true
@@ -344,6 +352,8 @@ export type CustomerMaxAggregateInputType = {
   employeeCount?: true
   joinDate?: true
   status?: true
+  serviceStatus?: true
+  contractEndDate?: true
   disposalUnitInstalled?: true
   isGroup?: true
   parentCustomerId?: true
@@ -395,6 +405,8 @@ export type CustomerCountAggregateInputType = {
   employeeCount?: true
   joinDate?: true
   status?: true
+  serviceStatus?: true
+  contractEndDate?: true
   disposalUnitInstalled?: true
   isGroup?: true
   parentCustomerId?: true
@@ -533,6 +545,8 @@ export type CustomerGroupByOutputType = {
   employeeCount: number | null
   joinDate: Date
   status: string
+  serviceStatus: string
+  contractEndDate: Date | null
   disposalUnitInstalled: number
   isGroup: boolean
   parentCustomerId: string | null
@@ -607,6 +621,8 @@ export type CustomerWhereInput = {
   employeeCount?: Prisma.IntNullableFilter<"Customer"> | number | null
   joinDate?: Prisma.DateTimeFilter<"Customer"> | Date | string
   status?: Prisma.StringFilter<"Customer"> | string
+  serviceStatus?: Prisma.StringFilter<"Customer"> | string
+  contractEndDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   disposalUnitInstalled?: Prisma.IntFilter<"Customer"> | number
   isGroup?: Prisma.BoolFilter<"Customer"> | boolean
   parentCustomerId?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -665,6 +681,8 @@ export type CustomerOrderByWithRelationInput = {
   employeeCount?: Prisma.SortOrderInput | Prisma.SortOrder
   joinDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  serviceStatus?: Prisma.SortOrder
+  contractEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   isGroup?: Prisma.SortOrder
   parentCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -726,6 +744,8 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   employeeCount?: Prisma.IntNullableFilter<"Customer"> | number | null
   joinDate?: Prisma.DateTimeFilter<"Customer"> | Date | string
   status?: Prisma.StringFilter<"Customer"> | string
+  serviceStatus?: Prisma.StringFilter<"Customer"> | string
+  contractEndDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   disposalUnitInstalled?: Prisma.IntFilter<"Customer"> | number
   isGroup?: Prisma.BoolFilter<"Customer"> | boolean
   parentCustomerId?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -784,6 +804,8 @@ export type CustomerOrderByWithAggregationInput = {
   employeeCount?: Prisma.SortOrderInput | Prisma.SortOrder
   joinDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  serviceStatus?: Prisma.SortOrder
+  contractEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   isGroup?: Prisma.SortOrder
   parentCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -843,6 +865,8 @@ export type CustomerScalarWhereWithAggregatesInput = {
   employeeCount?: Prisma.IntNullableWithAggregatesFilter<"Customer"> | number | null
   joinDate?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
   status?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  serviceStatus?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  contractEndDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
   disposalUnitInstalled?: Prisma.IntWithAggregatesFilter<"Customer"> | number
   isGroup?: Prisma.BoolWithAggregatesFilter<"Customer"> | boolean
   parentCustomerId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
@@ -894,6 +918,8 @@ export type CustomerCreateInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -951,6 +977,8 @@ export type CustomerUncheckedCreateInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -1008,6 +1036,8 @@ export type CustomerUpdateInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1065,6 +1095,8 @@ export type CustomerUncheckedUpdateInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1122,6 +1154,8 @@ export type CustomerCreateManyInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -1173,6 +1207,8 @@ export type CustomerUpdateManyMutationInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1223,6 +1259,8 @@ export type CustomerUncheckedUpdateManyInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1289,6 +1327,8 @@ export type CustomerCountOrderByAggregateInput = {
   employeeCount?: Prisma.SortOrder
   joinDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  serviceStatus?: Prisma.SortOrder
+  contractEndDate?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   isGroup?: Prisma.SortOrder
   parentCustomerId?: Prisma.SortOrder
@@ -1360,6 +1400,8 @@ export type CustomerMaxOrderByAggregateInput = {
   employeeCount?: Prisma.SortOrder
   joinDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  serviceStatus?: Prisma.SortOrder
+  contractEndDate?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   isGroup?: Prisma.SortOrder
   parentCustomerId?: Prisma.SortOrder
@@ -1411,6 +1453,8 @@ export type CustomerMinOrderByAggregateInput = {
   employeeCount?: Prisma.SortOrder
   joinDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  serviceStatus?: Prisma.SortOrder
+  contractEndDate?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   isGroup?: Prisma.SortOrder
   parentCustomerId?: Prisma.SortOrder
@@ -1659,6 +1703,8 @@ export type CustomerCreateWithoutChildCustomersInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -1715,6 +1761,8 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -1776,6 +1824,8 @@ export type CustomerCreateWithoutParentCustomerInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -1832,6 +1882,8 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -1909,6 +1961,8 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1965,6 +2019,8 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2040,6 +2096,8 @@ export type CustomerScalarWhereInput = {
   employeeCount?: Prisma.IntNullableFilter<"Customer"> | number | null
   joinDate?: Prisma.DateTimeFilter<"Customer"> | Date | string
   status?: Prisma.StringFilter<"Customer"> | string
+  serviceStatus?: Prisma.StringFilter<"Customer"> | string
+  contractEndDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   disposalUnitInstalled?: Prisma.IntFilter<"Customer"> | number
   isGroup?: Prisma.BoolFilter<"Customer"> | boolean
   parentCustomerId?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -2091,6 +2149,8 @@ export type CustomerCreateWithoutNotificationsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -2147,6 +2207,8 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -2219,6 +2281,8 @@ export type CustomerUpdateWithoutNotificationsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2275,6 +2339,8 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2331,6 +2397,8 @@ export type CustomerCreateWithoutCollectionsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -2387,6 +2455,8 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -2459,6 +2529,8 @@ export type CustomerUpdateWithoutCollectionsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2515,6 +2587,8 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2571,6 +2645,8 @@ export type CustomerCreateWithoutCertificatesInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -2627,6 +2703,8 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -2699,6 +2777,8 @@ export type CustomerUpdateWithoutCertificatesInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2755,6 +2835,8 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2811,6 +2893,8 @@ export type CustomerCreateWithoutReportsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -2867,6 +2951,8 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -2939,6 +3025,8 @@ export type CustomerUpdateWithoutReportsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2995,6 +3083,8 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3051,6 +3141,8 @@ export type CustomerCreateWithoutShopOrdersInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -3107,6 +3199,8 @@ export type CustomerUncheckedCreateWithoutShopOrdersInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
@@ -3179,6 +3273,8 @@ export type CustomerUpdateWithoutShopOrdersInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3235,6 +3331,8 @@ export type CustomerUncheckedUpdateWithoutShopOrdersInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   parentCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3291,6 +3389,8 @@ export type CustomerCreateManyParentCustomerInput = {
   employeeCount?: number | null
   joinDate?: Date | string
   status?: string
+  serviceStatus?: string
+  contractEndDate?: Date | string | null
   disposalUnitInstalled?: number
   isGroup?: boolean
   totalWasteCollected?: number
@@ -3341,6 +3441,8 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3397,6 +3499,8 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3453,6 +3557,8 @@ export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
   employeeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   joinDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  contractEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   disposalUnitInstalled?: Prisma.IntFieldUpdateOperationsInput | number
   isGroup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   totalWasteCollected?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3579,6 +3685,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   employeeCount?: boolean
   joinDate?: boolean
   status?: boolean
+  serviceStatus?: boolean
+  contractEndDate?: boolean
   disposalUnitInstalled?: boolean
   isGroup?: boolean
   parentCustomerId?: boolean
@@ -3638,6 +3746,8 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   employeeCount?: boolean
   joinDate?: boolean
   status?: boolean
+  serviceStatus?: boolean
+  contractEndDate?: boolean
   disposalUnitInstalled?: boolean
   isGroup?: boolean
   parentCustomerId?: boolean
@@ -3690,6 +3800,8 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   employeeCount?: boolean
   joinDate?: boolean
   status?: boolean
+  serviceStatus?: boolean
+  contractEndDate?: boolean
   disposalUnitInstalled?: boolean
   isGroup?: boolean
   parentCustomerId?: boolean
@@ -3742,6 +3854,8 @@ export type CustomerSelectScalar = {
   employeeCount?: boolean
   joinDate?: boolean
   status?: boolean
+  serviceStatus?: boolean
+  contractEndDate?: boolean
   disposalUnitInstalled?: boolean
   isGroup?: boolean
   parentCustomerId?: boolean
@@ -3761,7 +3875,7 @@ export type CustomerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "serviceStatus" | "contractEndDate" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentCustomer?: boolean | Prisma.Customer$parentCustomerArgs<ExtArgs>
   childCustomers?: boolean | Prisma.Customer$childCustomersArgs<ExtArgs>
@@ -3822,6 +3936,11 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     employeeCount: number | null
     joinDate: Date
     status: string
+    /**
+     * * Operational service lifecycle: ACTIVE | RENEWAL_DUE | PAUSED_RENEWAL | PAUSED_PAYMENT | INACTIVE
+     */
+    serviceStatus: string
+    contractEndDate: Date | null
     disposalUnitInstalled: number
     isGroup: boolean
     parentCustomerId: string | null
@@ -4300,6 +4419,8 @@ export interface CustomerFieldRefs {
   readonly employeeCount: Prisma.FieldRef<"Customer", 'Int'>
   readonly joinDate: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly status: Prisma.FieldRef<"Customer", 'String'>
+  readonly serviceStatus: Prisma.FieldRef<"Customer", 'String'>
+  readonly contractEndDate: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly disposalUnitInstalled: Prisma.FieldRef<"Customer", 'Int'>
   readonly isGroup: Prisma.FieldRef<"Customer", 'Boolean'>
   readonly parentCustomerId: Prisma.FieldRef<"Customer", 'String'>

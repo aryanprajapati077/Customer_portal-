@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
   Box,
+  CheckCircle2,
   Gift,
   Leaf,
   Loader2,
@@ -62,12 +64,19 @@ function toShopProduct(p: (typeof SHOWCASE_PRODUCTS)[number]): ShopProduct {
 
 function ShopContent() {
   const { customer, authLoading, dataLoading, metrics } = usePortalData()
+  const searchParams = useSearchParams()
+  const orderedId = searchParams.get("ordered")
   const [category, setCategory] = useState<string>("all")
   const [apiProducts, setApiProducts] = useState<ShopProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [ordersInProgress, setOrdersInProgress] = useState(0)
   const [ordersCompleted, setOrdersCompleted] = useState(0)
+  const [showOrderedBanner, setShowOrderedBanner] = useState(Boolean(orderedId))
+
+  useEffect(() => {
+    if (orderedId) setShowOrderedBanner(true)
+  }, [orderedId])
 
   useEffect(() => {
     ;(async () => {
@@ -129,6 +138,33 @@ function ShopContent() {
   return (
     <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)} showCart>
       <div className="space-y-5">
+        {showOrderedBanner && orderedId ? (
+          <div className="flex flex-col gap-2 rounded-2xl border border-[#C8E6D4] bg-[#E8F5E9] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1B7339]" />
+              <div>
+                <p className="text-[14px] font-semibold text-[#1A1A1A]">
+                  Order {orderedId} placed successfully
+                </p>
+                <p className="text-[12px] text-[#5A5A5A]">
+                  Track it anytime under Order & Claim History.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Link href="/dashboard/shop/orders" className="portal-btn-outline-green !h-9 text-[12px]">
+                View orders
+              </Link>
+              <button
+                type="button"
+                className="h-9 rounded-full px-3 text-[12px] text-[#5A5A5A] hover:bg-white/70"
+                onClick={() => setShowOrderedBanner(false)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
         <PageHeader
           icon={Gift}
           title="Kraftreborn"

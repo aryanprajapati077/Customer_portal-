@@ -48,6 +48,7 @@ export type ProductMinAggregateOutputType = {
   buttsRescued: number | null
   imageUrl: string | null
   imageGradient: string | null
+  availableColors: string | null
   allowsLogo: boolean | null
   active: boolean | null
   sortOrder: number | null
@@ -65,6 +66,7 @@ export type ProductMaxAggregateOutputType = {
   buttsRescued: number | null
   imageUrl: string | null
   imageGradient: string | null
+  availableColors: string | null
   allowsLogo: boolean | null
   active: boolean | null
   sortOrder: number | null
@@ -82,6 +84,7 @@ export type ProductCountAggregateOutputType = {
   buttsRescued: number
   imageUrl: number
   imageGradient: number
+  availableColors: number
   allowsLogo: number
   active: number
   sortOrder: number
@@ -113,6 +116,7 @@ export type ProductMinAggregateInputType = {
   buttsRescued?: true
   imageUrl?: true
   imageGradient?: true
+  availableColors?: true
   allowsLogo?: true
   active?: true
   sortOrder?: true
@@ -130,6 +134,7 @@ export type ProductMaxAggregateInputType = {
   buttsRescued?: true
   imageUrl?: true
   imageGradient?: true
+  availableColors?: true
   allowsLogo?: true
   active?: true
   sortOrder?: true
@@ -147,6 +152,7 @@ export type ProductCountAggregateInputType = {
   buttsRescued?: true
   imageUrl?: true
   imageGradient?: true
+  availableColors?: true
   allowsLogo?: true
   active?: true
   sortOrder?: true
@@ -251,6 +257,7 @@ export type ProductGroupByOutputType = {
   buttsRescued: number
   imageUrl: string | null
   imageGradient: string
+  availableColors: string | null
   allowsLogo: boolean
   active: boolean
   sortOrder: number
@@ -291,6 +298,7 @@ export type ProductWhereInput = {
   buttsRescued?: Prisma.IntFilter<"Product"> | number
   imageUrl?: Prisma.StringNullableFilter<"Product"> | string | null
   imageGradient?: Prisma.StringFilter<"Product"> | string
+  availableColors?: Prisma.StringNullableFilter<"Product"> | string | null
   allowsLogo?: Prisma.BoolFilter<"Product"> | boolean
   active?: Prisma.BoolFilter<"Product"> | boolean
   sortOrder?: Prisma.IntFilter<"Product"> | number
@@ -309,6 +317,7 @@ export type ProductOrderByWithRelationInput = {
   buttsRescued?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   imageGradient?: Prisma.SortOrder
+  availableColors?: Prisma.SortOrderInput | Prisma.SortOrder
   allowsLogo?: Prisma.SortOrder
   active?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
@@ -330,6 +339,7 @@ export type ProductWhereUniqueInput = Prisma.AtLeast<{
   buttsRescued?: Prisma.IntFilter<"Product"> | number
   imageUrl?: Prisma.StringNullableFilter<"Product"> | string | null
   imageGradient?: Prisma.StringFilter<"Product"> | string
+  availableColors?: Prisma.StringNullableFilter<"Product"> | string | null
   allowsLogo?: Prisma.BoolFilter<"Product"> | boolean
   active?: Prisma.BoolFilter<"Product"> | boolean
   sortOrder?: Prisma.IntFilter<"Product"> | number
@@ -348,6 +358,7 @@ export type ProductOrderByWithAggregationInput = {
   buttsRescued?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   imageGradient?: Prisma.SortOrder
+  availableColors?: Prisma.SortOrderInput | Prisma.SortOrder
   allowsLogo?: Prisma.SortOrder
   active?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
@@ -373,6 +384,7 @@ export type ProductScalarWhereWithAggregatesInput = {
   buttsRescued?: Prisma.IntWithAggregatesFilter<"Product"> | number
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Product"> | string | null
   imageGradient?: Prisma.StringWithAggregatesFilter<"Product"> | string
+  availableColors?: Prisma.StringNullableWithAggregatesFilter<"Product"> | string | null
   allowsLogo?: Prisma.BoolWithAggregatesFilter<"Product"> | boolean
   active?: Prisma.BoolWithAggregatesFilter<"Product"> | boolean
   sortOrder?: Prisma.IntWithAggregatesFilter<"Product"> | number
@@ -390,6 +402,7 @@ export type ProductCreateInput = {
   buttsRescued?: number
   imageUrl?: string | null
   imageGradient?: string
+  availableColors?: string | null
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: number
@@ -408,6 +421,7 @@ export type ProductUncheckedCreateInput = {
   buttsRescued?: number
   imageUrl?: string | null
   imageGradient?: string
+  availableColors?: string | null
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: number
@@ -426,6 +440,7 @@ export type ProductUpdateInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -444,6 +459,7 @@ export type ProductUncheckedUpdateInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -462,6 +478,7 @@ export type ProductCreateManyInput = {
   buttsRescued?: number
   imageUrl?: string | null
   imageGradient?: string
+  availableColors?: string | null
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: number
@@ -479,6 +496,7 @@ export type ProductUpdateManyMutationInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -496,6 +514,7 @@ export type ProductUncheckedUpdateManyInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -513,6 +532,7 @@ export type ProductCountOrderByAggregateInput = {
   buttsRescued?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageGradient?: Prisma.SortOrder
+  availableColors?: Prisma.SortOrder
   allowsLogo?: Prisma.SortOrder
   active?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
@@ -536,6 +556,7 @@ export type ProductMaxOrderByAggregateInput = {
   buttsRescued?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageGradient?: Prisma.SortOrder
+  availableColors?: Prisma.SortOrder
   allowsLogo?: Prisma.SortOrder
   active?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
@@ -553,6 +574,7 @@ export type ProductMinOrderByAggregateInput = {
   buttsRescued?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageGradient?: Prisma.SortOrder
+  availableColors?: Prisma.SortOrder
   allowsLogo?: Prisma.SortOrder
   active?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
@@ -597,6 +619,7 @@ export type ProductCreateWithoutOrderItemsInput = {
   buttsRescued?: number
   imageUrl?: string | null
   imageGradient?: string
+  availableColors?: string | null
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: number
@@ -614,6 +637,7 @@ export type ProductUncheckedCreateWithoutOrderItemsInput = {
   buttsRescued?: number
   imageUrl?: string | null
   imageGradient?: string
+  availableColors?: string | null
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: number
@@ -647,6 +671,7 @@ export type ProductUpdateWithoutOrderItemsInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -664,6 +689,7 @@ export type ProductUncheckedUpdateWithoutOrderItemsInput = {
   buttsRescued?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageGradient?: Prisma.StringFieldUpdateOperationsInput | string
+  availableColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowsLogo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
@@ -712,6 +738,7 @@ export type ProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   buttsRescued?: boolean
   imageUrl?: boolean
   imageGradient?: boolean
+  availableColors?: boolean
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: boolean
@@ -731,6 +758,7 @@ export type ProductSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   buttsRescued?: boolean
   imageUrl?: boolean
   imageGradient?: boolean
+  availableColors?: boolean
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: boolean
@@ -748,6 +776,7 @@ export type ProductSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   buttsRescued?: boolean
   imageUrl?: boolean
   imageGradient?: boolean
+  availableColors?: boolean
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: boolean
@@ -765,6 +794,7 @@ export type ProductSelectScalar = {
   buttsRescued?: boolean
   imageUrl?: boolean
   imageGradient?: boolean
+  availableColors?: boolean
   allowsLogo?: boolean
   active?: boolean
   sortOrder?: boolean
@@ -772,7 +802,7 @@ export type ProductSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "price" | "category" | "tagline" | "buttsRescued" | "imageUrl" | "imageGradient" | "allowsLogo" | "active" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["product"]>
+export type ProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "price" | "category" | "tagline" | "buttsRescued" | "imageUrl" | "imageGradient" | "availableColors" | "allowsLogo" | "active" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["product"]>
 export type ProductInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orderItems?: boolean | Prisma.Product$orderItemsArgs<ExtArgs>
   _count?: boolean | Prisma.ProductCountOutputTypeDefaultArgs<ExtArgs>
@@ -795,6 +825,10 @@ export type $ProductPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     buttsRescued: number
     imageUrl: string | null
     imageGradient: string
+    /**
+     * * JSON array e.g. ["Blue","Green","Yellow","Red","White","Mix"]
+     */
+    availableColors: string | null
     allowsLogo: boolean
     active: boolean
     sortOrder: number
@@ -1233,6 +1267,7 @@ export interface ProductFieldRefs {
   readonly buttsRescued: Prisma.FieldRef<"Product", 'Int'>
   readonly imageUrl: Prisma.FieldRef<"Product", 'String'>
   readonly imageGradient: Prisma.FieldRef<"Product", 'String'>
+  readonly availableColors: Prisma.FieldRef<"Product", 'String'>
   readonly allowsLogo: Prisma.FieldRef<"Product", 'Boolean'>
   readonly active: Prisma.FieldRef<"Product", 'Boolean'>
   readonly sortOrder: Prisma.FieldRef<"Product", 'Int'>

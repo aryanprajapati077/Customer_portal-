@@ -95,8 +95,8 @@ function SuccessContent() {
               Continue shopping
             </Link>
           </Button>
-          <Button asChild className="rounded-full">
-            <Link href="/dashboard">Back to dashboard</Link>
+          <Button asChild className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
+            <Link href="/dashboard/shop">Back to KraftReborn</Link>
           </Button>
         </div>
       </div>

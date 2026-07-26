@@ -273,12 +273,34 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                {selected.logoRequested && selected.logoUrl && (
-                  <div>
-                    <p className="text-sm font-semibold mb-2">Customer logo</p>
-                    <div className="relative w-24 h-24 rounded-lg border overflow-hidden bg-white">
-                      <Image src={selected.logoUrl} alt="Customer logo" fill className="object-contain p-2" />
-                    </div>
+                {selected.logoRequested && (
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
+                    <p className="text-sm font-semibold">Customer logo</p>
+                    {selected.logoUrl ? (
+                      <div className="relative mx-auto h-36 w-full max-w-[220px] overflow-hidden rounded-lg border bg-white">
+                        <Image
+                          src={selected.logoUrl}
+                          alt="Customer logo"
+                          fill
+                          className="object-contain p-3"
+                          unoptimized={selected.logoUrl.startsWith("data:")}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Logo was requested on this order, but no file was uploaded by the customer.
+                      </p>
+                    )}
+                    {selected.logoUrl ? (
+                      <a
+                        href={selected.logoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex text-xs font-medium text-primary hover:underline"
+                      >
+                        Open logo full size →
+                      </a>
+                    ) : null}
                   </div>
                 )}
 
@@ -293,12 +315,23 @@ export default function AdminOrdersPage() {
 
                 <div className="space-y-2 pt-2 border-t">
                   <p className="text-sm font-semibold">Update status</p>
+                  <p className="text-xs text-muted-foreground">
+                    Current:{" "}
+                    <span className="font-semibold text-foreground">
+                      {orderStatusLabel(selected.status)}
+                    </span>
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     {ORDER_STATUSES.filter((s) => s !== selected.status).map((s) => (
                       <Button
                         key={s}
                         size="sm"
                         variant={s === "completed" ? "default" : "outline"}
+                        className={
+                          s === "completed"
+                            ? "bg-[#1B7339] hover:bg-[#145a2c]"
+                            : undefined
+                        }
                         disabled={updating}
                         onClick={() => updateStatus(selected.id, s)}
                       >

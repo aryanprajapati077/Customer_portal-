@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Cigarette, Gift, Info, Recycle, Sparkles } from "lucide-react"
 import {
   Dialog,
@@ -44,6 +44,16 @@ export function HowItWorksDialog() {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
 
+  useEffect(() => {
+    if (!open) return
+    const id = setInterval(() => setActive((s) => (s + 1) % STAGES.length), 4200)
+    return () => clearInterval(id)
+  }, [open])
+
+  useEffect(() => {
+    if (open) setActive(0)
+  }, [open])
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -72,7 +82,7 @@ export function HowItWorksDialog() {
                 type="button"
                 onClick={() => setActive(i)}
                 className={cn(
-                  "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                  "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all duration-300",
                   isActive
                     ? "border-[#1B7339]/40 bg-[#F4F9F5] shadow-sm"
                     : "border-[#EAEAEA] bg-white hover:bg-[#FAFAFA]",
@@ -91,11 +101,14 @@ export function HowItWorksDialog() {
                     {s.eyebrow}
                   </span>
                   <span className="mt-0.5 block text-[14px] font-semibold text-[#1A1A1A]">{s.title}</span>
-                  {isActive ? (
-                    <span className="mt-1 block text-[12.5px] leading-relaxed text-[#5A5A5A]">
-                      {s.subtitle}
-                    </span>
-                  ) : null}
+                  <span
+                    className={cn(
+                      "mt-1 block text-[12.5px] leading-relaxed text-[#5A5A5A] transition-all duration-300",
+                      isActive ? "max-h-24 opacity-100" : "max-h-0 overflow-hidden opacity-0",
+                    )}
+                  >
+                    {s.subtitle}
+                  </span>
                 </span>
               </button>
             )
@@ -109,7 +122,7 @@ export function HowItWorksDialog() {
               type="button"
               onClick={() => setActive(i)}
               className={cn(
-                "rounded-full transition-all",
+                "rounded-full transition-all duration-300",
                 active === i ? "h-1.5 w-4 bg-[#1B7339]" : "h-1.5 w-1.5 bg-[#C5C5C5]",
               )}
               aria-label={`Stage ${i + 1}`}

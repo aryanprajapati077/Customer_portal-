@@ -1,14 +1,27 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
+import { sql } from "@/lib/db"
+
+async function ensureSupportAttachmentColumn() {
+  await sql.query(`ALTER TABLE "SupportTicket" ADD COLUMN IF NOT EXISTS "attachmentUrl" TEXT`)
+}
 
 export async function GET() {
   try {
+    await ensureSupportAttachmentColumn()
     const tickets = await prisma.supportTicket.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
     })
-    return NextResponse.json({ success: true, tickets })
+    const rows = tickets as Array<(typeof tickets)[number] & { attachmentUrl?: string | null }>
+    return NextResponse.json({
+      success: true,
+      tickets: rows.map((t) => ({
+        ...t,
+        attachmentUrl: t.attachmentUrl || null,
+      })),
+    })
   } catch (err) {
     console.error("Admin support tickets error:", err)
     return NextResponse.json({ error: "Failed to fetch tickets" }, { status: 500 })

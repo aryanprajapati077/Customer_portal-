@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Mail, RefreshCw, LifeBuoy } from "lucide-react"
+import { Loader2, Mail, RefreshCw, LifeBuoy, Paperclip, ExternalLink } from "lucide-react"
 
 type Ticket = {
   id: string
@@ -23,6 +23,7 @@ type Ticket = {
   status: string
   source: string
   createdAt: string
+  attachmentUrl?: string | null
 }
 
 export default function AdminSupportPage() {
@@ -124,9 +125,14 @@ export default function AdminSupportPage() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium text-sm truncate">{t.subject}</p>
-                        <Badge variant={t.status === "open" ? "default" : "secondary"} className="shrink-0 text-[10px]">
-                          {t.status}
-                        </Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {t.attachmentUrl ? (
+                            <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
+                          ) : null}
+                          <Badge variant={t.status === "open" ? "default" : "secondary"} className="text-[10px]">
+                            {t.status}
+                          </Badge>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate mt-0.5">{t.name} · {t.email}</p>
                       <p className="text-[11px] text-muted-foreground mt-1">
@@ -190,6 +196,35 @@ export default function AdminSupportPage() {
                 <div className="rounded-xl bg-muted/40 border border-border/50 p-4 text-sm whitespace-pre-wrap leading-relaxed">
                   {selected.message}
                 </div>
+                {selected.attachmentUrl ? (
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                      <Paperclip className="w-4 h-4 text-primary" />
+                      Attachment
+                    </p>
+                    {selected.attachmentUrl.startsWith("data:image/") ||
+                    selected.attachmentUrl.match(/\.(png|jpe?g|webp)(\?|$)/i) ||
+                    selected.attachmentUrl.includes("/uploads/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selected.attachmentUrl}
+                        alt="Ticket attachment"
+                        className="max-h-56 w-auto max-w-full rounded-lg border bg-white object-contain"
+                      />
+                    ) : null}
+                    <a
+                      href={selected.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      Open / download attachment
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No photo or file attached to this ticket.</p>
+                )}
               </div>
             )}
           </CardContent>

@@ -305,17 +305,18 @@ model VerifiedCertificate {
 }
 
 model SupportTicket {
-  id         String   @id @default(cuid())
-  customerId String?
-  name       String
-  email      String
-  subject    String
-  message    String
-  category   String   @default("general")
-  status     String   @default("open")
-  source     String   @default("chatbot")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(cuid())
+  customerId     String?
+  name           String
+  email          String
+  subject        String
+  message        String
+  category       String   @default("general")
+  status         String   @default("open")
+  source         String   @default("chatbot")
+  attachmentUrl  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([status])
   @@index([email])

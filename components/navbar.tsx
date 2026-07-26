@@ -77,7 +77,7 @@ export function Navbar() {
               </Link>
             )}
             <a
-              href="#calculator"
+              href="/#calculator"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#1B7339] px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#145a2c]"
             >
               Calculate impact

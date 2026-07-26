@@ -18,7 +18,7 @@ export function AdminAuthShell({
 }) {
   return (
     <div className="landing-root min-h-screen bg-white text-[#141414]">
-      <div className="mx-auto grid min-h-screen max-w-7xl lg:grid-cols-2">
+      <div className="grid min-h-screen lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -34,6 +34,18 @@ export function AdminAuthShell({
             sizes="50vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0F1F14]/80 via-[#0F1F14]/30 to-transparent" />
+          <div className="absolute inset-x-0 top-0 p-10">
+            <Link href="/" className="inline-flex w-fit">
+              <Image
+                src="/report-assets/buffindia-logo-clear.png"
+                alt="BuffIndia"
+                width={180}
+                height={58}
+                className="h-11 w-auto object-contain"
+                priority
+              />
+            </Link>
+          </div>
           <div className="absolute inset-x-0 bottom-0 p-10 text-white">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#C8F000]">
               <Shield className="h-3.5 w-3.5" />
@@ -62,18 +74,18 @@ export function AdminAuthShell({
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="relative mx-auto w-full max-w-md"
           >
-            <Link href="/" className="inline-flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-2 lg:hidden">
               <Image
-                src="/logo.svg"
+                src="/report-assets/buffindia-logo-clear.png"
                 alt="BuffIndia"
-                width={140}
-                height={44}
-                className="h-9 w-auto object-contain"
+                width={160}
+                height={52}
+                className="h-10 w-auto object-contain"
                 priority
               />
             </Link>
 
-            <p className="mt-9 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1B7339]">
+            <p className="mt-9 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1B7339] lg:mt-0">
               BuffIndia Admin
             </p>
             <h2 className="mt-2 font-[family-name:var(--font-display)] text-[2.1rem] leading-tight tracking-tight sm:text-[2.35rem]">

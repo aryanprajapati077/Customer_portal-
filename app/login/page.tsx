@@ -53,9 +53,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#F4F7F4] text-[#1A1A1A]">
-      <div className="mx-auto flex min-h-screen max-w-[1400px] flex-col lg:flex-row">
-        {/* Left — minimal botanical panel */}
+    <div className="relative min-h-screen overflow-hidden bg-white text-[#1A1A1A]">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        {/* Left — full-bleed botanical panel */}
         <section className="relative flex min-h-[48vh] flex-1 flex-col overflow-hidden px-7 pb-10 pt-7 sm:px-12 lg:min-h-screen lg:max-w-[55%] lg:px-14 lg:pb-14 lg:pt-10">
           <div className="pointer-events-none absolute inset-0">
             <Image
@@ -98,11 +98,11 @@ export default function LoginPage() {
           <div className="relative z-10 flex h-full flex-col text-white">
             <Link href="/" className="inline-flex w-fit">
               <Image
-                src="/logo.svg"
+                src="/report-assets/buffindia-logo-clear.png"
                 alt="BuffIndia"
-                width={168}
-                height={55}
-                className="h-10 w-auto object-contain brightness-0 invert sm:h-11"
+                width={180}
+                height={58}
+                className="h-11 w-auto object-contain sm:h-12"
                 priority
               />
             </Link>
@@ -277,8 +277,8 @@ export default function LoginPage() {
       </div>
 
       {/* Bottom contact strip */}
-      <footer className="border-t border-[#E5E7EB] bg-white/90 px-4 py-3 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-8 gap-y-2 text-[12px] text-[#6B6B6B] sm:justify-between sm:px-6">
+      <footer className="border-t border-[#E5E7EB] bg-white px-4 py-3">
+        <div className="mx-auto flex w-full flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 text-[12px] text-[#6B6B6B] sm:justify-between sm:px-8 lg:px-14">
           <a
             href="https://www.buffindia.com"
             target="_blank"

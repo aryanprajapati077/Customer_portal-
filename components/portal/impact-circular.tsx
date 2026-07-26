@@ -108,39 +108,43 @@ export function ImpactCircular({ metrics }: ImpactCircularProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 items-start">
-        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          <h3 className="text-[15px] font-semibold text-[#1A1A1A] mb-4">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1fr] gap-4 items-stretch">
+        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col">
+          <h3 className="text-[15px] font-semibold text-[#1A1A1A] shrink-0">
             Circular Journey: From Cigarette Waste to Sustainable Products
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-4 relative">
-            {JOURNEY.map((step, idx) => (
-              <motion.div
-                key={step.title}
-                className="relative flex flex-col items-center text-center"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.06, duration: 0.35 }}
-                whileHover={{ y: -2 }}
-              >
-                {idx < JOURNEY.length - 1 && (
-                  <div className="hidden sm:block absolute top-5 left-[60%] w-[80%] h-px bg-[#C8E6C9]" />
-                )}
-                <div className="relative z-10 w-10 h-10 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] flex items-center justify-center mb-2">
-                  <step.icon className="w-4 h-4 text-[#2E7D32]" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#2E7D32] text-white text-[9px] font-bold flex items-center justify-center">
-                    {step.n}
-                  </span>
-                </div>
-                <p className="text-[13px] font-semibold text-[#1A1A1A]">{step.title}</p>
-                <p className="text-[11px] text-[#7A7A7A] mt-1 leading-snug">{step.desc}</p>
-              </motion.div>
-            ))}
+          <div className="flex-1 flex items-center py-5">
+            <div className="grid w-full grid-cols-2 sm:grid-cols-5 gap-x-4 gap-y-6 relative">
+              {JOURNEY.map((step, idx) => (
+                <motion.div
+                  key={step.title}
+                  className="relative flex flex-col items-center text-center px-0.5"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.06, duration: 0.35 }}
+                  whileHover={{ y: -2 }}
+                >
+                  {idx < JOURNEY.length - 1 && (
+                    <div className="hidden sm:block absolute top-7 left-[62%] w-[76%] h-px bg-[#C8E6C9]" />
+                  )}
+                  <div className="relative z-10 w-14 h-14 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] flex items-center justify-center mb-3">
+                    <step.icon className="w-6 h-6 text-[#2E7D32]" strokeWidth={1.75} />
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#2E7D32] text-white text-[10px] font-bold flex items-center justify-center">
+                      {step.n}
+                    </span>
+                  </div>
+                  <p className="text-[14px] font-semibold text-[#1A1A1A] leading-tight">{step.title}</p>
+                  <p className="text-[12px] text-[#6B6B6B] mt-1.5 leading-snug max-w-[11.5rem]">
+                    {step.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="mt-4 rounded-xl bg-[#EAF6EC] px-4 py-3 flex items-start gap-2">
+          <div className="mt-auto rounded-xl bg-[#EAF6EC] px-4 py-3.5 flex items-start gap-2.5 shrink-0">
             <Leaf className="w-4 h-4 text-[#2E7D32] mt-0.5 shrink-0" />
-            <p className="text-[12px] text-[#2E7D32] leading-relaxed">
+            <p className="text-[13px] text-[#2E7D32] leading-relaxed">
               Every step is designed to keep waste out of landfills and create long-term environmental
               value.
             </p>

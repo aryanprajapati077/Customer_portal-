@@ -212,8 +212,14 @@ export async function POST(request: NextRequest) {
 
     let logoUrl: string | null = null
     if (body.logoBase64 && String(body.logoBase64).startsWith("data:")) {
-      const saved = await saveBase64Image(String(body.logoBase64), "logos", `customer-${id}`)
-      logoUrl = saved.url
+      try {
+        const saved = await saveBase64Image(String(body.logoBase64), "logos", `customer-${id}`)
+        logoUrl = saved.url
+      } catch (logoErr) {
+        console.error("Logo upload failed, continuing without file path:", logoErr)
+        // Still store data URL so create succeeds; img src accepts data:
+        logoUrl = String(body.logoBase64)
+      }
     } else if (body.logoUrl) {
       logoUrl = String(body.logoUrl).trim() || null
     }

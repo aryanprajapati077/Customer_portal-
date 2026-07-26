@@ -13,6 +13,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 function InfoRow({ label, value, last }: { label: string; value: ReactNode; last?: boolean }) {
   return (
@@ -154,7 +162,10 @@ export default function OrganizationPage() {
                 variant="outline"
                 size="sm"
                 className="h-8 text-[12px]"
-                onClick={() => setShowAdd((v) => !v)}
+                onClick={() => {
+                  setError("")
+                  setShowAdd(true)
+                }}
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Add user
@@ -163,52 +174,7 @@ export default function OrganizationPage() {
           >
             <InfoRow label="Contact Person" value={customer?.contactPerson || "—"} />
             <InfoRow label="Email Address" value={customer?.email || "—"} />
-            <InfoRow label="Phone Number" value={customer?.phone || "—"} last={!showAdd && users.length === 0} />
-
-            {showAdd && (
-              <div className="mt-4 rounded-xl border border-[#E8E8E8] bg-[#F8FBF8] p-3 space-y-2.5">
-                <p className="text-[12px] font-semibold text-[#1A1A1A]">
-                  Grant dashboard access (Main POC)
-                </p>
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Name</Label>
-                    <Input
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Email</Label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Password</Label>
-                    <Input
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                      className="h-9"
-                    />
-                  </div>
-                </div>
-                {error && <p className="text-[12px] text-red-600">{error}</p>}
-                <Button
-                  type="button"
-                  onClick={addUser}
-                  disabled={saving}
-                  className="h-9 bg-[#1B7339] hover:bg-[#145a2c]"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create access"}
-                </Button>
-              </div>
-            )}
+            <InfoRow label="Phone Number" value={customer?.phone || "—"} last={users.length === 0} />
 
             {(usersLoading || users.length > 0) && (
               <div className="mt-4 space-y-2">
@@ -274,7 +240,7 @@ export default function OrganizationPage() {
             />
             <InfoRow
               label="Collection Frequency"
-              value={(customer as { collectionFrequency?: string } | null)?.collectionFrequency || "Fortnightly"}
+              value={(customer as { collectionFrequency?: string } | null)?.collectionFrequency || "—"}
             />
             <InfoRow
               label="Number of Kiosks Installed"
@@ -284,6 +250,77 @@ export default function OrganizationPage() {
           </SectionCard>
         </div>
       </div>
+
+      <Dialog
+        open={showAdd}
+        onOpenChange={(open) => {
+          setShowAdd(open)
+          if (!open) {
+            setError("")
+            setForm({ name: "", email: "", password: "" })
+          }
+        }}
+      >
+        <DialogContent className="rounded-2xl border-[#E5E2DA] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Grant dashboard access</DialogTitle>
+            <DialogDescription>
+              Create login credentials for a team member linked to this organization.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-user-name">Name</Label>
+              <Input
+                id="portal-user-name"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                className="h-10"
+                autoComplete="name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-user-email">Email</Label>
+              <Input
+                id="portal-user-email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                className="h-10"
+                autoComplete="email"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-user-password">Password</Label>
+              <Input
+                id="portal-user-password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                className="h-10"
+                autoComplete="new-password"
+                required
+              />
+              <p className="text-[11px] text-[#7A7A7A]">Minimum 6 characters.</p>
+            </div>
+            {error ? <p className="text-[12px] text-red-600">{error}</p> : null}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button type="button" variant="outline" onClick={() => setShowAdd(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={addUser}
+              disabled={saving}
+              className="bg-[#1B7339] hover:bg-[#145a2c]"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create access"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PortalShell>
   )
 }

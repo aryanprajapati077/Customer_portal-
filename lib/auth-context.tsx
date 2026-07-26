@@ -27,6 +27,15 @@ export interface Customer {
   disposalUnitInstalled?: number
   isGroup?: boolean
   parentCustomerId?: string | null
+  collectionFrequency?: string | null
+  serviceStartDate?: string | null
+  noOfKiosk?: number
+  noOfBasicKiosk?: number
+  noOfAdvanceKiosk?: number
+  noOfPanVendorKiosk?: number
+  noOfWallMountKiosk?: number
+  gstin?: string | null
+  serviceStatus?: string | null
 }
 
 interface AuthContextType {

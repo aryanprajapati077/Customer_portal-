@@ -101,9 +101,13 @@ export function ImpactSdg({ metrics }: ImpactSdgProps) {
                 transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-[20px] font-bold text-[#1A1A1A]">7/7</span>
-              <span className="text-[10px] text-[#7A7A7A] leading-tight px-2">Goals Supported</span>
+            <div className="absolute inset-[18px] flex flex-col items-center justify-center text-center px-1">
+              <span className="text-[18px] font-bold leading-none text-[#1A1A1A]">7/7</span>
+              <span className="mt-1 text-[9px] font-medium leading-tight text-[#6B6B6B]">
+                Goals
+                <br />
+                Supported
+              </span>
             </div>
           </motion.div>
           <div>

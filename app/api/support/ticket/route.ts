@@ -3,6 +3,52 @@ import { prisma } from "@/lib/prisma"
 import { Resend } from "resend"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 
+function mapStatus(status: string) {
+  const s = (status || "").toLowerCase()
+  if (s === "open") return "Open"
+  if (s === "in_progress" || s === "in progress" || s === "processing") return "In Progress"
+  if (s === "resolved" || s === "closed" || s === "done") return "Resolved"
+  return status || "Open"
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const email = String(searchParams.get("email") || "")
+      .trim()
+      .toLowerCase()
+    const customerId = String(searchParams.get("customerId") || "").trim()
+
+    if (!email && !customerId) {
+      return NextResponse.json({ error: "email or customerId required" }, { status: 400 })
+    }
+
+    const tickets = await prisma.supportTicket.findMany({
+      where: email
+        ? customerId
+          ? { OR: [{ email: { equals: email, mode: "insensitive" } }, { customerId }] }
+          : { email: { equals: email, mode: "insensitive" } }
+        : { customerId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    })
+
+    return NextResponse.json({
+      ok: true,
+      tickets: tickets.map((t) => ({
+        id: t.id,
+        displayId: `#SUP-${t.id.slice(-4).toUpperCase()}`,
+        subject: t.subject,
+        status: mapStatus(t.status),
+        createdAt: t.createdAt.toISOString(),
+      })),
+    })
+  } catch (err) {
+    console.error("Support tickets GET error:", err)
+    return NextResponse.json({ error: "Failed to load tickets" }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()

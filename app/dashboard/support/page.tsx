@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Headphones,
+  Loader2,
   Mail,
   MessageCircle,
   Paperclip,
@@ -13,16 +14,22 @@ import { PageHeader } from "@/components/portal/page-header"
 import { usePortalData } from "@/hooks/use-portal-data"
 import { SUPPORT_CONTACT, SUPPORT_TOPICS } from "@/lib/support-knowledge"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-const DEMO_TICKETS = [
-  { id: "#SUP-1023", subject: "Collection issue", status: "Open" as const },
-  { id: "#SUP-1018", subject: "Request report", status: "In Progress" as const },
-  { id: "#SUP-1012", subject: "Kiosk not working", status: "Resolved" as const },
-  { id: "#SUP-1007", subject: "Invoice download", status: "Resolved" as const },
-  { id: "#SUP-1001", subject: "Schedule change", status: "Resolved" as const },
-]
+type TicketRow = {
+  id: string
+  displayId: string
+  subject: string
+  status: string
+}
 
-const STATUS_STYLE = {
+const STATUS_STYLE: Record<string, string> = {
   Open: "bg-[#E8F5E9] text-[#1B7339]",
   "In Progress": "bg-[#FFF3E0] text-[#EF6C00]",
   Resolved: "bg-[#F0F0F0] text-[#6B6B6B]",
@@ -34,6 +41,27 @@ export default function SupportPage() {
   const [message, setMessage] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [tickets, setTickets] = useState<TicketRow[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(false)
+
+  const loadTickets = useCallback(async () => {
+    if (!customer?.email && !customer?.id) return
+    setTicketsLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (customer.email) params.set("email", customer.email)
+      if (customer.id) params.set("customerId", customer.id)
+      const res = await fetch(`/api/support/ticket?${params.toString()}`)
+      const data = await res.json()
+      if (data?.ok || data?.tickets) setTickets(data.tickets || [])
+    } finally {
+      setTicketsLoading(false)
+    }
+  }, [customer?.email, customer?.id])
+
+  useEffect(() => {
+    loadTickets()
+  }, [loadTickets])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +74,7 @@ export default function SupportPage() {
         body: JSON.stringify({
           name: customer?.contactPerson || customer?.companyName || "Portal User",
           email: customer?.email,
+          customerId: customer?.id,
           subject,
           message,
           category: "general",
@@ -56,6 +85,7 @@ export default function SupportPage() {
       setSubmitted(true)
       setSubject("")
       setMessage("")
+      await loadTickets()
     } catch {
       alert("Could not submit ticket. Please try again or email support@buffindia.com.")
     }
@@ -78,26 +108,34 @@ export default function SupportPage() {
               Tell us what&apos;s happening and we&apos;ll take care of it.
             </p>
             {submitted ? (
-              <div className="rounded-xl bg-[#EAF6EC] p-4 text-[13px] text-[#1B7339] font-medium">
-                Ticket submitted successfully. Our team will get back to you soon.
+              <div className="space-y-3">
+                <div className="rounded-xl bg-[#EAF6EC] p-4 text-[13px] text-[#1B7339] font-medium">
+                  Ticket submitted successfully. Our team will get back to you soon.
+                </div>
+                <button
+                  type="button"
+                  className="portal-link text-[13px]"
+                  onClick={() => setSubmitted(false)}
+                >
+                  Submit another ticket
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div>
                   <label className="text-[12px] font-medium text-[#4A4A4A]">Subject</label>
-                  <select
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="mt-1.5 w-full h-10 rounded-lg border border-[#D8D8D8] bg-white px-3 text-[13px] text-[#1A1A1A]"
-                    required
-                  >
-                    <option value="">Select a subject</option>
-                    {SUPPORT_TOPICS.map((t) => (
-                      <option key={t.id} value={t.label}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={subject || undefined} onValueChange={setSubject} required>
+                    <SelectTrigger className="mt-1.5 h-10 w-full rounded-lg border-[#D8D8D8] bg-white text-[13px]">
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORT_TOPICS.map((t) => (
+                        <SelectItem key={t.id} value={t.label}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-[12px] font-medium text-[#4A4A4A]">Message</label>
@@ -120,7 +158,7 @@ export default function SupportPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !subject}
                   className="w-full h-11 rounded-lg bg-[#1B7339] text-white text-[14px] font-semibold hover:bg-[#145a2c] disabled:opacity-60"
                 >
                   {submitting ? "Submitting..." : "Submit Ticket"}
@@ -144,28 +182,44 @@ export default function SupportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {DEMO_TICKETS.map((t) => (
-                    <tr key={t.id} className="border-t border-[#F0F0F0]">
-                      <td className="px-3 py-3 text-[12px] font-medium text-[#1A1A1A]">{t.id}</td>
-                      <td className="px-3 py-3 text-[12px] text-[#4A4A4A]">{t.subject}</td>
-                      <td className="px-3 py-3">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold",
-                            STATUS_STYLE[t.status],
-                          )}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                          {t.status}
-                        </span>
+                  {ticketsLoading ? (
+                    <tr>
+                      <td colSpan={3} className="px-3 py-8 text-center">
+                        <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#1B7339]" />
                       </td>
                     </tr>
-                  ))}
+                  ) : tickets.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-3 py-8 text-center text-[13px] text-[#8A8A8A]">
+                        No tickets yet. Submit one and it will appear here.
+                      </td>
+                    </tr>
+                  ) : (
+                    tickets.map((t) => (
+                      <tr key={t.id} className="border-t border-[#F0F0F0]">
+                        <td className="px-3 py-3 text-[12px] font-medium text-[#1A1A1A]">
+                          {t.displayId}
+                        </td>
+                        <td className="px-3 py-3 text-[12px] text-[#4A4A4A]">{t.subject}</td>
+                        <td className="px-3 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold",
+                              STATUS_STYLE[t.status] || STATUS_STYLE.Open,
+                            )}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            {t.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-            <button type="button" className="mt-4 portal-link">
-              View all tickets →
+            <button type="button" className="mt-4 portal-link" onClick={loadTickets}>
+              Refresh tickets →
             </button>
           </div>
         </div>

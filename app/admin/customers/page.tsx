@@ -19,6 +19,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Loader2, Plus, Search, Users, Download, Table2 } from "lucide-react"
 import {
   CreateCustomerForm,
@@ -500,11 +507,9 @@ export default function AdminCustomersPage() {
                   <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
                     Update service lifecycle
                   </p>
-                  <select
-                    className="w-full h-10 rounded-lg border border-[#D8D8D8] bg-white px-3 text-[13px]"
+                  <Select
                     value={selected.serviceStatus || "ACTIVE"}
-                    onChange={async (e) => {
-                      const serviceStatus = e.target.value
+                    onValueChange={async (serviceStatus) => {
                       const res = await fetch("/api/admin/customers", {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
@@ -516,12 +521,17 @@ export default function AdminCustomersPage() {
                       }
                     }}
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="RENEWAL_DUE">Renewal Due Soon</option>
-                    <option value="PAUSED_RENEWAL">Paused – Renewal Pending</option>
-                    <option value="PAUSED_PAYMENT">Paused – Payment Pending</option>
-                    <option value="INACTIVE">Inactive / Service Ended</option>
-                  </select>
+                    <SelectTrigger className="w-full h-10 rounded-lg border-[#D8D8D8] bg-white text-[13px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="RENEWAL_DUE">Renewal Due Soon</SelectItem>
+                      <SelectItem value="PAUSED_RENEWAL">Paused – Renewal Pending</SelectItem>
+                      <SelectItem value="PAUSED_PAYMENT">Paused – Payment Pending</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive / Service Ended</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="date"
                     defaultValue={

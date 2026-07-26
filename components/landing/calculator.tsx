@@ -23,6 +23,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   INDUSTRIES,
   calculateImpact,
   formatCompactLitres,
@@ -79,7 +86,7 @@ export function LandingCalculator() {
   const needsKiosk = industry === "Corporate Office" || industry === "Hotel"
   const needsEmployees = industry === "Corporate Office"
   const needsZones = industry === "Hotel"
-  const field =
+  const fieldTrigger =
     "mt-1.5 h-11 w-full rounded-xl border border-[#E5E2DA] bg-[#FBFBF8] px-3 text-[14px] text-[#141414] outline-none transition focus:border-[#1B7339] focus:bg-white focus:ring-2 focus:ring-[#1B7339]/15"
 
   const submitProposal = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -144,83 +151,97 @@ export function LandingCalculator() {
           </p>
 
           <div className="mt-8 space-y-4">
-            <label className="block text-[13px] font-medium text-[#374151]">
-              Industry Type
-              <select
-                className={field}
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value as Industry)}
-              >
-                {INDUSTRIES.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div>
+              <p className="text-[13px] font-medium text-[#374151]">Industry Type</p>
+              <Select value={industry} onValueChange={(v) => setIndustry(v as Industry)}>
+                <SelectTrigger className={fieldTrigger}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDUSTRIES.map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {o}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {needsEmployees ? (
               <>
-                <label className="block text-[13px] font-medium text-[#374151]">
-                  No. of Employees
-                  <select
-                    className={field}
-                    value={employees}
-                    onChange={(e) => setEmployees(Number(e.target.value))}
+                <div>
+                  <p className="text-[13px] font-medium text-[#374151]">No. of Employees</p>
+                  <Select
+                    value={String(employees)}
+                    onValueChange={(v) => setEmployees(Number(v))}
                   >
-                    {EMP_PRESETS.map((o) => (
-                      <option key={o.label} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block text-[13px] font-medium text-[#374151]">
-                  No. of Locations
-                  <select
-                    className={field}
-                    value={locations}
-                    onChange={(e) => setLocations(Number(e.target.value))}
+                    <SelectTrigger className={fieldTrigger}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EMP_PRESETS.map((o) => (
+                        <SelectItem key={o.label} value={String(o.value)}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium text-[#374151]">No. of Locations</p>
+                  <Select
+                    value={String(locations)}
+                    onValueChange={(v) => setLocations(Number(v))}
                   >
-                    {LOC_PRESETS.map((o) => (
-                      <option key={o.label} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <SelectTrigger className={fieldTrigger}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOC_PRESETS.map((o) => (
+                        <SelectItem key={o.label} value={String(o.value)}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             ) : null}
 
             {needsZones ? (
-              <label className="block text-[13px] font-medium text-[#374151]">
-                No. of Smoking Zones
-                <select
-                  className={field}
-                  value={smokingZones}
-                  onChange={(e) => setSmokingZones(Number(e.target.value))}
+              <div>
+                <p className="text-[13px] font-medium text-[#374151]">No. of Smoking Zones</p>
+                <Select
+                  value={String(smokingZones)}
+                  onValueChange={(v) => setSmokingZones(Number(v))}
                 >
-                  {ZONE_PRESETS.map((o) => (
-                    <option key={o.label} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger className={fieldTrigger}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ZONE_PRESETS.map((o) => (
+                      <SelectItem key={o.label} value={String(o.value)}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : null}
 
             {needsKiosk ? (
-              <label className="block text-[13px] font-medium text-[#374151]">
-                Kiosk Preference
-                <select
-                  className={field}
-                  value={kioskType}
-                  onChange={(e) => setKioskType(e.target.value as KioskType)}
-                >
-                  <option value="Basic">Basic</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </label>
+              <div>
+                <p className="text-[13px] font-medium text-[#374151]">Kiosk Preference</p>
+                <Select value={kioskType} onValueChange={(v) => setKioskType(v as KioskType)}>
+                  <SelectTrigger className={fieldTrigger}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Basic">Basic</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             ) : null}
 
             {estimate.mode === "package" || estimate.mode === "contact" ? (

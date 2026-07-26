@@ -12,7 +12,7 @@ type BannerVariant = "home" | "impact" | "kraft"
 
 const STORY_SLIDES = [
   {
-    eyebrow: "Chapter 01",
+    eyebrow: "Stage 01",
     title: "It starts with a single butt",
     subtitle: "Littered filters leach toxins into soil and water — unless we catch them first.",
     icon: Cigarette,
@@ -20,7 +20,7 @@ const STORY_SLIDES = [
     tint: "from-[#FFF3E0]/90 to-[#EEF3EA]",
   },
   {
-    eyebrow: "Chapter 02",
+    eyebrow: "Stage 02",
     title: "Collected. Weighed. Recovered.",
     subtitle: "Your kiosks feed a circular stream — ash, fibre and impact, all measured.",
     icon: Recycle,
@@ -28,7 +28,7 @@ const STORY_SLIDES = [
     tint: "from-[#E8F5E9]/95 to-[#EEF3EA]",
   },
   {
-    eyebrow: "Chapter 03",
+    eyebrow: "Stage 03",
     title: "Waste becomes KraftReborn",
     subtitle: "Beautiful. Sustainable. Made from cigarette waste — for gifts that tell a story.",
     icon: Gift,
@@ -36,7 +36,7 @@ const STORY_SLIDES = [
     tint: "from-[#EEF3EA] to-[#F7F6F2]",
   },
   {
-    eyebrow: "Chapter 04",
+    eyebrow: "Stage 04",
     title: "Redeem your rupee amount",
     subtitle: "Shop KraftReborn with your available rupee balance and bring circular design home.",
     icon: Sparkles,

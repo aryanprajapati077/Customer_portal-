@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   Box,
   Gift,
-  Info,
   Leaf,
   Loader2,
   Package,
@@ -16,7 +15,7 @@ import {
 import { PortalShell } from "@/components/portal/portal-shell"
 import { PageHeader } from "@/components/portal/page-header"
 import { WhatsNewBanner } from "@/components/portal/whats-new-banner"
-import { OutlineButton } from "@/components/portal/outline-button"
+import { HowItWorksDialog } from "@/components/dashboard/shop/how-it-works-dialog"
 import { ProductCard } from "@/components/dashboard/shop/product-card"
 import { usePortalData } from "@/hooks/use-portal-data"
 import type { ShopProduct } from "@/lib/cart-context"
@@ -136,10 +135,7 @@ function ShopContent() {
           subtitle="Sustainable products upcycled from cigarette waste — redeem with your rupee amount."
           actions={
             <>
-              <OutlineButton>
-                <Info className="w-4 h-4" />
-                How it Works
-              </OutlineButton>
+              <HowItWorksDialog />
               <Link
                 href="/dashboard/shop/store"
                 className="portal-btn-outline-green inline-flex items-center gap-2"
@@ -192,7 +188,7 @@ function ShopContent() {
                   </div>
                   <p className="text-[13.5px] font-bold text-[#1A1A1A] leading-snug">{card.value}</p>
                   {"descLink" in card && card.descLink ? (
-                    <Link href="/dashboard/shop/cart" className="portal-link text-[12px] mt-auto pt-1 inline-block">
+                    <Link href="/dashboard/shop/orders" className="portal-link text-[12px] mt-auto pt-1 inline-block">
                       {card.descLink}
                     </Link>
                   ) : (
@@ -284,7 +280,7 @@ function ShopContent() {
                 Redeem Now
               </Link>
               <Link
-                href="/dashboard/shop/cart"
+                href="/dashboard/shop/orders"
                 className="mt-2.5 inline-block portal-link text-[12px]"
               >
                 View claim history →
@@ -323,7 +319,7 @@ function ShopContent() {
                   <span className="font-semibold">{ordersCompleted}</span>
                 </div>
               </div>
-              <Link href="/dashboard/shop/cart" className="inline-block mt-3 portal-link text-[12px]">
+              <Link href="/dashboard/shop/orders" className="inline-block mt-3 portal-link text-[12px]">
                 View All Orders →
               </Link>
             </div>

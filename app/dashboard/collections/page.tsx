@@ -19,25 +19,99 @@ import { MetricCard } from "@/components/portal/metric-card"
 import { usePortalData } from "@/hooks/use-portal-data"
 import { DownloadImpactReport } from "@/components/portal/download-impact-report"
 import { formatKg, formatPortalDate } from "@/lib/portal-metrics"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ChevronDown } from "lucide-react"
+
+type Period = "this-month" | "this-year" | "all"
+
+const PERIOD_LABEL: Record<Period, string> = {
+  "this-month": "This Month",
+  "this-year": "This Year",
+  all: "All Time",
+}
+
+function frequencyDescription(freq?: string | null) {
+  const f = (freq || "").trim()
+  if (!f) return "As per service agreement"
+  const map: Record<string, string> = {
+    Monthly: "Once every month",
+    "Every 2 month": "Once every 2 months",
+    "Every 3 month": "Once every 3 months",
+    "2 times a month": "Twice a month",
+  }
+  return map[f] || f
+}
 
 export default function CollectionsPage() {
   const { customer, authLoading, dataLoading, collections, metrics, handleRefresh, isRefreshing } =
     usePortalData()
   const [sortAsc, setSortAsc] = useState(false)
+  const [period, setPeriod] = useState<Period>("this-year")
+
+  const filtered = useMemo(() => {
+    const now = new Date()
+    return collections.filter((c) => {
+      if (!c.date || period === "all") return true
+      const d = new Date(c.date)
+      if (Number.isNaN(d.getTime())) return true
+      if (period === "this-month") {
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+      }
+      // this-year
+      return d.getFullYear() === now.getFullYear()
+    })
+  }, [collections, period])
 
   const sorted = useMemo(() => {
-    const list = [...collections]
+    const list = [...filtered]
     list.sort((a, b) => {
       const da = a.date ? new Date(a.date).getTime() : 0
       const db = b.date ? new Date(b.date).getTime() : 0
       return sortAsc ? da - db : db - da
     })
     return list
-  }, [collections, sortAsc])
+  }, [filtered, sortAsc])
 
-  const kiosks = customer?.disposalUnitInstalled || 12
-  const startDate = formatPortalDate(customer?.joinDate)
+  const periodWasteKg = useMemo(
+    () => filtered.reduce((sum, c) => sum + (Number(c.weight) || 0), 0),
+    [filtered],
+  )
+
+  const kiosks =
+    Number(customer?.disposalUnitInstalled) ||
+    Number((customer as { noOfKiosk?: number } | null)?.noOfKiosk) ||
+    0
+  const startDate = formatPortalDate(
+    (customer as { serviceStartDate?: string } | null)?.serviceStartDate || customer?.joinDate,
+  )
   const status = customer?.status === "Active" || !customer?.status ? "Running" : customer.status
+  const frequency =
+    (customer as { collectionFrequency?: string } | null)?.collectionFrequency || "—"
+  const freqDesc = frequencyDescription(
+    (customer as { collectionFrequency?: string } | null)?.collectionFrequency,
+  )
+
+  const kioskTypes = useMemo(() => {
+    const c = customer as
+      | {
+          noOfBasicKiosk?: number
+          noOfAdvanceKiosk?: number
+          noOfPanVendorKiosk?: number
+          noOfWallMountKiosk?: number
+        }
+      | null
+      | undefined
+    const parts: string[] = []
+    if (Number(c?.noOfWallMountKiosk) > 0) parts.push("Wall-mounted")
+    if (Number(c?.noOfBasicKiosk) > 0 || Number(c?.noOfAdvanceKiosk) > 0) parts.push("Floor-standing")
+    if (Number(c?.noOfPanVendorKiosk) > 0) parts.push("Pan vendor")
+    return parts.length ? parts.join(" + ") : "As configured"
+  }, [customer])
 
   return (
     <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)}>
@@ -48,10 +122,22 @@ export default function CollectionsPage() {
           subtitle="Track your cigarette waste collections and ESG reports."
           actions={
             <>
-              <OutlineButton>
-                <Calendar className="w-4 h-4" />
-                This Year
-              </OutlineButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <OutlineButton type="button">
+                    <Calendar className="w-4 h-4" />
+                    {PERIOD_LABEL[period]}
+                    <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                  </OutlineButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[160px]">
+                  {(Object.keys(PERIOD_LABEL) as Period[]).map((key) => (
+                    <DropdownMenuItem key={key} onClick={() => setPeriod(key)}>
+                      {PERIOD_LABEL[key]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DownloadImpactReport customerId={customer?.id}>
                 <OutlineButton>
                   <Download className="w-4 h-4" />
@@ -65,18 +151,18 @@ export default function CollectionsPage() {
         <div className="portal-card overflow-hidden">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-[#EFEFEF]">
             {[
-              { icon: Trash2, label: "No. of Kiosks Installed", value: String(kiosks) },
+              { icon: Trash2, label: "No. of Kiosks Installed", value: String(kiosks || "—") },
               {
                 icon: Trash2,
                 label: "Type of Kiosks Installed",
-                value: "Wall-mounted + Floor-standing",
+                value: kioskTypes,
               },
               {
                 icon: CalendarCheck2,
                 label: "Service Start Date",
-                value: startDate === "—" ? "01 Jan 2026" : startDate,
+                value: startDate === "—" ? "—" : startDate,
               },
-              { icon: RefreshCw, label: "Collection Frequency", value: "Fortnightly" },
+              { icon: RefreshCw, label: "Collection Frequency", value: frequency },
             ].map((item) => (
               <div key={item.label} className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -108,27 +194,27 @@ export default function CollectionsPage() {
             iconBg="bg-[#E8F5E9]"
             iconColor="text-[#1B7339]"
             label="Total Waste Collected"
-            value={formatKg(metrics.totalWasteKg)}
+            value={formatKg(periodWasteKg || (period === "all" ? metrics.totalWasteKg : periodWasteKg))}
             valueClassName="text-[#1B7339]"
-            description="This Year"
+            description={PERIOD_LABEL[period]}
           />
           <MetricCard
             icon={Calendar}
             iconBg="bg-[#FFF3E0]"
             iconColor="text-[#EF6C00]"
             label="Total Collections"
-            value={String(metrics.collectionCount || sorted.length || 48)}
+            value={String(sorted.length)}
             valueClassName="text-[#EF6C00]"
-            description="This Year"
+            description={PERIOD_LABEL[period]}
           />
           <MetricCard
             icon={Calendar}
             iconBg="bg-[#F3E5F5]"
             iconColor="text-[#7B1FA2]"
             label="Collection Frequency"
-            value="Fortnightly"
+            value={frequency}
             valueClassName="text-[#7B1FA2]"
-            description="Once in 15 Days"
+            description={freqDesc}
           />
         </div>
 
@@ -155,10 +241,7 @@ export default function CollectionsPage() {
                     </button>
                   </th>
                   <th className="px-5 py-3 text-[12px] font-semibold text-[#1B7339]">
-                    <span className="inline-flex items-center gap-1">
-                      Waste Collected
-                      <ArrowDownUp className="w-3.5 h-3.5" />
-                    </span>
+                    <span className="inline-flex items-center gap-1">Waste Collected</span>
                   </th>
                   <th className="px-5 py-3 text-[12px] font-semibold text-[#1B7339]">ESG Report</th>
                 </tr>
@@ -167,7 +250,7 @@ export default function CollectionsPage() {
                 {sorted.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="px-5 py-10 text-center text-sm text-[#8A8A8A]">
-                      No collections recorded yet.
+                      No collections recorded for {PERIOD_LABEL[period].toLowerCase()}.
                     </td>
                   </tr>
                 ) : (

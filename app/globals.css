@@ -15,6 +15,28 @@ html {
 body {
   overflow-x: clip;
   max-width: 100%;
+  color-scheme: light;
+  background: #ffffff;
+  color: #141414;
+}
+
+/* Hide scrollbars site-wide while keeping scroll */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+  width: 0;
+  height: 0;
+}
+
+/* Force light appearance even if OS is dark — portal/landing use light tokens */
+html.dark,
+html.dark body {
+  color-scheme: light;
+  background: #ffffff !important;
+  color: #141414 !important;
 }
 
 @custom-variant dark (&:is(.dark *));

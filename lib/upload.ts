@@ -34,14 +34,24 @@ export async function saveBase64Image(
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/)
   if (!match) throw new Error("Invalid image data")
 
-  const mime = match[1]
+  const mime = match[1].toLowerCase()
+  if (mime.includes("svg")) {
+    throw new Error("SVG logos are not supported. Please upload PNG, JPG, or WEBP.")
+  }
+
   const ext = mime.includes("png") ? ".png" : mime.includes("webp") ? ".webp" : ".jpg"
-  const dir = path.join(UPLOAD_ROOT, folder)
-  await mkdir(dir, { recursive: true })
-
   const filename = `${prefix}-${randomBytes(6).toString("hex")}${ext}`
-  const filepath = path.join(dir, filename)
-  await writeFile(filepath, Buffer.from(match[2], "base64"))
 
-  return { url: `/uploads/${folder}/${filename}`, filename }
+  try {
+    const dir = path.join(UPLOAD_ROOT, folder)
+    await mkdir(dir, { recursive: true })
+    const filepath = path.join(dir, filename)
+    await writeFile(filepath, Buffer.from(match[2], "base64"))
+    return { url: `/uploads/${folder}/${filename}`, filename }
+  } catch {
+    // Serverless / read-only FS (e.g. Vercel): keep data URL so customer create still succeeds
+    const maxChars = 900_000
+    const url = dataUrl.length > maxChars ? dataUrl.slice(0, maxChars) : dataUrl
+    return { url, filename }
+  }
 }

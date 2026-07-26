@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/sheet"
 import { formatInr } from "@/lib/kraftreborn-products"
 import { ORDER_STATUSES, orderStatusColor, orderStatusLabel } from "@/lib/shop-constants"
+import { cn } from "@/lib/utils"
 import {
   Loader2,
   Package,
@@ -24,6 +24,11 @@ import {
   Truck,
   Clock,
   XCircle,
+  ImageIcon,
+  ExternalLink,
+  Mail,
+  User,
+  Wallet,
 } from "lucide-react"
 
 type OrderRow = {
@@ -231,124 +236,216 @@ export default function AdminOrdersPage() {
       </Card>
 
       <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
           {selected && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{selected.orderNumber}</SheetTitle>
-                <SheetDescription>{selected.customer.companyName}</SheetDescription>
-              </SheetHeader>
-
-              <div className="mt-6 space-y-6">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className={orderStatusColor(selected.status)}>
-                    {orderStatusLabel(selected.status)}
-                  </Badge>
-                  <Badge variant="outline">{formatInr(selected.subtotal)}</Badge>
-                  {selected.useKrCredits && (
-                    <Badge variant="outline">
-                      KR Credits {selected.creditsDeducted ? "✓ deducted" : "pending"}
+            <div className="flex flex-col min-h-full">
+              <div className="border-b border-[#E8EEE9] bg-[#F7FBF7] px-6 py-5">
+                <SheetHeader className="space-y-2 p-0 text-left">
+                  <div className="flex items-start justify-between gap-3 pr-6">
+                    <div className="min-w-0 space-y-1">
+                      <SheetTitle className="font-[family-name:var(--font-display)] text-xl text-[#141414] truncate">
+                        {selected.orderNumber}
+                      </SheetTitle>
+                      <SheetDescription className="text-[13px] text-[#5A5A5A]">
+                        {selected.customer.companyName}
+                      </SheetDescription>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn("shrink-0 text-[11px] font-medium", orderStatusColor(selected.status))}
+                    >
+                      {orderStatusLabel(selected.status)}
                     </Badge>
-                  )}
-                </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="inline-flex items-center rounded-full border border-[#DCE6DF] bg-white px-2.5 py-1 text-[12px] font-medium text-[#1B7339]">
+                      {formatInr(selected.subtotal)}
+                    </span>
+                    {selected.useKrCredits && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
+                          selected.creditsDeducted
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-amber-200 bg-amber-50 text-amber-700",
+                        )}
+                      >
+                        {selected.creditsDeducted ? "KR deducted" : "KR pending"}
+                      </span>
+                    )}
+                    {selected.logoRequested && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#DCE6DF] bg-white px-2.5 py-1 text-[12px] font-medium text-[#3D3D3D]">
+                        <ImageIcon className="h-3 w-3 text-[#1B7339]" />
+                        Logo order
+                      </span>
+                    )}
+                  </div>
+                </SheetHeader>
+              </div>
 
-                <div className="text-sm space-y-1">
-                  <p><span className="text-muted-foreground">Contact:</span> {selected.customer.contactPerson || "—"}</p>
-                  <p><span className="text-muted-foreground">Email:</span> {selected.customer.email}</p>
-                  <p><span className="text-muted-foreground">Credits balance:</span> {formatInr(Math.floor(selected.customer.kraftrebornCredits))}</p>
-                </div>
+              <div className="space-y-5 px-6 py-5 pb-10">
+                <section className="rounded-2xl border border-[#E5EBE6] bg-white p-4 space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7339]">
+                    Customer
+                  </p>
+                  <div className="space-y-2.5 text-[13px]">
+                    <div className="flex items-center gap-2.5 text-[#141414]">
+                      <User className="h-4 w-4 shrink-0 text-[#1B7339]/70" />
+                      <span>{selected.customer.contactPerson || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[#141414]">
+                      <Mail className="h-4 w-4 shrink-0 text-[#1B7339]/70" />
+                      <span className="truncate">{selected.customer.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[#141414]">
+                      <Wallet className="h-4 w-4 shrink-0 text-[#1B7339]/70" />
+                      <span>
+                        Credits balance{" "}
+                        <strong>{formatInr(Math.floor(selected.customer.kraftrebornCredits))}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </section>
 
-                <div>
-                  <p className="text-sm font-semibold mb-2">Line items</p>
-                  <div className="space-y-2">
-                    {selected.items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm p-2 rounded-lg bg-muted/30">
-                        <span>
-                          {item.productName} × {item.quantity}
-                          {item.allowsLogo ? " (logo)" : ""}
+                <section className="space-y-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7339]">
+                    Line items
+                  </p>
+                  <div className="overflow-hidden rounded-2xl border border-[#E5EBE6]">
+                    {selected.items.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "flex items-start justify-between gap-3 bg-white px-4 py-3 text-[13px]",
+                          idx > 0 && "border-t border-[#EEF2EF]",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium text-[#141414]">{item.productName}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-[#6B6B6B]">
+                            <span>× {item.quantity}</span>
+                            {item.allowsLogo && (
+                              <span className="rounded-md bg-[#F0F7F2] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                                Logo eligible
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="shrink-0 font-semibold text-[#141414]">
+                          {formatInr(item.price * item.quantity)}
                         </span>
-                        <span>{formatInr(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
 
                 {selected.logoRequested && (
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
-                    <p className="text-sm font-semibold">Customer logo</p>
+                  <section className="rounded-2xl border border-[#E5EBE6] bg-[#F7FBF7] p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7339]">
+                        Customer logo
+                      </p>
+                      {selected.logoUrl ? (
+                        <a
+                          href={selected.logoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1B7339] hover:underline"
+                        >
+                          Open full size
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null}
+                    </div>
                     {selected.logoUrl ? (
-                      <div className="relative mx-auto h-36 w-full max-w-[220px] overflow-hidden rounded-lg border bg-white">
-                        <Image
+                      <div className="flex items-center justify-center rounded-xl border border-[#DCE6DF] bg-white p-6">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
                           src={selected.logoUrl}
-                          alt="Customer logo"
-                          fill
-                          className="object-contain p-3"
-                          unoptimized={selected.logoUrl.startsWith("data:")}
+                          alt="Customer logo for this order"
+                          className="max-h-40 max-w-full object-contain"
                         />
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Logo was requested on this order, but no file was uploaded by the customer.
-                      </p>
+                      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#C9D9CF] bg-white/70 px-4 py-8 text-center">
+                        <ImageIcon className="h-8 w-8 text-[#9BB5A3]" />
+                        <p className="text-[13px] font-medium text-[#3D3D3D]">Logo requested</p>
+                        <p className="max-w-[240px] text-[12px] text-[#7A7A7A]">
+                          Customer asked for logo customisation but did not upload a file with this order.
+                        </p>
+                      </div>
                     )}
-                    {selected.logoUrl ? (
-                      <a
-                        href={selected.logoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex text-xs font-medium text-primary hover:underline"
-                      >
-                        Open logo full size →
-                      </a>
-                    ) : null}
-                  </div>
+                  </section>
                 )}
 
                 <Button
-                  className="w-full"
+                  className="h-11 w-full rounded-xl border-[#C9D9CF] bg-white text-[#1B7339] hover:bg-[#F0F7F2] hover:text-[#145a2c]"
                   variant="outline"
                   onClick={() => downloadPdf(selected.id, selected.orderNumber)}
                 >
-                  <FileDown className="w-4 h-4 mr-2" />
+                  <FileDown className="mr-2 h-4 w-4" />
                   Download order sheet PDF
                 </Button>
 
-                <div className="space-y-2 pt-2 border-t">
-                  <p className="text-sm font-semibold">Update status</p>
-                  <p className="text-xs text-muted-foreground">
-                    Current:{" "}
-                    <span className="font-semibold text-foreground">
+                <section className="rounded-2xl border border-[#E5EBE6] bg-white p-4 space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7339]">
+                    Update status
+                  </p>
+                  <p className="text-[12px] text-[#6B6B6B]">
+                    Current status:{" "}
+                    <span className="font-semibold text-[#141414]">
                       {orderStatusLabel(selected.status)}
                     </span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {ORDER_STATUSES.filter((s) => s !== selected.status).map((s) => (
-                      <Button
-                        key={s}
-                        size="sm"
-                        variant={s === "completed" ? "default" : "outline"}
-                        className={
-                          s === "completed"
-                            ? "bg-[#1B7339] hover:bg-[#145a2c]"
-                            : undefined
-                        }
-                        disabled={updating}
-                        onClick={() => updateStatus(selected.id, s)}
-                      >
-                        {orderStatusLabel(s)}
-                      </Button>
-                    ))}
+                    {ORDER_STATUSES.map((s) => {
+                      const isCurrent = s === selected.status
+                      const isDanger = s === "cancelled"
+                      const isDone = s === "completed"
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={updating || isCurrent}
+                          onClick={() => updateStatus(selected.id, s)}
+                          className={cn(
+                            "h-10 rounded-xl border text-[13px] font-medium transition-colors disabled:opacity-100",
+                            isCurrent &&
+                              "border-[#1B7339] bg-[#E8F5E9] text-[#1B7339] cursor-default",
+                            !isCurrent &&
+                              !isDanger &&
+                              !isDone &&
+                              "border-[#E5E5E5] bg-white text-[#3D3D3D] hover:border-[#1B7339]/40 hover:bg-[#F7FBF7]",
+                            !isCurrent &&
+                              isDone &&
+                              "border-[#1B7339]/30 bg-white text-[#1B7339] hover:bg-[#E8F5E9]",
+                            !isCurrent &&
+                              isDanger &&
+                              "border-red-200 bg-white text-red-600 hover:bg-red-50",
+                            updating && "opacity-60",
+                          )}
+                        >
+                          {isCurrent ? `✓ ${orderStatusLabel(s)}` : orderStatusLabel(s)}
+                        </button>
+                      )
+                    })}
                   </div>
-                  {selected.status !== "completed" && (
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Shipped</strong> emails the dispatch notice.{" "}
-                      <strong>Completed</strong> deducts KR credits, generates the impact
-                      certificate, and emails the delivered notice.
+                  {selected.status !== "completed" && selected.status !== "cancelled" && (
+                    <p className="text-[11px] leading-relaxed text-[#7A7A7A]">
+                      <strong className="text-[#3D3D3D]">Shipped</strong> emails the dispatch notice.{" "}
+                      <strong className="text-[#3D3D3D]">Completed</strong> deducts KR credits,
+                      generates the impact certificate, and emails the delivered notice.
                     </p>
                   )}
-                </div>
+                  {updating && (
+                    <div className="flex items-center gap-2 text-[12px] text-[#1B7339]">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Updating status…
+                    </div>
+                  )}
+                </section>
               </div>
-            </>
+            </div>
           )}
         </SheetContent>
       </Sheet>

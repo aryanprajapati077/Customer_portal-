@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const { lines, subtotal, itemCount, clearCart } = useCart()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  const orderPlacedRef = useRef(false)
   const [useKrCredits, setUseKrCredits] = useState(true)
   const [wantLogo, setWantLogo] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -32,9 +33,12 @@ export default function CheckoutPage() {
   const credits = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
   const canPayWithCredits = credits >= subtotal && subtotal > 0
 
+  // Empty cart → back to cart, but never after a successful place-order
+  // (clearCart would otherwise race and land on cart instead of KraftReborn).
   useEffect(() => {
+    if (orderPlacedRef.current || submitting) return
     if (lines.length === 0) router.replace("/dashboard/shop/cart")
-  }, [lines.length, router])
+  }, [lines.length, router, submitting])
 
   useEffect(() => {
     if (!hasLogoEligibleItems) {
@@ -100,6 +104,7 @@ export default function CheckoutPage() {
       const data = await res.json()
       if (!data.success) {
         setError(data.error || "Checkout failed")
+        setSubmitting(false)
         return
       }
 
@@ -120,18 +125,18 @@ export default function CheckoutPage() {
         }),
       )
 
+      orderPlacedRef.current = true
       clearCart()
-      router.push(`/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`)
+      router.replace(`/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`)
     } catch {
       setError("Network error. Please try again.")
-    } finally {
       setSubmitting(false)
     }
   }
 
   if (lines.length === 0) {
     return (
-      <ShopShell showBack backHref="/dashboard/shop/cart" title="Checkout">
+      <ShopShell showBack backHref="/dashboard/shop" title="Checkout">
         <div className="flex justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>

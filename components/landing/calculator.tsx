@@ -1,54 +1,130 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Droplets, Cigarette, Leaf, Recycle, ArrowRight } from "lucide-react"
+import {
+  Droplets,
+  Cigarette,
+  Leaf,
+  Recycle,
+  ArrowRight,
+  Loader2,
+  CheckCircle2,
+  Building2,
+} from "lucide-react"
 import { InspireCard } from "@/components/marketing/inspire-page"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  INDUSTRIES,
+  calculateImpact,
+  formatCompactLitres,
+  formatInr,
+  type Industry,
+  type KioskType,
+} from "@/lib/impact-calculator"
 
-const INDUSTRIES = ["Hospitality", "Corporate Campus", "Education", "Healthcare", "Retail / Mall", "Mixed Use"]
-const EMP_OPTIONS = [
+const EMP_PRESETS = [
   { label: "1 – 50", value: 40 },
   { label: "51 – 200", value: 120 },
   { label: "201 – 500", value: 320 },
   { label: "500+", value: 650 },
 ]
-const LOC_OPTIONS = [
+
+const LOC_PRESETS = [
   { label: "1", value: 1 },
   { label: "2 – 5", value: 3 },
   { label: "6 – 15", value: 10 },
   { label: "16+", value: 22 },
 ]
-const KIOSK_OPTIONS = ["Basic", "Advanced", "Mixed Fleet"]
 
-function formatNumber(n: number) {
-  return new Intl.NumberFormat("en-IN").format(Math.round(n))
-}
+const ZONE_PRESETS = [
+  { label: "1", value: 1 },
+  { label: "2 – 5", value: 3 },
+  { label: "6 – 10", value: 8 },
+  { label: "11+", value: 14 },
+]
 
 export function LandingCalculator() {
-  const [industry, setIndustry] = useState(INDUSTRIES[0])
-  const [employees, setEmployees] = useState(EMP_OPTIONS[1].value)
-  const [locations, setLocations] = useState(LOC_OPTIONS[1].value)
-  const [kiosk, setKiosk] = useState(KIOSK_OPTIONS[1])
+  const [industry, setIndustry] = useState<Industry>("Corporate Office")
+  const [employees, setEmployees] = useState(EMP_PRESETS[1].value)
+  const [locations, setLocations] = useState(LOC_PRESETS[1].value)
+  const [smokingZones, setSmokingZones] = useState(ZONE_PRESETS[1].value)
+  const [kioskType, setKioskType] = useState<KioskType>("Advanced")
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState("")
+  const [pdfDownload, setPdfDownload] = useState<{ filename: string; href: string } | null>(null)
 
-  const impact = useMemo(() => {
-    const kioskMul = kiosk === "Advanced" ? 1.25 : kiosk === "Mixed Fleet" ? 1.1 : 1
-    const industryMul =
-      industry === "Hospitality" ? 1.3 : industry === "Corporate Campus" ? 1.15 : 1
-    const butts = employees * locations * 180 * kioskMul * industryMul
-    const waterLitres = butts * 100
-    const co2Tonnes = butts * 0.0005
-    const productsValue = Math.round((butts / 3000) * 180)
-    return {
-      butts,
-      waterLitres,
-      co2Tonnes,
-      recycled: 99,
-      plan: kiosk === "Basic" ? "Basic Plan" : "Advanced Plan",
-      productsValue,
-    }
-  }, [industry, employees, locations, kiosk])
+  const estimate = useMemo(
+    () =>
+      calculateImpact({
+        industry,
+        employees,
+        locations,
+        smokingZones,
+        kioskType,
+      }),
+    [industry, employees, locations, smokingZones, kioskType],
+  )
 
+  const needsKiosk = industry === "Corporate Office" || industry === "Hotel"
+  const needsEmployees = industry === "Corporate Office"
+  const needsZones = industry === "Hotel"
   const field =
     "mt-1.5 h-11 w-full rounded-xl border border-[#E5E2DA] bg-[#FBFBF8] px-3 text-[14px] text-[#141414] outline-none transition focus:border-[#1B7339] focus:bg-white focus:ring-2 focus:ring-[#1B7339]/15"
+
+  const submitProposal = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    const form = new FormData(e.currentTarget)
+    const payload = {
+      fullName: String(form.get("fullName") || ""),
+      companyName: String(form.get("companyName") || ""),
+      email: String(form.get("email") || ""),
+      phone: String(form.get("phone") || ""),
+      city: String(form.get("city") || ""),
+      industry,
+      employees: needsEmployees ? employees : undefined,
+      locations: needsEmployees ? locations : undefined,
+      smokingZones: needsZones ? smokingZones : undefined,
+      kioskType: needsKiosk ? kioskType : undefined,
+    }
+    try {
+      const res = await fetch("/api/proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || "Could not generate proposal")
+
+      if (data.pdfBase64 && data.filename) {
+        const href = `data:application/pdf;base64,${data.pdfBase64}`
+        setPdfDownload({ filename: data.filename, href })
+        const a = document.createElement("a")
+        a.href = href
+        a.download = data.filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      }
+      setDone(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <section id="calculator" className="scroll-mt-24 py-16 sm:py-20 lg:py-24">
@@ -70,48 +146,88 @@ export function LandingCalculator() {
           <div className="mt-8 space-y-4">
             <label className="block text-[13px] font-medium text-[#374151]">
               Industry Type
-              <select className={field} value={industry} onChange={(e) => setIndustry(e.target.value)}>
+              <select
+                className={field}
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value as Industry)}
+              >
                 {INDUSTRIES.map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-[13px] font-medium text-[#374151]">
-              No. of Employees / Smoking Zones
-              <select
-                className={field}
-                value={employees}
-                onChange={(e) => setEmployees(Number(e.target.value))}
-              >
-                {EMP_OPTIONS.map((o) => (
-                  <option key={o.label} value={o.value}>
-                    {o.label}
+                  <option key={o} value={o}>
+                    {o}
                   </option>
                 ))}
               </select>
             </label>
-            <label className="block text-[13px] font-medium text-[#374151]">
-              No. of Locations
-              <select
-                className={field}
-                value={locations}
-                onChange={(e) => setLocations(Number(e.target.value))}
-              >
-                {LOC_OPTIONS.map((o) => (
-                  <option key={o.label} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-[13px] font-medium text-[#374151]">
-              Kiosk Preference
-              <select className={field} value={kiosk} onChange={(e) => setKiosk(e.target.value)}>
-                {KIOSK_OPTIONS.map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </label>
+
+            {needsEmployees ? (
+              <>
+                <label className="block text-[13px] font-medium text-[#374151]">
+                  No. of Employees
+                  <select
+                    className={field}
+                    value={employees}
+                    onChange={(e) => setEmployees(Number(e.target.value))}
+                  >
+                    {EMP_PRESETS.map((o) => (
+                      <option key={o.label} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-[13px] font-medium text-[#374151]">
+                  No. of Locations
+                  <select
+                    className={field}
+                    value={locations}
+                    onChange={(e) => setLocations(Number(e.target.value))}
+                  >
+                    {LOC_PRESETS.map((o) => (
+                      <option key={o.label} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            ) : null}
+
+            {needsZones ? (
+              <label className="block text-[13px] font-medium text-[#374151]">
+                No. of Smoking Zones
+                <select
+                  className={field}
+                  value={smokingZones}
+                  onChange={(e) => setSmokingZones(Number(e.target.value))}
+                >
+                  {ZONE_PRESETS.map((o) => (
+                    <option key={o.label} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            {needsKiosk ? (
+              <label className="block text-[13px] font-medium text-[#374151]">
+                Kiosk Preference
+                <select
+                  className={field}
+                  value={kioskType}
+                  onChange={(e) => setKioskType(e.target.value as KioskType)}
+                >
+                  <option value="Basic">Basic</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </label>
+            ) : null}
+
+            {estimate.mode === "package" || estimate.mode === "contact" ? (
+              <p className="rounded-xl bg-[#F4F9F5] px-4 py-3 text-[13px] leading-relaxed text-[#2A4A32]">
+                {estimate.impactNote || estimate.summaryLine}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -120,49 +236,344 @@ export function LandingCalculator() {
             Your estimated impact
           </p>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
-            <Metric
-              icon={Cigarette}
-              label="Cigarette Butts Diverted"
-              value={formatNumber(impact.butts)}
-              note="per year"
-            />
-            <Metric
-              icon={Droplets}
-              label="Water Pollution Prevented"
-              value={`${formatNumber(impact.waterLitres / 1_000_000)}M`}
-              note="litres"
-            />
-            <Metric
-              icon={Leaf}
-              label="CO₂ Emissions Avoided"
-              value={impact.co2Tonnes.toFixed(0)}
-              note="tonnes / year"
-            />
-            <Metric icon={Recycle} label="Waste Recycled" value={`${impact.recycled}%`} note="recovery rate" />
-          </div>
+          {estimate.mode === "quantified" ? (
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <Metric
+                icon={Cigarette}
+                label="Cigarette Butts Diverted"
+                value={formatInr(estimate.buttsDiverted || 0)}
+                note="per year"
+              />
+              <Metric
+                icon={Droplets}
+                label="Water Pollution Prevented"
+                value={formatCompactLitres(estimate.waterLitres || 0)}
+                note="litres"
+              />
+              <Metric
+                icon={Building2}
+                label="Est. Annual Investment"
+                value={
+                  estimate.annualInvestment != null ? `₹${formatInr(estimate.annualInvestment)}` : "—"
+                }
+                note={
+                  estimate.pricing
+                    ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
+                    : "excl. GST / year"
+                }
+              />
+              <Metric
+                icon={Recycle}
+                label="Waste Recycled"
+                value={`${estimate.wasteRecycledPct}%`}
+                note="recovery rate"
+              />
+            </div>
+          ) : estimate.mode === "survey" || estimate.mode === "package" ? (
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <Metric
+                icon={Building2}
+                label="Recommended Package"
+                value={estimate.packageName}
+                note={
+                  estimate.recommendedKiosks != null
+                    ? `${estimate.recommendedKiosks} kiosks`
+                    : "fixed annual plan"
+                }
+              />
+              <Metric
+                icon={Leaf}
+                label="Est. Annual Investment"
+                value={
+                  estimate.annualInvestment != null ? `₹${formatInr(estimate.annualInvestment)}` : "—"
+                }
+                note={
+                  estimate.pricing
+                    ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
+                    : estimate.annualInvestmentNote || ""
+                }
+              />
+              <Metric
+                icon={Recycle}
+                label="Waste Recycled"
+                value={`${estimate.wasteRecycledPct}%`}
+                note="recovery rate"
+              />
+              <Metric
+                icon={Droplets}
+                label="Impact timing"
+                value="Post-survey"
+                note="site assessment required"
+              />
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl bg-[#F4F9F5] px-4 py-6 text-[14px] leading-relaxed text-[#2A4A32]">
+              {estimate.impactNote}
+            </div>
+          )}
 
           <div className="mt-7 rounded-2xl bg-[#F4F9F5] px-4 py-4">
             <p className="text-[13px] text-[#2A4A32]">
-              Recommended: <span className="font-semibold">{impact.plan}</span>
+              Recommended: <span className="font-semibold">{estimate.packageName}</span>
+              {estimate.kioskType ? (
+                <span className="text-[#5A5A5A]"> · {estimate.kioskType} kiosk</span>
+              ) : null}
+              {estimate.recommendedKiosks != null ? (
+                <span className="text-[#5A5A5A]"> · {estimate.recommendedKiosks} units</span>
+              ) : null}
             </p>
-            <p className="mt-1 text-[13px] text-[#5A5A5A]">
-              Est. complimentary KraftReborn value ≈{" "}
-              <span className="font-semibold text-[#141414]">
-                ₹{formatNumber(impact.productsValue)}
-              </span>
-            </p>
+            {estimate.pricing ? (
+              <div className="mt-2 space-y-1 text-[13px] text-[#5A5A5A]">
+                {estimate.pricing.lineItems.map((item) => (
+                  <p key={item.label} className="flex justify-between gap-3">
+                    <span>{item.label}</span>
+                    <span className="shrink-0 font-medium text-[#141414]">
+                      ₹{formatInr(item.amount)}
+                    </span>
+                  </p>
+                ))}
+                <p className="flex justify-between gap-3 border-t border-[#D7E8DB] pt-2">
+                  <span>Subtotal excl. GST</span>
+                  <span className="font-semibold text-[#141414]">
+                    ₹{formatInr(estimate.pricing.subtotalExclGst)}
+                  </span>
+                </p>
+                <p className="flex justify-between gap-3">
+                  <span>GST @ {estimate.pricing.gstRatePct}%</span>
+                  <span className="font-medium text-[#141414]">
+                    ₹{formatInr(estimate.pricing.gstAmount)}
+                  </span>
+                </p>
+                <p className="flex justify-between gap-3 text-[#2A4A32]">
+                  <span className="font-semibold">Total incl. GST / year</span>
+                  <span className="font-bold">₹{formatInr(estimate.pricing.totalInclGst)}</span>
+                </p>
+              </div>
+            ) : null}
+            {estimate.kraftRebornValue != null ? (
+              <p className="mt-2 text-[13px] text-[#5A5A5A]">
+                Complimentary KraftReborn value ={" "}
+                <span className="font-semibold text-[#141414]">
+                  ₹{formatInr(estimate.kraftRebornValue)}
+                </span>
+              </p>
+            ) : null}
+            {estimate.impactNote && estimate.mode === "survey" ? (
+              <p className="mt-2 text-[12px] leading-relaxed text-[#5A5A5A]">{estimate.impactNote}</p>
+            ) : null}
           </div>
 
-          <a
-            href="#proposal"
+          <button
+            type="button"
+            onClick={() => {
+              setDone(false)
+              setError("")
+              setPdfDownload(null)
+              setOpen(true)
+            }}
             className="landing-btn-primary mt-6 w-full"
           >
             Get detailed proposal
             <ArrowRight className="h-4 w-4" />
-          </a>
+          </button>
         </InspireCard>
       </div>
+
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v)
+          if (!v) {
+            setDone(false)
+            setError("")
+            setPdfDownload(null)
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-[#E5E2DA] bg-[#FBFBF8] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-[family-name:var(--font-display)] text-xl">
+              {done ? "Your proposal is ready" : "Get my detailed proposal"}
+            </DialogTitle>
+            <DialogDescription>
+              {done
+                ? "Full commercial PDF downloaded. We’ve also emailed it and notified Buffindia sales."
+                : "Review package, kiosks, pricing and impact — then generate your branded PDF proposal."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {done ? (
+            <div className="flex flex-col items-center py-6 text-center">
+              <CheckCircle2 className="h-10 w-10 text-[#1B7339]" />
+              <p className="mt-4 text-[15px] font-semibold text-[#141414]">Proposal generated</p>
+              <p className="mt-2 max-w-sm text-[13px] text-[#5A5A5A]">
+                Your PDF includes package, kiosk quantity, full pricing with GST, impact summary, and
+                KraftReborn entitlement.
+              </p>
+              {pdfDownload ? (
+                <a
+                  href={pdfDownload.href}
+                  download={pdfDownload.filename}
+                  className="landing-btn-primary mt-6"
+                >
+                  Download proposal PDF
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 rounded-full"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3 rounded-xl border border-[#E5E2DA] bg-white px-4 py-3 text-[13px] text-[#374151]">
+                <p>
+                  <span className="text-[#8A8A8A]">Package</span> ·{" "}
+                  <span className="font-semibold">{estimate.packageName}</span>
+                  {estimate.kioskType ? ` · ${estimate.kioskType}` : ""}
+                </p>
+                {estimate.recommendedKiosks != null ? (
+                  <p>
+                    <span className="text-[#8A8A8A]">Recommended kiosks</span> ·{" "}
+                    <span className="font-semibold">{estimate.recommendedKiosks}</span>
+                  </p>
+                ) : null}
+
+                {estimate.pricing ? (
+                  <div className="border-t border-[#EFECE4] pt-2">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A8A8A]">
+                      Pricing
+                    </p>
+                    {estimate.pricing.lineItems.map((item) => (
+                      <p key={item.label} className="flex justify-between gap-2 py-0.5">
+                        <span className="text-[#5A5A5A]">{item.label}</span>
+                        <span className="font-medium">₹{formatInr(item.amount)}</span>
+                      </p>
+                    ))}
+                    <p className="mt-1 flex justify-between gap-2 border-t border-[#EFECE4] pt-2">
+                      <span>Subtotal excl. GST</span>
+                      <span className="font-semibold">
+                        ₹{formatInr(estimate.pricing.subtotalExclGst)}
+                      </span>
+                    </p>
+                    <p className="flex justify-between gap-2">
+                      <span>GST @ {estimate.pricing.gstRatePct}%</span>
+                      <span className="font-medium">₹{formatInr(estimate.pricing.gstAmount)}</span>
+                    </p>
+                    <p className="flex justify-between gap-2 text-[#1B7339]">
+                      <span className="font-semibold">Total incl. GST / year</span>
+                      <span className="font-bold">₹{formatInr(estimate.pricing.totalInclGst)}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[#5A5A5A]">{estimate.impactNote}</p>
+                )}
+
+                {estimate.buttsDiverted != null ? (
+                  <p className="border-t border-[#EFECE4] pt-2">
+                    <span className="text-[#8A8A8A]">Impact</span> ·{" "}
+                    <span className="font-semibold">
+                      {formatInr(estimate.buttsDiverted)} butts / yr
+                    </span>
+                    {estimate.waterLitres != null
+                      ? ` · ${formatCompactLitres(estimate.waterLitres)} L water`
+                      : ""}
+                    {` · ${estimate.wasteRecycledPct}% recycled`}
+                  </p>
+                ) : estimate.impactNote && estimate.pricing ? (
+                  <p className="border-t border-[#EFECE4] pt-2 text-[#5A5A5A]">{estimate.impactNote}</p>
+                ) : null}
+
+                {estimate.kraftRebornValue != null ? (
+                  <p>
+                    <span className="text-[#8A8A8A]">KraftReborn</span> ·{" "}
+                    <span className="font-semibold">₹{formatInr(estimate.kraftRebornValue)}</span>
+                  </p>
+                ) : null}
+              </div>
+
+              <form onSubmit={submitProposal} className="space-y-3">
+                {error ? (
+                  <p className="rounded-xl bg-red-50 px-3 py-2 text-[13px] text-red-700">{error}</p>
+                ) : null}
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    required
+                    className="h-11 rounded-xl border-[#E5E2DA] bg-white"
+                    autoComplete="name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    required
+                    className="h-11 rounded-xl border-[#E5E2DA] bg-white"
+                    autoComplete="organization"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Work Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    className="h-11 rounded-xl border-[#E5E2DA] bg-white"
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      className="h-11 rounded-xl border-[#E5E2DA] bg-white"
+                      autoComplete="tel"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      required
+                      className="h-11 rounded-xl border-[#E5E2DA] bg-white"
+                      autoComplete="address-level2"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-11 w-full rounded-full bg-[#141414] text-[14px] font-semibold text-white hover:bg-[#1B7339]"
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Generate my proposal
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
@@ -185,7 +596,7 @@ function Metric({
       </div>
       <p className="text-[11px] font-medium uppercase tracking-wide text-[#8A8A8A]">{label}</p>
       <p className="mt-1 text-[1.55rem] font-bold tracking-tight text-[#141414]">{value}</p>
-      <p className="text-[12px] text-[#6B6B6B]">{note}</p>
+      {note ? <p className="text-[12px] text-[#6B6B6B]">{note}</p> : null}
     </div>
   )
 }

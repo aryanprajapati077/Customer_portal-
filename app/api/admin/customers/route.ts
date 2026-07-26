@@ -131,6 +131,10 @@ export async function POST(request: NextRequest) {
     const noOfAdvanceKiosk = int(body.noOfAdvanceKiosk)
     const noOfPanVendorKiosk = int(body.noOfPanVendorKiosk)
     const noOfWallMountKiosk = int(body.noOfWallMountKiosk)
+    const kraftrebornCredits =
+      body.kraftrebornCredits !== "" && body.kraftrebornCredits != null
+        ? Math.max(0, Math.floor(num(body.kraftrebornCredits)))
+        : NaN
 
     const missing: string[] = []
     if (!brandName) missing.push("Customer Brand Name")
@@ -147,6 +151,14 @@ export async function POST(request: NextRequest) {
     if (!collectionFrequency) missing.push("Collection Frequency")
     if (body.noOfKiosk === "" || body.noOfKiosk == null || noOfKiosk < 0) {
       missing.push("No. Of Kiosk")
+    }
+    if (
+      body.kraftrebornCredits === "" ||
+      body.kraftrebornCredits == null ||
+      !Number.isFinite(kraftrebornCredits) ||
+      kraftrebornCredits < 0
+    ) {
+      missing.push("KR Amount")
     }
     if (!collectionPocs.length) {
       missing.push("Collection POC details")
@@ -213,7 +225,7 @@ export async function POST(request: NextRequest) {
         "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
         "collectionPocs", "serviceStartDate",
         "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
-        "collectionFrequency",
+        "collectionFrequency", "kraftrebornCredits",
         "contactPerson", phone, address, status, "disposalUnitInstalled",
         "joinDate", "isGroup", "parentCustomerId",
         "createdAt", "updatedAt"
@@ -242,6 +254,7 @@ export async function POST(request: NextRequest) {
         ${noOfPanVendorKiosk},
         ${noOfWallMountKiosk},
         ${collectionFrequency},
+        ${kraftrebornCredits},
         ${primaryPocName},
         ${primaryPocNumber},
         ${address},
@@ -255,7 +268,7 @@ export async function POST(request: NextRequest) {
       )
       RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
                 "primaryPocName", "primaryPocEmail", "primaryPocNumber",
-                "collectionFrequency", "noOfKiosk", "serviceStartDate",
+                "collectionFrequency", "noOfKiosk", "kraftrebornCredits", "serviceStartDate",
                 "contactPerson", phone, address, status,
                 "disposalUnitInstalled", "createdAt", "updatedAt"
     `

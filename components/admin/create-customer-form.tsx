@@ -45,6 +45,7 @@ export type CreateCustomerFormState = {
   noOfPanVendorKiosk: string
   noOfWallMountKiosk: string
   collectionFrequency: string
+  kraftrebornCredits: string
   gstin: string
   logoBase64: string
   logoPreview: string
@@ -70,6 +71,7 @@ export const EMPTY_CREATE_CUSTOMER_FORM: CreateCustomerFormState = {
   noOfPanVendorKiosk: "0",
   noOfWallMountKiosk: "0",
   collectionFrequency: "",
+  kraftrebornCredits: "",
   gstin: "",
   logoBase64: "",
   logoPreview: "",
@@ -524,6 +526,25 @@ export function CreateCustomerForm({
         </div>
       </div>
 
+      <div className="space-y-3 rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] p-4">
+        <div className="space-y-2">
+          <Req>KR Amount (₹)</Req>
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            required
+            value={form.kraftrebornCredits}
+            onChange={(e) => setForm((p) => ({ ...p, kraftrebornCredits: e.target.value }))}
+            placeholder="e.g. 30000"
+          />
+          <p className="text-[11px] text-[#6B6B6B]">
+            KraftReborn credit balance in rupees. Required so the customer can redeem products in the
+            shop.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
@@ -536,7 +557,8 @@ export function CreateCustomerForm({
             !form.city ||
             !form.lsuName ||
             !form.lsuTechnicianName ||
-            !form.collectionFrequency
+            !form.collectionFrequency ||
+            form.kraftrebornCredits === ""
           }
           className="bg-[#1B7339] hover:bg-[#145a2c]"
         >

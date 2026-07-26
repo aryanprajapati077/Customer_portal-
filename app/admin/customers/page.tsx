@@ -166,6 +166,10 @@ export default function AdminCustomersPage() {
       setCreateError("No. Of Kiosk is required")
       return
     }
+    if (createForm.kraftrebornCredits === "" || Number(createForm.kraftrebornCredits) < 0) {
+      setCreateError("KR Amount is required (₹) so the customer can redeem in the shop")
+      return
+    }
 
     setCreateLoading(true)
     try {
@@ -192,6 +196,7 @@ export default function AdminCustomersPage() {
           noOfPanVendorKiosk: Number(createForm.noOfPanVendorKiosk) || 0,
           noOfWallMountKiosk: Number(createForm.noOfWallMountKiosk) || 0,
           collectionFrequency: createForm.collectionFrequency,
+          kraftrebornCredits: Number(createForm.kraftrebornCredits),
           gstin: createForm.gstin.trim() || undefined,
           logoBase64: createForm.logoBase64 || undefined,
         }),
@@ -535,6 +540,40 @@ export default function AdminCustomersPage() {
                     }}
                   />
                   <p className="text-[11px] text-[#7A7A7A]">Contract / renewal end date</p>
+                </div>
+                <div className="rounded-xl border border-[#E2EBE4] p-3 space-y-2">
+                  <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                    KR Amount (₹) — redeemable balance
+                  </p>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    key={`kr-${selected.id}-${selected.kraftrebornCredits ?? 0}`}
+                    defaultValue={
+                      selected.kraftrebornCredits != null ? String(Math.floor(selected.kraftrebornCredits)) : ""
+                    }
+                    placeholder="Required for shop redemption"
+                    onBlur={async (e) => {
+                      const raw = e.target.value.trim()
+                      if (raw === "") return
+                      const kraftrebornCredits = Math.max(0, Math.floor(Number(raw)))
+                      if (!Number.isFinite(kraftrebornCredits)) return
+                      const res = await fetch("/api/admin/customers", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: selected.id, kraftrebornCredits }),
+                      })
+                      const data = await res.json()
+                      if (data?.success) {
+                        setSelected((s) => (s ? { ...s, kraftrebornCredits } : s))
+                        await load()
+                      }
+                    }}
+                  />
+                  <p className="text-[11px] text-[#7A7A7A]">
+                    Save on blur. Customer can redeem this balance in the KraftReborn shop.
+                  </p>
                 </div>
                 {selected.collectionPocs && (
                   <div className="rounded-xl border border-[#E2EBE4] p-3">

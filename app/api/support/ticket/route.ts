@@ -156,7 +156,7 @@ export async function POST(request: Request) {
           from,
           to: adminEmail,
           replyTo: email,
-          subject: `[Support] ${subject}`,
+          subject: source === "contact" ? `[Contact] ${subject}` : `[Support] ${subject}`,
           text: `New support ticket (#${ticketId})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\nAttachment: ${attachmentUrl ? "Yes" : "No"}\n\n${message}`,
         })
         .catch(() => {})

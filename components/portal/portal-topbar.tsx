@@ -86,19 +86,39 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
             )}
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" className="w-80 p-0">
+          <DropdownMenuLabel className="px-3 py-2.5">Notifications</DropdownMenuLabel>
+          <DropdownMenuSeparator className="m-0" />
           {notifications.length === 0 ? (
             <div className="px-3 py-4 text-sm text-muted-foreground">No notifications yet</div>
           ) : (
-            notifications.slice(0, 6).map((n) => (
-              <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 py-2.5">
-                <span className={cn("text-sm", !n.readAt && "font-semibold")}>{n.title}</span>
-                {n.body && <span className="text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
-              </DropdownMenuItem>
-            ))
+            <div className="max-h-[320px] overflow-y-auto py-1">
+              {notifications.slice(0, 6).map((n) => (
+                <DropdownMenuItem
+                  key={n.id}
+                  className={cn(
+                    "mx-1 flex flex-col items-start gap-0.5 rounded-lg py-2.5",
+                    !n.readAt && "bg-[#E8F5E9]",
+                  )}
+                  onClick={() => router.push("/dashboard/notifications")}
+                >
+                  <span className={cn("text-sm", !n.readAt && "font-semibold text-[#1B7339]")}>
+                    {n.title}
+                  </span>
+                  {n.body && <span className="text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
+                </DropdownMenuItem>
+              ))}
+            </div>
           )}
+          <DropdownMenuSeparator className="m-0" />
+          <div className="p-1.5">
+            <DropdownMenuItem
+              className="justify-center rounded-lg text-[13px] font-semibold text-[#1B7339]"
+              onClick={() => router.push("/dashboard/notifications")}
+            >
+              View all notifications
+            </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Download, FileBarChart2, FileText } from "lucide-react"
 import { PortalShell } from "@/components/portal/portal-shell"
 import { PageHeader } from "@/components/portal/page-header"
@@ -8,9 +9,26 @@ import { usePortalData } from "@/hooks/use-portal-data"
 import { DownloadImpactReport } from "@/components/portal/download-impact-report"
 import { CertificateDownloadButton, DownloadCertificate } from "@/components/portal/download-certificate"
 import { formatPortalDate } from "@/lib/portal-metrics"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { ReportRangeKey } from "@/lib/report-date-range"
+
+const PERIOD_OPTIONS: { value: ReportRangeKey; label: string }[] = [
+  { value: "this-year", label: "Current Year" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "installation", label: "Installation till date" },
+  { value: "month", label: "This month" },
+  { value: "custom", label: "Start date to end date" },
+]
 
 export default function ReportsPage() {
   const { customer, authLoading, dataLoading, reports, certificates } = usePortalData()
+  const [period, setPeriod] = useState<ReportRangeKey>("this-year")
 
   return (
     <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)}>
@@ -43,25 +61,35 @@ export default function ReportsPage() {
             Choose current year, quarterly, installation till date, this month, or a custom start–end
             date range when you download.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["this-year", "Current Year"],
-                ["quarterly", "Quarterly"],
-                ["installation", "Installation till date"],
-                ["month", "This month"],
-                ["custom", "Start date to end date"],
-              ] as const
-            ).map(([range, label]) => (
-              <DownloadImpactReport key={range} customerId={customer?.id} defaultRange={range}>
-                <button
-                  type="button"
-                  className="h-9 px-3.5 rounded-full border border-[#D8D8D8] bg-white text-[12.5px] font-medium text-[#4A4A4A] hover:border-[#1B7339] hover:text-[#1B7339] hover:bg-[#E8F5E9]"
-                >
-                  {label}
-                </button>
-              </DownloadImpactReport>
-            ))}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="space-y-1.5 flex-1 max-w-sm">
+              <label className="text-[12px] font-medium text-[#5A5A5A]">Report period</label>
+              <Select value={period} onValueChange={(v) => setPeriod(v as ReportRangeKey)}>
+                <SelectTrigger className="h-10 rounded-xl border-[#D8D8D8] bg-white text-[13px]">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DownloadImpactReport
+              key={period}
+              customerId={customer?.id}
+              defaultRange={period}
+            >
+              <button
+                type="button"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1B7339] px-4 text-[13px] font-semibold text-white hover:bg-[#145a2c]"
+              >
+                <Download className="w-4 h-4" />
+                Download report
+              </button>
+            </DownloadImpactReport>
           </div>
         </div>
 

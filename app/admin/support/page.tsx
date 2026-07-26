@@ -79,7 +79,7 @@ export default function AdminSupportPage() {
           </div>
           <h1 className="text-3xl font-bold">Support Tickets</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tickets from the help chatbot and support center. {openCount} open.
+            Tickets from the help chatbot, support center, and website contact form. {openCount} open.
           </p>
         </div>
         <div className="flex gap-2">

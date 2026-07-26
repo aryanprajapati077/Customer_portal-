@@ -19,14 +19,15 @@ export function LandingProducts() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative aspect-[4/3] overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-white/80 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
+          className="relative aspect-[4/3] overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-gradient-to-br from-[#F4F8F4] via-white to-[#EEF5EF] shadow-[0_1px_0_rgba(0,0,0,0.03)]"
         >
           <Image
             src="/landing/upcycled-products.png"
             alt="KraftReborn upcycled products"
             fill
-            className="object-cover"
+            className="object-contain object-center p-4 sm:p-6"
             sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
           />
         </motion.div>
 

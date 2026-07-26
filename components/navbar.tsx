@@ -12,7 +12,7 @@ const navLinks = [
   { name: "Impact", href: "/#impact" },
   { name: "KraftReborn", href: "/#kraftreborn" },
   { name: "Journey", href: "/#journey" },
-  { name: "Contact", href: "/#proposal" },
+  { name: "Contact", href: "/contact" },
 ]
 
 export function Navbar() {

@@ -13,8 +13,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Download, FileSpreadsheet, Loader2 } from "lucide-react"
 import type { ReportRangeKey } from "@/lib/report-date-range"
 
 export type ReportRange = ReportRangeKey
@@ -145,67 +151,31 @@ export function DownloadImpactReport({
 
         <div className="space-y-2">
           <p className="text-sm font-medium text-[#1F4A30]">Format</p>
-          <div className="grid grid-cols-2 gap-2">
-            {(
-              [
-                { id: "pdf" as const, label: "PDF Report", hint: "Branded 4-page ESG PDF", Icon: FileText },
-                {
-                  id: "excel" as const,
-                  label: "Excel (.xlsx)",
-                  hint: "Customer + month-wise data",
-                  Icon: FileSpreadsheet,
-                },
-              ] as const
-            ).map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFormat(f.id)}
-                className={cn(
-                  "flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-colors",
-                  format === f.id
-                    ? "border-[#1B7339] bg-[#E8F5E9]"
-                    : "border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]",
-                )}
-              >
-                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#1A1A1A]">
-                  <f.Icon className="h-3.5 w-3.5 text-[#1B7339]" />
-                  {f.label}
-                </span>
-                <span className="mt-0.5 text-[11px] text-[#7A7A7A]">{f.hint}</span>
-              </button>
-            ))}
-          </div>
+          <Select value={format} onValueChange={(v) => setFormat(v as ReportFormat)}>
+            <SelectTrigger className="h-10 rounded-xl border-[#E5E5E5] bg-white text-[13px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdf">PDF Report — branded 4-page ESG PDF</SelectItem>
+              <SelectItem value="excel">Excel (.xlsx) — customer + month-wise data</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <p className="text-sm font-medium text-[#1F4A30]">Report period</p>
-          <div className="grid grid-cols-1 gap-2">
-            {ranges.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRange(r.id)}
-                className={cn(
-                  "flex items-start justify-between rounded-xl border px-3 py-2.5 text-left transition-colors",
-                  range === r.id
-                    ? "border-[#1B7339] bg-[#E8F5E9]"
-                    : "border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]",
-                )}
-              >
-                <span>
-                  <span className="block text-[13px] font-semibold text-[#1A1A1A]">{r.label}</span>
-                  <span className="mt-0.5 block text-[11px] text-[#7A7A7A]">{r.hint}</span>
-                </span>
-                <span
-                  className={cn(
-                    "mt-1 h-3.5 w-3.5 rounded-full border",
-                    range === r.id ? "border-[#1B7339] bg-[#1B7339]" : "border-[#C5C5C5]",
-                  )}
-                />
-              </button>
-            ))}
-          </div>
+          <Select value={range} onValueChange={(v) => setRange(v as ReportRange)}>
+            <SelectTrigger className="h-10 rounded-xl border-[#E5E5E5] bg-white text-[13px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ranges.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.label} — {r.hint}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {range === "custom" && (
             <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#E5E5E5] bg-[#F8FBF8] p-3">

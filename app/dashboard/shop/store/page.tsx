@@ -161,12 +161,12 @@ export default function KraftStorePage() {
                 </div>
               </div>
             </div>
-            <div className="relative aspect-[5/4] overflow-hidden rounded-[1.35rem] border border-black/[0.05] bg-white/70 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            <div className="relative aspect-[5/4] overflow-hidden rounded-[1.35rem] border border-black/[0.05] bg-gradient-to-br from-[#F4F8F4] via-white to-[#EEF5EF] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
               <Image
                 src="/landing/upcycled-products.png"
                 alt="KraftReborn products"
                 fill
-                className="object-cover"
+                className="object-contain object-center p-4 sm:p-5"
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 priority
               />

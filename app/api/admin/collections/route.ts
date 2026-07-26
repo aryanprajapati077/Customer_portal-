@@ -88,6 +88,49 @@ export async function POST(request: NextRequest) {
       WHERE id = ${customerId}
     `
 
+    if (String(status).toLowerCase() === "completed") {
+      try {
+        const customerRows = await sql`
+          SELECT id, email, "primaryPocEmail", "companyName", "contactPerson"
+          FROM "Customer" WHERE id = ${customerId} LIMIT 1
+        `
+        const customer = customerRows[0] as
+          | {
+              id: string
+              email: string
+              primaryPocEmail?: string | null
+              companyName: string
+              contactPerson?: string | null
+            }
+          | undefined
+        if (customer) {
+          const d = new Date(dateValue)
+          const month = d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+          const to =
+            String(customer.primaryPocEmail || customer.email || "")
+              .toLowerCase()
+              .trim()
+          if (to.includes("@")) {
+            const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+            await sendNotificationEmail({
+              templateId: "collection_completed",
+              to,
+              vars: {
+                name: customer.contactPerson?.split(" ")[0] || customer.companyName || "Partner",
+                company: customer.companyName,
+                month,
+                weight: String(Number(weight).toFixed(2)),
+                location: location || "",
+                customerId: customer.id,
+              },
+            })
+          }
+        }
+      } catch (err) {
+        console.error("Collection completed email failed:", err)
+      }
+    }
+
     return NextResponse.json({ success: true, collection: rows?.[0] || null })
   } catch (error) {
     console.error("Error creating collection (admin):", error)

@@ -1,5 +1,9 @@
 import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
+import {
+  emailSupporterFooterHtml,
+  emailSupporterFooterText,
+} from "@/lib/email-supporter-footer"
 
 function escapeHtml(value: string) {
   return String(value)
@@ -95,6 +99,7 @@ export function buildCertificateEmailHtml(options: {
           <td style="padding:20px 36px;background:#F7FBF7;border-top:1px solid #E2EBE4;font-family:ui-sans-serif,system-ui,sans-serif;">
             <p style="margin:0 0 4px;font-size:13px;">Warm regards,<br /><strong>Team BuffIndia</strong></p>
             <p style="margin:0;font-size:12px;color:#8A8A8A;">Certificate delivery · ESG Impact · Kraftreborn</p>
+            ${emailSupporterFooterHtml()}
           </td>
         </tr>
       </table>
@@ -122,7 +127,9 @@ Organization: ${options.companyName}
 The branded PDF is attached to this email.
 Portal: ${SITE_URL}/dashboard/reports
 
-— Team BuffIndia`
+— Team BuffIndia
+
+${emailSupporterFooterText()}`
 }
 
 export async function sendCertificateEmail(options: {

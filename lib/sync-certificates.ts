@@ -39,12 +39,12 @@ export async function syncServiceCertificate(customerId: string) {
   const address = customer.address ? String(customer.address) : "India"
   const fy = getIndianFiscalYear()
   const certNum = certificateNumber(customerId)
-  const name = "Certificate of Services"
+  const name = "Certificate of Clean Environmental Partnership"
   const description =
     totalWaste > 0
-      ? `In recognition of commitment to Buffindia - Cigarette Waste Litter Free India Campaign. Cumulative waste ${totalWaste.toFixed(2)} kg (${fy}) upcycled into eco-friendly products.`
-      : `In recognition of partnership with Buffindia - Cigarette Waste Litter Free India Campaign (${fy}).`
-  const certNumber = `BUFF-COS-${certNum}-${customerId}`
+      ? `Clean Environmental Partnership recognition for BuffIndia cigarette waste management. Cumulative waste ${totalWaste.toFixed(2)} kg (${fy}) recovered and upcycled.`
+      : `Clean Environmental Partnership recognition for BuffIndia cigarette waste management (${fy}).`
+  const certNumber = `BUFF-CEP-${certNum}-${customerId}`
 
   if (existing.length > 0) {
     await sql`

@@ -1,4 +1,8 @@
 import { SITE_URL } from "@/lib/site-config"
+import {
+  emailSupporterFooterHtml,
+  emailSupporterFooterText,
+} from "@/lib/email-supporter-footer"
 
 export type EsgEmailCopy = {
   subject: string
@@ -209,6 +213,7 @@ export function buildEsgReportEmailHtml(
                 ${footerLine}<br />
                 Automated delivery from the BuffIndia Customer Portal.
               </p>
+              ${emailSupporterFooterHtml()}
             </td>
           </tr>
         </table>
@@ -261,6 +266,8 @@ ${applyVars(copy.chapter3Body, vars)}
 
 ${applyVars(copy.closing, vars)}
 ${applyVars(copy.signOff, vars)}
+
+${emailSupporterFooterText()}
 
 (${subjectLine})`
 }

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { PRODUCT_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
+import { PRODUCT_COLOR_OPTIONS } from "@/lib/product-colors"
 import { Loader2, Plus, Pencil, Trash2, ShoppingBag, Upload, Search } from "lucide-react"
 
 type ProductRow = {
@@ -33,6 +34,7 @@ type ProductRow = {
   allowsLogo: boolean
   active: boolean
   sortOrder: number
+  availableColors?: string[]
 }
 
 const EMPTY_FORM = {
@@ -47,6 +49,7 @@ const EMPTY_FORM = {
   allowsLogo: false,
   active: true,
   sortOrder: "0",
+  availableColors: [...PRODUCT_COLOR_OPTIONS] as string[],
 }
 
 export default function AdminProductsPage() {
@@ -104,6 +107,9 @@ export default function AdminProductsPage() {
       allowsLogo: p.allowsLogo,
       active: p.active,
       sortOrder: String(p.sortOrder),
+      availableColors: p.availableColors?.length
+        ? p.availableColors
+        : [...PRODUCT_COLOR_OPTIONS],
     })
     setImageFile(null)
     setDialogOpen(true)
@@ -124,6 +130,7 @@ export default function AdminProductsPage() {
       fd.set("allowsLogo", String(form.allowsLogo))
       fd.set("active", String(form.active))
       fd.set("sortOrder", form.sortOrder)
+      fd.set("availableColors", JSON.stringify(form.availableColors))
       if (imageFile) fd.set("image", imageFile)
 
       const res = await fetch("/api/admin/products", {
@@ -262,6 +269,33 @@ export default function AdminProductsPage() {
             <div className="space-y-2">
               <Label>Image gradient (fallback if no image)</Label>
               <Input value={form.imageGradient} onChange={(e) => setForm((f) => ({ ...f, imageGradient: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Available colors</Label>
+              <div className="flex flex-wrap gap-2">
+                {PRODUCT_COLOR_OPTIONS.map((color) => {
+                  const checked = form.availableColors.includes(color)
+                  return (
+                    <label
+                      key={color}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5E5] px-2.5 py-1 text-[12px] cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) =>
+                          setForm((f) => ({
+                            ...f,
+                            availableColors: v
+                              ? [...f.availableColors, color]
+                              : f.availableColors.filter((c) => c !== color),
+                          }))
+                        }
+                      />
+                      {color}
+                    </label>
+                  )
+                })}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Product image</Label>

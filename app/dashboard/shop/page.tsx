@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, Suspense } from "react"
 import Link from "next/link"
 import {
   Box,
-  Download,
   Gift,
   Info,
   Leaf,
@@ -23,6 +22,8 @@ import { usePortalData } from "@/hooks/use-portal-data"
 import type { ShopProduct } from "@/lib/cart-context"
 import { SHOWCASE_PRODUCTS } from "@/lib/portal-showcase-products"
 import { formatIndianNumber, formatKg } from "@/lib/portal-metrics"
+import { creditsToRupees } from "@/lib/kraftreborn"
+import { formatInr } from "@/lib/kraftreborn-products"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -123,8 +124,7 @@ function ShopContent() {
   }, [category, catalog])
 
   const visible = showAll ? filtered : filtered.slice(0, 10)
-  const credits = metrics.kraftrebornCredits
-  const creditValue = credits // 1 credit = ₹1
+  const rupeeAmount = creditsToRupees(Number(metrics.kraftrebornCredits) || 0)
   const productsClaimed = ordersCompleted
 
   return (
@@ -133,17 +133,20 @@ function ShopContent() {
         <PageHeader
           icon={Gift}
           title="Kraftreborn"
-          subtitle="Sustainable products upcycled from cigarette waste."
+          subtitle="Sustainable products upcycled from cigarette waste — redeem with your rupee amount."
           actions={
             <>
               <OutlineButton>
                 <Info className="w-4 h-4" />
                 How it Works
               </OutlineButton>
-              <OutlineButton tone="green">
-                <Download className="w-4 h-4" />
-                Download Catalogue
-              </OutlineButton>
+              <Link
+                href="/dashboard/shop/store"
+                className="portal-btn-outline-green inline-flex items-center gap-2"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Open Shop
+              </Link>
             </>
           }
         />
@@ -156,17 +159,17 @@ function ShopContent() {
               {[
                 {
                   icon: Sparkles,
-                  bg: "bg-[#F3E5F5]",
-                  color: "text-[#7B1FA2]",
-                  value: `${formatIndianNumber(credits)} Kraftreborn Credits`,
-                  desc: "Available Balance",
+                  bg: "bg-[#E8F5E9]",
+                  color: "text-[#1B7339]",
+                  value: formatInr(rupeeAmount),
+                  desc: "Rupee amount available",
                 },
                 {
                   icon: ShoppingBag,
                   bg: "bg-[#FFF3E0]",
                   color: "text-[#8D6E63]",
-                  value: `₹${formatIndianNumber(creditValue)} Credit Value`,
-                  desc: "(1 Credit = ₹1)",
+                  value: `₹${formatIndianNumber(rupeeAmount)}`,
+                  desc: "Claim value (1:1 INR)",
                 },
                 {
                   icon: Package,
@@ -183,7 +186,7 @@ function ShopContent() {
                   descLink: "Track your orders",
                 },
               ].map((card) => (
-                <div key={card.value} className="portal-card p-4 h-full min-h-[112px] flex flex-col">
+                <div key={card.value + (card.desc || "")} className="portal-card p-4 h-full min-h-[112px] flex flex-col">
                   <div className={`w-9 h-9 rounded-full ${card.bg} flex items-center justify-center mb-2.5`}>
                     <card.icon className={`w-4 h-4 ${card.color}`} />
                   </div>
@@ -200,7 +203,15 @@ function ShopContent() {
             </div>
 
             <div>
-              <h2 className="text-[15px] font-semibold text-[#1A1A1A] mb-3">Shop by Category</h2>
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                <h2 className="text-[15px] font-semibold text-[#1A1A1A]">Shop by Category</h2>
+                <Link
+                  href="/dashboard/shop/store"
+                  className="text-[12.5px] font-semibold text-[#1B7339] hover:underline"
+                >
+                  Full store →
+                </Link>
+              </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {CATEGORIES.map((cat) => {
                   const active = category === cat.id
@@ -247,9 +258,9 @@ function ShopContent() {
                   )}
                   {filtered.length > 10 && !showAll && (
                     <div className="flex justify-center mt-5">
-                      <OutlineButton tone="green" onClick={() => setShowAll(true)}>
+                      <Link href="/dashboard/shop/store" className="portal-btn-outline-green">
                         View All Products →
-                      </OutlineButton>
+                      </Link>
                     </div>
                   )}
                 </>
@@ -259,24 +270,25 @@ function ShopContent() {
 
           <aside className="space-y-3 xl:sticky xl:top-20">
             <div className="portal-card p-4">
-              <h3 className="text-[13.5px] font-semibold text-[#1A1A1A] mb-3">Your Kraftreborn Balance</h3>
+              <h3 className="text-[13.5px] font-semibold text-[#1A1A1A] mb-3">Your Rupee Amount</h3>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#F3E5F5] flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-[#7B1FA2]" />
+                <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-[#1B7339]" />
                 </div>
-                <p className="text-[14px] font-bold text-[#1A1A1A]">
-                  {formatIndianNumber(credits)} Kraftreborn Credits
-                </p>
+                <p className="text-[14px] font-bold text-[#1A1A1A]">{formatInr(rupeeAmount)}</p>
               </div>
               <Link
-                href="/dashboard/shop"
-                className="flex items-center justify-center w-full h-11 rounded-lg bg-[#5E35B1] text-white text-[13.5px] font-semibold hover:bg-[#512DA8]"
+                href="/dashboard/shop/store"
+                className="flex items-center justify-center w-full h-11 rounded-full bg-[#1B7339] text-white text-[13.5px] font-semibold hover:bg-[#145a2c]"
               >
                 Redeem Now
               </Link>
-              <button type="button" className="mt-2.5 portal-link text-[12px]">
-                View Credit History →
-              </button>
+              <Link
+                href="/dashboard/shop/cart"
+                className="mt-2.5 inline-block portal-link text-[12px]"
+              >
+                View claim history →
+              </Link>
             </div>
 
             <div className="portal-card p-4">
@@ -286,7 +298,7 @@ function ShopContent() {
                   { icon: Leaf, text: `${formatKg(metrics.totalWasteKg)} Cigarette waste collected` },
                   { icon: Sparkles, text: `${formatKg(metrics.microplasticsKg)} Microplastics upcycled` },
                   { icon: Box, text: `${productsClaimed} Products created` },
-                  { icon: Sparkles, text: `${formatIndianNumber(credits)} Credits earned` },
+                  { icon: Sparkles, text: `${formatInr(rupeeAmount)} Rupee amount` },
                 ].map((row) => (
                   <div key={row.text} className="flex items-center gap-2.5 text-[12px] text-[#4A4A4A]">
                     <row.icon className="w-3.5 h-3.5 text-[#1B7339] shrink-0" />

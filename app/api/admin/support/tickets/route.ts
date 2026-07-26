@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sendNotificationEmail } from "@/lib/send-notification-email"
 
 export async function GET() {
   try {
@@ -24,10 +25,23 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
     }
 
+    const prev = await prisma.supportTicket.findUnique({ where: { id } })
     const ticket = await prisma.supportTicket.update({
       where: { id },
       data: { status },
     })
+
+    if (status === "resolved" && prev?.status !== "resolved" && ticket.email) {
+      await sendNotificationEmail({
+        templateId: "support_ticket_resolved",
+        to: ticket.email,
+        vars: {
+          name: (ticket.name || "Partner").split(" ")[0],
+          ticketId: ticket.id.slice(-8).toUpperCase(),
+          subject: ticket.subject,
+        },
+      }).catch((err) => console.error("Support resolved email failed:", err))
+    }
 
     return NextResponse.json({ success: true, ticket })
   } catch (err) {

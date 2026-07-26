@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ShopProduct | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
+  const [selectedColor, setSelectedColor] = useState<string>("")
 
   useEffect(() => {
     ;(async () => {
@@ -39,7 +40,9 @@ export default function ProductDetailPage() {
             imageUrl: showcase.image,
             imageGradient: "from-stone-100 to-emerald-50",
             allowsLogo: false,
+            availableColors: ["Blue", "Green", "Yellow", "Red", "White", "Mix"],
           })
+          setSelectedColor("Mix")
           return
         }
         const res = await fetch("/api/customer/products")
@@ -47,6 +50,7 @@ export default function ProductDetailPage() {
         if (data?.success) {
           const found = (data.products as ShopProduct[]).find((p) => p.id === productId)
           setProduct(found || null)
+          if (found?.availableColors?.length) setSelectedColor(found.availableColors[0])
         }
       } finally {
         setLoading(false)
@@ -78,22 +82,22 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = () => {
-    addItem(product, quantity)
+    addItem(product, quantity, selectedColor || undefined)
     router.push("/dashboard/shop/cart")
   }
 
   return (
-    <ShopShell showBack backHref="/dashboard/shop" title={product.name}>
-      <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
-        <div className="aspect-square rounded-3xl overflow-hidden border border-stone-200/60 shadow-lg relative">
+    <ShopShell showBack backHref="/dashboard/shop/store" title={product.name}>
+      <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2">
+        <div className="relative aspect-square overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-[#F4F3EE] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
           {product.imageUrl ? (
             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" sizes="50vw" />
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}>
               <div className="text-center px-8">
-                <Sparkles className="w-8 h-8 mx-auto mb-4 text-amber-600/50" />
-                <p className="font-serif text-3xl font-bold text-stone-800/85">{product.name}</p>
-                <p className="text-sm text-stone-600 mt-2">{product.tagline}</p>
+                <Sparkles className="w-8 h-8 mx-auto mb-4 text-[#1B7339]/40" />
+                <p className="font-[family-name:var(--font-display)] text-3xl font-bold text-[#141414]/85">{product.name}</p>
+                <p className="text-sm text-[#5A5A5A] mt-2">{product.tagline}</p>
               </div>
             </div>
           )}
@@ -102,24 +106,46 @@ export default function ProductDetailPage() {
         <div className="space-y-6">
           <div>
             <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="outline" className="bg-amber-50">{product.buttsRescued} butts rescued</Badge>
-              {product.allowsLogo && <Badge className="bg-amber-500">Custom logo available</Badge>}
+              <Badge variant="outline" className="bg-[#E8F5E9] text-[#1B7339] border-[#C8E6D4]">{product.buttsRescued} butts rescued</Badge>
+              {product.allowsLogo && <Badge className="bg-[#1B7339]">Custom logo available</Badge>}
             </div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-stone-900">{product.name}</h1>
-            <p className="text-3xl font-bold mt-3 text-stone-900">{formatInr(product.price)}</p>
-            <p className="text-sm text-stone-500 mt-1">{product.price} KR credits · 1 credit = ₹1</p>
+            <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-bold tracking-tight text-[#141414]">{product.name}</h1>
+            <p className="text-3xl font-bold mt-3 text-[#141414]">{formatInr(product.price)}</p>
+            <p className="text-sm text-[#6B6B6B] mt-1">Rupee amount · 1 unit = ₹1</p>
           </div>
 
-          <p className="text-stone-600 leading-relaxed">{product.description}</p>
+          <p className="text-[#5A5A5A] leading-relaxed">{product.description}</p>
 
-          <div className="rounded-2xl border border-stone-200/60 bg-white/60 p-5 text-sm space-y-1">
-            <p className="text-stone-500">{product.tagline}</p>
-            <p className="text-xs text-stone-400">kraftreborn.in · circular craft · zero plastic · handmade india</p>
+          {(product.availableColors?.length || 0) > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-[#3A3A3A]">Color</p>
+              <div className="flex flex-wrap gap-2">
+                {product.availableColors!.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`h-9 px-3.5 rounded-full border text-[13px] font-medium transition-colors ${
+                      selectedColor === color
+                        ? "border-[#1B7339] bg-[#E8F5E9] text-[#1B7339]"
+                        : "border-[#D9D6CF] bg-white text-[#5A5A5A] hover:border-[#1B7339]"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-[1.25rem] border border-[#E5E2DA] bg-[#F7F6F2] p-5 text-sm space-y-1">
+            <p className="text-[#5A5A5A]">{product.tagline}</p>
+            <p className="text-xs text-[#8A8A8A]">kraftreborn.in · circular craft · zero plastic · handmade india</p>
           </div>
 
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">Quantity</span>
-            <div className="flex items-center rounded-full border border-stone-200 bg-white px-2 py-1">
+            <div className="flex items-center rounded-full border border-[#D9D6CF] bg-white px-2 py-1">
               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
                 <Minus className="w-4 h-4" />
               </Button>
@@ -131,11 +157,11 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button size="lg" className="flex-1 rounded-full h-12" onClick={handleAddToCart}>
+            <Button size="lg" className="flex-1 rounded-full h-12 bg-[#1B7339] hover:bg-[#145a2c]" onClick={handleAddToCart}>
               <ShoppingBag className="w-4 h-4 mr-2" />
               Add to cart — {formatInr(product.price * quantity)}
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full h-12 bg-white/70" asChild>
+            <Button size="lg" variant="outline" className="rounded-full h-12 bg-white border-[#D9D6CF]" asChild>
               <Link href="/dashboard/shop/cart">View cart</Link>
             </Button>
           </div>

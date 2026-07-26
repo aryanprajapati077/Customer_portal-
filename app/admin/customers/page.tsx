@@ -44,6 +44,8 @@ type CustomerRow = {
   phone: string | null
   address: string | null
   status: string
+  serviceStatus?: string | null
+  contractEndDate?: string | null
   primaryPocName?: string | null
   primaryPocEmail?: string | null
   primaryPocNumber?: string | null
@@ -470,6 +472,13 @@ export default function AdminCustomersPage() {
                       ["Basic / Advance / Pan / Wall", `${selected.noOfBasicKiosk ?? 0} / ${selected.noOfAdvanceKiosk ?? 0} / ${selected.noOfPanVendorKiosk ?? 0} / ${selected.noOfWallMountKiosk ?? 0}`],
                       ["Login Email", selected.email],
                       ["Status", selected.status],
+                      ["Service Status", selected.serviceStatus || "ACTIVE"],
+                      [
+                        "Contract End",
+                        selected.contractEndDate
+                          ? new Date(selected.contractEndDate).toLocaleDateString("en-IN")
+                          : "",
+                      ],
                       ["KR Credits", selected.kraftrebornCredits],
                       ["Total Waste (kg)", selected.totalWasteCollected],
                     ].map(([label, value]) => (
@@ -482,6 +491,51 @@ export default function AdminCustomersPage() {
                     ))}
                   </tbody>
                 </table>
+                <div className="rounded-xl border border-[#E2EBE4] p-3 space-y-2">
+                  <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                    Update service lifecycle
+                  </p>
+                  <select
+                    className="w-full h-10 rounded-lg border border-[#D8D8D8] bg-white px-3 text-[13px]"
+                    value={selected.serviceStatus || "ACTIVE"}
+                    onChange={async (e) => {
+                      const serviceStatus = e.target.value
+                      const res = await fetch("/api/admin/customers", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: selected.id, serviceStatus }),
+                      })
+                      const data = await res.json()
+                      if (data?.success) {
+                        setSelected((s) => (s ? { ...s, serviceStatus } : s))
+                      }
+                    }}
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="RENEWAL_DUE">Renewal Due Soon</option>
+                    <option value="PAUSED_RENEWAL">Paused – Renewal Pending</option>
+                    <option value="PAUSED_PAYMENT">Paused – Payment Pending</option>
+                    <option value="INACTIVE">Inactive / Service Ended</option>
+                  </select>
+                  <Input
+                    type="date"
+                    defaultValue={
+                      selected.contractEndDate
+                        ? new Date(selected.contractEndDate).toISOString().slice(0, 10)
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      const contractEndDate = e.target.value || null
+                      await fetch("/api/admin/customers", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: selected.id, contractEndDate }),
+                      })
+                      setSelected((s) => (s ? { ...s, contractEndDate } : s))
+                    }}
+                  />
+                  <p className="text-[11px] text-[#7A7A7A]">Contract / renewal end date</p>
+                </div>
                 {selected.collectionPocs && (
                   <div className="rounded-xl border border-[#E2EBE4] p-3">
                     <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">

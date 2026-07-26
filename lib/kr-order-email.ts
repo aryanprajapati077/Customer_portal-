@@ -1,6 +1,10 @@
 import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
 import { formatInr } from "@/lib/kraftreborn-products"
+import {
+  emailSupporterFooterHtml,
+  emailSupporterFooterText,
+} from "@/lib/email-supporter-footer"
 
 function escapeHtml(value: string) {
   return String(value)
@@ -73,6 +77,7 @@ export async function sendKrOrderConfirmationEmail(options: {
             <a href="${portalUrl}" style="display:inline-block;padding:14px 26px;border-radius:999px;background:#8B5A2B;color:#fff;font-weight:700;font-size:14px;text-decoration:none;">View shop & orders →</a>
             <p style="margin:18px 0 0;font-size:13px;color:#6B6B6B;line-height:1.6;">We’ll notify you when your order is completed. Upcycled from recovered cigarette waste — thank you for closing the loop.</p>
             <p style="margin:16px 0 0;font-size:13px;">Warm regards,<br /><strong>Team BuffIndia · Kraftreborn</strong></p>
+            ${emailSupporterFooterHtml()}
           </td>
         </tr>
       </table>
@@ -90,7 +95,9 @@ ${options.items.map((i) => `- ${i.productName} x${i.quantity} = ${formatInr(i.pr
 
 Track in portal: ${portalUrl}
 
-— Team BuffIndia · Kraftreborn`
+— Team BuffIndia · Kraftreborn
+
+${emailSupporterFooterText()}`
 
   if (!resend) {
     console.warn("[kr-order-email] RESEND_API_KEY not set", { to: options.to, orderNumber: options.orderNumber })

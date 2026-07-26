@@ -40,15 +40,17 @@ export default function ReportsPage() {
         <div className="portal-card p-4">
           <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">Generate by period</p>
           <p className="text-[12px] text-[#7A7A7A] mb-3">
-            Choose this year, quarterly, installation till date, or this month when you download.
+            Choose current year, quarterly, installation till date, this month, or a custom start–end
+            date range when you download.
           </p>
           <div className="flex flex-wrap gap-2">
             {(
               [
-                ["this-year", "This year"],
+                ["this-year", "Current Year"],
                 ["quarterly", "Quarterly"],
                 ["installation", "Installation till date"],
                 ["month", "This month"],
+                ["custom", "Start date to end date"],
               ] as const
             ).map(([range, label]) => (
               <DownloadImpactReport key={range} customerId={customer?.id} defaultRange={range}>

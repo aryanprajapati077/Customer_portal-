@@ -246,8 +246,17 @@ export default function AdminCollectionsPage() {
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Weight (kg)</Label>
             <Input
+              type="number"
+              step="0.01"
+              min="0"
               value={draft.weight}
-              onChange={(e) => setDraft((d) => ({ ...d, weight: Number(e.target.value) }))}
+              onChange={(e) => {
+                const raw = e.target.value
+                setDraft((d) => ({
+                  ...d,
+                  weight: raw === "" ? 0 : Number.parseFloat(raw),
+                }))
+              }}
               inputMode="decimal"
             />
           </div>

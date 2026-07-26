@@ -60,6 +60,23 @@ type CustomerOption = {
   status: string
 }
 
+type DeliveryIssue = {
+  id: string
+  customerId: string | null
+  email: string
+  emailRole: string
+  kind: string
+  status: string
+  error: string | null
+  period: string | null
+  companyName: string | null
+  customerCompanyName?: string | null
+  loginEmail?: string | null
+  primaryPocEmail?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 function currentMonthInput(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
@@ -84,11 +101,43 @@ export default function AdminReportsPage() {
     failed: number
     skipped: number
     periodLabel?: string
+    results?: { id: string; email: string; status: string; error?: string }[]
   } | null>(null)
   const [genMessage, setGenMessage] = useState<string | null>(null)
   const [emailCopy, setEmailCopy] = useState<EsgEmailCopy>(DEFAULT_ESG_EMAIL_COPY)
   const [savingCopy, setSavingCopy] = useState(false)
   const [copyMessage, setCopyMessage] = useState<string | null>(null)
+  const [renewalPreview, setRenewalPreview] = useState<{
+    subject: string
+    html: string
+    text: string
+    trigger?: string
+  } | null>(null)
+
+  const [deliveryIssues, setDeliveryIssues] = useState<DeliveryIssue[]>([])
+  const [deliveryCounts, setDeliveryCounts] = useState<Record<string, number>>({})
+  const [deliveryFilter, setDeliveryFilter] = useState<"all" | "failed" | "bounced" | "complained">(
+    "all",
+  )
+  const [deliveryQ, setDeliveryQ] = useState("")
+  const [deliveryLoading, setDeliveryLoading] = useState(false)
+  const [editingEmail, setEditingEmail] = useState<Record<string, string>>({})
+  const [savingEmailId, setSavingEmailId] = useState<string | null>(null)
+
+  const loadDeliveries = async (status = deliveryFilter, search = deliveryQ) => {
+    setDeliveryLoading(true)
+    try {
+      const params = new URLSearchParams({ status, q: search })
+      const res = await fetch(`/api/admin/email-deliveries?${params}`)
+      const data = await res.json()
+      if (data?.success) {
+        setDeliveryIssues(data.deliveries || [])
+        setDeliveryCounts(data.counts || {})
+      }
+    } finally {
+      setDeliveryLoading(false)
+    }
+  }
 
   const load = async () => {
     setLoading(true)
@@ -111,6 +160,10 @@ export default function AdminReportsPage() {
       if (templateData?.success && templateData.copy) {
         setEmailCopy(templateData.copy)
       }
+      if (templateData?.success && templateData.renewal) {
+        setRenewalPreview(templateData.renewal)
+      }
+      await loadDeliveries()
     } finally {
       setLoading(false)
     }
@@ -226,8 +279,10 @@ export default function AdminReportsPage() {
           failed: data.failed,
           skipped: data.skipped,
           periodLabel: data.periodLabel,
+          results: data.results || [],
         })
         await load()
+        await loadDeliveries()
       } else {
         alert(data?.error || "Failed to send emails")
       }
@@ -254,6 +309,41 @@ export default function AdminReportsPage() {
       }
     } finally {
       setSavingCopy(false)
+    }
+  }
+
+  const saveCorrectedEmail = async (issue: DeliveryIssue) => {
+    if (!issue.customerId) {
+      alert("No linked customer for this bounce. Update the client from Customers.")
+      return
+    }
+    const nextEmail = (editingEmail[issue.id] || issue.email).toLowerCase().trim()
+    if (!nextEmail.includes("@")) {
+      alert("Enter a valid email address")
+      return
+    }
+    setSavingEmailId(issue.id)
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: issue.customerId,
+          primaryPocEmail: nextEmail,
+          syncLoginEmail: true,
+          resolveEmailIssue: true,
+          oldEmail: issue.email,
+          emailLogId: issue.id,
+        }),
+      })
+      const data = await res.json()
+      if (!data?.success) {
+        alert(data?.error || "Could not update email")
+        return
+      }
+      await loadDeliveries()
+    } finally {
+      setSavingEmailId(null)
     }
   }
 
@@ -458,11 +548,205 @@ export default function AdminReportsPage() {
                   </span>
                   <span className="text-muted-foreground">{lastResult.skipped} skipped</span>
                 </div>
+                {!!lastResult.results?.some((r) => r.status === "failed") && (
+                  <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
+                    {lastResult.results
+                      .filter((r) => r.status === "failed")
+                      .map((r) => (
+                        <p key={`${r.id}-${r.email}`} className="text-[12px] text-destructive">
+                          {r.id} · {r.email}
+                          {r.error ? ` — ${r.error}` : ""}
+                        </p>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <Card className="glass border-destructive/20">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Failed & bounced emails
+              </CardTitle>
+              <CardDescription>
+                Filter clients whose ESG report email failed or bounced. Update the email ID here, then
+                resend from Email Reports.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[12px]">
+              <Badge variant="outline">Failed: {deliveryCounts.failed || 0}</Badge>
+              <Badge variant="outline" className="border-orange-300 text-orange-700">
+                Bounced: {deliveryCounts.bounced || 0}
+              </Badge>
+              <Badge variant="outline">Complaints: {deliveryCounts.complained || 0}</Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="space-y-1.5 sm:w-48">
+              <Label>Status filter</Label>
+              <Select
+                value={deliveryFilter}
+                onValueChange={(v) => {
+                  const next = v as typeof deliveryFilter
+                  setDeliveryFilter(next)
+                  loadDeliveries(next, deliveryQ)
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All problems</SelectItem>
+                  <SelectItem value="failed">Failed sends</SelectItem>
+                  <SelectItem value="bounced">Bounced</SelectItem>
+                  <SelectItem value="complained">Complaints</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="relative flex-1 space-y-1.5">
+              <Label>Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={deliveryQ}
+                  onChange={(e) => setDeliveryQ(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") loadDeliveries(deliveryFilter, deliveryQ)
+                  }}
+                  placeholder="Email, company, customer ID..."
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loadDeliveries(deliveryFilter, deliveryQ)}
+              disabled={deliveryLoading}
+            >
+              {deliveryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span className="ml-2">Refresh</span>
+            </Button>
+          </div>
+
+          {deliveryLoading && deliveryIssues.length === 0 ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : deliveryIssues.length === 0 ? (
+            <p className="rounded-xl border border-border/50 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+              No failed or bounced report emails right now.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-border/50">
+              <table className="w-full min-w-[820px] text-left text-[13px]">
+                <thead className="bg-[#EAF6EC] text-[#1B7339]">
+                  <tr>
+                    <th className="px-3 py-2.5 font-semibold">Client</th>
+                    <th className="px-3 py-2.5 font-semibold">Bounced / failed email</th>
+                    <th className="px-3 py-2.5 font-semibold">Status</th>
+                    <th className="px-3 py-2.5 font-semibold">Error</th>
+                    <th className="px-3 py-2.5 font-semibold">Update email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliveryIssues.map((issue) => (
+                    <tr key={issue.id} className="border-t border-border/40 align-top">
+                      <td className="px-3 py-3">
+                        <p className="font-semibold text-foreground">
+                          {issue.customerCompanyName || issue.companyName || "—"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {issue.customerId || "Unlinked"}
+                          {issue.period ? ` · ${issue.period}` : ""}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="font-medium text-destructive">{issue.email}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Role: {issue.emailRole || "to"}
+                          {issue.primaryPocEmail ? ` · POC: ${issue.primaryPocEmail}` : ""}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            issue.status === "bounced"
+                              ? "border-orange-300 bg-orange-50 text-orange-800"
+                              : issue.status === "complained"
+                                ? "border-purple-300 bg-purple-50 text-purple-800"
+                                : "border-red-300 bg-red-50 text-red-800"
+                          }
+                        >
+                          {issue.status}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-3 max-w-[220px]">
+                        <p className="text-[12px] text-muted-foreground line-clamp-3">
+                          {issue.error || "—"}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex min-w-[240px] flex-col gap-2">
+                          <Input
+                            value={editingEmail[issue.id] ?? issue.email}
+                            onChange={(e) =>
+                              setEditingEmail((prev) => ({ ...prev, [issue.id]: e.target.value }))
+                            }
+                            placeholder="Correct email address"
+                            className="h-9"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="bg-[#1B7339] hover:bg-[#145a2c]"
+                              disabled={!issue.customerId || savingEmailId === issue.id}
+                              onClick={() => saveCorrectedEmail(issue)}
+                            >
+                              {savingEmailId === issue.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                "Save & clear"
+                              )}
+                            </Button>
+                            {issue.customerId && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSendCustomerId(issue.customerId!)
+                                  window.scrollTo({ top: 0, behavior: "smooth" })
+                                }}
+                              >
+                                Resend
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            Tip: Point Resend webhooks to <code className="rounded bg-muted px-1">/api/webhooks/resend</code>{" "}
+            for live bounce detection (email.bounced / email.failed / email.complained).
+          </p>
+        </CardContent>
+      </Card>
 
       <Card className="glass border-border/50">
         <CardHeader>
@@ -556,6 +840,30 @@ export default function AdminReportsPage() {
           </details>
         </CardContent>
       </Card>
+
+      {renewalPreview && (
+        <Card className="glass border-border/50">
+          <CardHeader>
+            <CardTitle>Service Renewal Reminder</CardTitle>
+            <CardDescription>
+              Trigger: {renewalPreview.trigger || "30 / 15 / 7 days before contract expiry"} · Subject:{" "}
+              {renewalPreview.subject}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div
+              className="max-h-[420px] overflow-auto rounded-xl border border-border/50 bg-[#F7F6F2]"
+              dangerouslySetInnerHTML={{ __html: renewalPreview.html }}
+            />
+            <details className="rounded-xl border border-border/50 bg-muted/20 p-3">
+              <summary className="cursor-pointer text-sm font-medium">Plain-text version</summary>
+              <pre className="mt-3 whitespace-pre-wrap font-mono text-xs text-muted-foreground">
+                {renewalPreview.text}
+              </pre>
+            </details>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="glass border-border/50">
         <CardHeader>

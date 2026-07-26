@@ -5,12 +5,20 @@ export async function GET(request: NextRequest) {
   try {
     const customerId = request.nextUrl.searchParams.get("customerId")
     const period = request.nextUrl.searchParams.get("period") || undefined
+    const range = request.nextUrl.searchParams.get("range") || undefined
+    const startDate = request.nextUrl.searchParams.get("startDate") || undefined
+    const endDate = request.nextUrl.searchParams.get("endDate") || undefined
 
     if (!customerId) {
       return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
     }
 
-    const { buffer, filename } = await generateImpactReportExcel(customerId, { period })
+    const { buffer, filename } = await generateImpactReportExcel(customerId, {
+      period,
+      range,
+      startDate,
+      endDate,
+    })
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
@@ -30,6 +38,9 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as {
       customerId?: string
       period?: string
+      range?: string
+      startDate?: string
+      endDate?: string
     }
 
     if (!body.customerId) {
@@ -38,6 +49,9 @@ export async function POST(request: NextRequest) {
 
     const { buffer, filename } = await generateImpactReportExcel(body.customerId, {
       period: body.period,
+      range: body.range,
+      startDate: body.startDate,
+      endDate: body.endDate,
     })
 
     return new NextResponse(new Uint8Array(buffer), {

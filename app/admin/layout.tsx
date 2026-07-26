@@ -23,6 +23,7 @@ import {
   X,
   ExternalLink,
   ListTree,
+  Mail,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -33,6 +34,7 @@ const nav = [
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/dropdowns", label: "Dropdowns", icon: ListTree },
   { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
+  { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
   { href: "/admin/collections", label: "Collections", icon: Package },
   { href: "/admin/shop/products", label: "Shop Products", icon: ShoppingBag },
   { href: "/admin/shop/orders", label: "Shop Orders", icon: ClipboardList },

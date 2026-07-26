@@ -82,7 +82,7 @@ export function ImpactAnalytics({ metrics, collections }: ImpactAnalyticsProps) 
     },
     {
       icon: Sparkles,
-      label: "KR credits",
+      label: "Amount to be claim pending",
       value: formatIndianNumber(metrics.kraftrebornCredits),
       color: "text-[#7B1FA2]",
       bg: "bg-[#F3E5F5]",

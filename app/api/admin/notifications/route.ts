@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { resend, getResendFrom } from "@/lib/resend"
+import {
+  emailSupporterFooterHtml,
+  emailSupporterFooterText,
+} from "@/lib/email-supporter-footer"
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,12 +63,13 @@ export async function POST(request: NextRequest) {
             from: getResendFrom(),
             to: customer.email,
             subject: title,
-            text: msg || "",
+            text: `${msg || ""}\n\n${emailSupporterFooterText()}`,
             html: `
-              <div style="font-family: ui-sans-serif, system-ui; line-height: 1.5">
+              <div style="font-family: ui-sans-serif, system-ui; line-height: 1.5; max-width: 600px;">
                 <h2 style="margin:0 0 12px 0;">${title}</h2>
                 ${msg ? `<p style="margin:0 0 16px 0; white-space: pre-wrap;">${msg}</p>` : ""}
                 <p style="margin:0; color:#666; font-size:12px;">Buffindia Customer Portal</p>
+                ${emailSupporterFooterHtml()}
               </div>
             `,
           })

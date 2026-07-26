@@ -39,7 +39,9 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "noOfWallMountKiosk" INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS "collectionFrequency" TEXT,
       ADD COLUMN IF NOT EXISTS "gstin" TEXT,
-      ADD COLUMN IF NOT EXISTS "logoUrl" TEXT
+      ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
+      ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
+      ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
   `)
 }
 
@@ -84,6 +86,7 @@ export async function GET(request: NextRequest) {
              "collectionPocs", "collectionFrequency",
              "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
              "serviceStartDate",
+             "serviceStatus", "contractEndDate",
              "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
              "kraftrebornCredits", "updatedAt", "createdAt",
              "isGroup", "parentCustomerId"
@@ -324,6 +327,14 @@ export async function PATCH(request: NextRequest) {
       updates.push(`status = $${i++}`)
       values.push(String(body.status))
     }
+    if (body?.serviceStatus !== undefined) {
+      updates.push(`"serviceStatus" = $${i++}`)
+      values.push(String(body.serviceStatus).toUpperCase())
+    }
+    if (body?.contractEndDate !== undefined) {
+      updates.push(`"contractEndDate" = $${i++}`)
+      values.push(body.contractEndDate ? new Date(String(body.contractEndDate)).toISOString() : null)
+    }
     if (body?.isGroup !== undefined) {
       updates.push(`"isGroup" = $${i++}`)
       values.push(Boolean(body.isGroup))
@@ -331,6 +342,27 @@ export async function PATCH(request: NextRequest) {
     if (body?.parentCustomerId !== undefined) {
       updates.push(`"parentCustomerId" = $${i++}`)
       values.push(body.parentCustomerId ? String(body.parentCustomerId) : null)
+    }
+    if (body?.email !== undefined) {
+      const email = String(body.email).toLowerCase().trim()
+      if (!email.includes("@")) {
+        return NextResponse.json({ success: false, error: "Valid email required" }, { status: 400 })
+      }
+      updates.push(`email = $${i++}`)
+      values.push(email)
+    }
+    if (body?.primaryPocEmail !== undefined) {
+      const email = String(body.primaryPocEmail).toLowerCase().trim()
+      if (!email.includes("@")) {
+        return NextResponse.json({ success: false, error: "Valid primary POC email required" }, { status: 400 })
+      }
+      updates.push(`"primaryPocEmail" = $${i++}`)
+      values.push(email)
+      // Keep login email in sync when primary POC is the login identity
+      if (body?.syncLoginEmail) {
+        updates.push(`email = $${i++}`)
+        values.push(email)
+      }
     }
 
     if (updates.length === 0) {
@@ -344,13 +376,64 @@ export async function PATCH(request: NextRequest) {
       SET ${updates.join(", ")}
       WHERE id = $${i}
       RETURNING id, email, "companyName", "contactPerson", phone, address, status,
+                "primaryPocEmail",
                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
                 "kraftrebornCredits", "updatedAt",
                 "isGroup", "parentCustomerId"
     `
     values.push(id)
 
+    const beforeRows =
+      body?.kraftrebornCredits !== undefined
+        ? await sql`SELECT "kraftrebornCredits", email, "primaryPocEmail", "companyName", "contactPerson" FROM "Customer" WHERE id = ${id} LIMIT 1`
+        : []
+
     const rows = await sql.query(query, values)
+
+    if (body?.kraftrebornCredits !== undefined && beforeRows[0]) {
+      const before = beforeRows[0] as {
+        kraftrebornCredits?: number
+        email?: string
+        primaryPocEmail?: string | null
+        companyName?: string
+        contactPerson?: string | null
+      }
+      const prev = Number(before.kraftrebornCredits) || 0
+      const next = Number(body.kraftrebornCredits)
+      const added = next - prev
+      if (Number.isFinite(added) && added > 0) {
+        const to = String(before.primaryPocEmail || before.email || "")
+          .toLowerCase()
+          .trim()
+        if (to.includes("@")) {
+          try {
+            const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+            await sendNotificationEmail({
+              templateId: "kraftreborn_balance_added",
+              to,
+              vars: {
+                name: before.contactPerson?.split(" ")[0] || before.companyName || "Partner",
+                company: before.companyName || "",
+                amount: String(Math.round(added)),
+                balance: String(Math.round(next)),
+                customerId: id,
+              },
+            })
+          } catch (err) {
+            console.error("Balance added email failed:", err)
+          }
+        }
+      }
+    }
+
+    if (body?.resolveEmailIssue || body?.email || body?.primaryPocEmail) {
+      const { resolveEmailDeliveryLogsForCustomer } = await import("@/lib/email-delivery-log")
+      await resolveEmailDeliveryLogsForCustomer(id, body?.oldEmail ? String(body.oldEmail) : undefined)
+      if (body?.emailLogId) {
+        const { resolveEmailDeliveryLog } = await import("@/lib/email-delivery-log")
+        await resolveEmailDeliveryLog(String(body.emailLogId))
+      }
+    }
 
     return NextResponse.json({ success: true, customer: rows?.[0] || null })
   } catch (error) {

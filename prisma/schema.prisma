@@ -45,6 +45,9 @@ model Customer {
   employeeCount Int?     @default(0)
   joinDate      DateTime @default(now())
   status        String   @default("Active")
+  /** Operational service lifecycle: ACTIVE | RENEWAL_DUE | PAUSED_RENEWAL | PAUSED_PAYMENT | INACTIVE */
+  serviceStatus   String    @default("ACTIVE")
+  contractEndDate DateTime?
   disposalUnitInstalled Int @default(0)
 
   // Group / Parent-Child: Group clients can access all child companies
@@ -187,9 +190,11 @@ model Product {
   category      String      @default("elegant-combos")
   tagline       String?
   buttsRescued  Int         @default(40)
-  imageUrl      String?
-  imageGradient String      @default("from-amber-100 via-stone-200 to-emerald-100")
-  allowsLogo    Boolean     @default(false)
+  imageUrl        String?
+  imageGradient   String      @default("from-amber-100 via-stone-200 to-emerald-100")
+  /** JSON array e.g. ["Blue","Green","Yellow","Red","White","Mix"] */
+  availableColors String?
+  allowsLogo      Boolean     @default(false)
   active        Boolean     @default(true)
   sortOrder     Int         @default(0)
   orderItems    OrderItem[]

@@ -72,6 +72,10 @@ For OTP and support emails from `@buffindia.com`:
 1. Resend → **Domains** → Add `buffindia.com`
 2. Add the DNS records Resend provides (SPF, DKIM)
 3. Use verified sender: `Buffindia <noreply@buffindia.com>`
+4. Resend → **Webhooks** → Add endpoint:
+   - URL: `https://impact.buffindia.com/api/webhooks/resend`
+   - Events: `email.bounced`, `email.failed`, `email.complained`, `email.delivered`
+   - This powers **Admin → Reports & Email → Failed & bounced emails** so you can see bounced addresses and update them.
 
 ---
 

@@ -11,10 +11,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { ReportRangeKey } from "@/lib/report-date-range"
 
-export type ReportRange = "this-year" | "quarterly" | "installation" | "month"
+export type ReportRange = ReportRangeKey
 type ReportFormat = "pdf" | "excel"
 
 interface DownloadImpactReportProps {
@@ -59,28 +62,42 @@ export function DownloadImpactReport({
   const [downloading, setDownloading] = useState(false)
   const [range, setRange] = useState<ReportRange>(defaultRange)
   const [format, setFormat] = useState<ReportFormat>("pdf")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
 
   const ranges: { id: ReportRange; label: string; hint: string }[] = useMemo(
     () => [
-      { id: "this-year", label: "This year", hint: "Jan–today of current year" },
+      { id: "this-year", label: "Current Year", hint: "Jan–today of current year" },
       { id: "quarterly", label: "Quarterly", hint: "Current quarter to date" },
       { id: "installation", label: "Installation till date", hint: "Full partnership history" },
       { id: "month", label: "This month", hint: "Latest monthly snapshot" },
+      { id: "custom", label: "Start date to end date", hint: "Pick a custom date range" },
     ],
     [],
   )
 
   const handleDownload = async () => {
     if (!customerId) return
+    if (range === "custom" && (!startDate || !endDate)) {
+      alert("Please select both start and end dates.")
+      return
+    }
     setDownloading(true)
     try {
       const resolved = resolvePeriod(range, period)
+      const payload = {
+        customerId,
+        period: resolved,
+        range,
+        startDate: range === "custom" ? startDate : undefined,
+        endDate: range === "custom" ? endDate : undefined,
+      }
 
       if (format === "excel") {
         const res = await fetch("/api/customer/impact-report-excel", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customerId, period: resolved }),
+          body: JSON.stringify(payload),
         })
         if (!res.ok) throw new Error("Failed to generate Excel")
         const blob = await res.blob()
@@ -95,11 +112,7 @@ export function DownloadImpactReport({
       const res = await fetch("/api/customer/impact-report-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId,
-          period: resolved,
-          range,
-        }),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("Failed to generate report")
       const blob = await res.blob()
@@ -193,6 +206,29 @@ export function DownloadImpactReport({
               </button>
             ))}
           </div>
+
+          {range === "custom" && (
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#E5E5E5] bg-[#F8FBF8] p-3">
+              <div className="space-y-1.5">
+                <Label className="text-[12px] text-[#5A5A5A]">Start date</Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[12px] text-[#5A5A5A]">End date</Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-[#E5E5E5] bg-[#F8FBF8] p-3">

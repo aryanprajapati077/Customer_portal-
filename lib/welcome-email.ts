@@ -1,6 +1,10 @@
 import { randomBytes } from "crypto"
 import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
+import {
+  emailSupporterFooterHtml,
+  emailSupporterFooterText,
+} from "@/lib/email-supporter-footer"
 
 function escapeHtml(value: string) {
   return String(value)
@@ -162,6 +166,7 @@ export function buildWelcomeEmailHtml(options: {
                 Cigarette Waste Management · ESG Impact · Kraftreborn<br />
                 This is an automated welcome from the BuffIndia Customer Portal.
               </p>
+              ${emailSupporterFooterHtml()}
             </td>
           </tr>
 
@@ -196,7 +201,9 @@ Sign in: ${loginUrl}
 
 Please change your password after your first login.
 
-— Team BuffIndia`
+— Team BuffIndia
+
+${emailSupporterFooterText()}`
 }
 
 export async function sendWelcomeEmail(options: {

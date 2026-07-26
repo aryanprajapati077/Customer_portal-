@@ -52,19 +52,19 @@ function SuccessContent() {
           {data?.amount != null && (
             <p className="text-lg">
               Total: <strong>{formatInr(data.amount)}</strong>{" "}
-              <Badge variant="outline" className="ml-2">KR credits</Badge>
+              <Badge variant="outline" className="ml-2">Rupee amount</Badge>
             </p>
           )}
         </div>
 
         {isPending && (
-          <Card className="border-amber-200/60 bg-amber-50/40 rounded-2xl text-left">
+          <Card className="border-[#C8E6D4] bg-[#E8F5E9]/50 rounded-2xl text-left">
             <CardContent className="p-6 flex gap-4">
-              <Clock className="w-8 h-8 text-amber-600 shrink-0 mt-0.5" />
+              <Clock className="w-8 h-8 text-[#1B7339] shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-stone-900">Pending fulfilment</p>
-                <p className="text-sm text-stone-600 mt-1 leading-relaxed">
-                  Our team will process your order. KR credits will be deducted when your order is marked{" "}
+                <p className="font-semibold text-[#141414]">Pending fulfilment</p>
+                <p className="text-sm text-[#5A5A5A] mt-1 leading-relaxed">
+                  Our team will process your order. Rupee amount will be deducted when your order is marked{" "}
                   <strong>completed</strong>. You&apos;ll receive a notification and impact certificate then.
                 </p>
               </div>
@@ -90,7 +90,7 @@ function SuccessContent() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
           <Button asChild variant="outline" className="rounded-full bg-white">
-            <Link href="/dashboard/shop">
+            <Link href="/dashboard/shop/store">
               <ShoppingBag className="w-4 h-4 mr-2" />
               Continue shopping
             </Link>

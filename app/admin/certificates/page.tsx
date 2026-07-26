@@ -123,7 +123,7 @@ export default function AdminCertificatesPage() {
     }
     if (
       !confirm(
-        `Email Certificate of Services (PDF) to ${selectedCustomer?.email || customerId}?`,
+        `Email Certificate of Clean Environmental Partnership (PDF) to ${selectedCustomer?.email || customerId}?`,
       )
     ) {
       return
@@ -164,7 +164,7 @@ export default function AdminCertificatesPage() {
     companyName: selectedCustomer?.companyName || "Prima Bay",
     contactName: "Partner",
     customerId: customerId || "BI01",
-    certificateName: "Certificate of Services",
+    certificateName: "Certificate of Clean Environmental Partnership",
     certificateNumber: "206",
     fiscalYear: "FY 2025-26",
   })

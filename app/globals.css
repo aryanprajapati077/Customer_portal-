@@ -294,16 +294,18 @@ nextjs-portal {
   }
 }
 
-/* Editorial landing (inspired by buffindia-redesign) */
+/* Editorial landing — Inspire system */
 .landing-root {
   --l-bg: #f7f6f2;
   --l-ink: #141414;
-  --l-muted: #5c5c5c;
+  --l-muted: #5a5a5a;
   --l-line: #d9d6cf;
   --l-green: #1b7339;
   --l-green-dark: #145a2c;
+  --l-lime: #c8f000;
   --l-orange: #ef6c00;
   --l-surface: #ffffff;
+  --l-soft: #e8f5e9;
   background: var(--l-bg);
   color: var(--l-ink);
 }
@@ -395,8 +397,12 @@ nextjs-portal {
 }
 
 .landing-marquee-track {
-  animation: landing-marquee 28s linear infinite;
+  animation: landing-marquee 40s linear infinite;
   width: max-content;
+}
+
+.group\/marquee:hover .landing-marquee-track {
+  animation-play-state: paused;
 }
 
 .landing-fade-up {

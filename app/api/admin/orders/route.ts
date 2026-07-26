@@ -130,10 +130,36 @@ export async function PATCH(request: NextRequest) {
       const result = await completeOrder(id)
       const order = await prisma.shopOrder.findUnique({
         where: { id },
-        include: { items: true, customer: { select: { id: true, companyName: true, email: true } } },
+        include: {
+          items: true,
+          customer: {
+            select: { id: true, companyName: true, email: true, contactPerson: true },
+          },
+        },
       })
+      if (order?.customer?.email) {
+        const itemSummary = order.items
+          .map((i) => `${i.productName} × ${i.quantity}`)
+          .join(", ")
+        const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+        await sendNotificationEmail({
+          templateId: "kraftreborn_delivered",
+          to: order.customer.email,
+          vars: {
+            name: order.customer.contactPerson?.split(" ")[0] || order.customer.companyName,
+            company: order.customer.companyName,
+            orderNumber: order.orderNumber,
+            itemSummary: itemSummary || "Your KraftReborn products",
+          },
+        }).catch((err) => console.error("Delivered email failed:", err))
+      }
       return NextResponse.json({ success: true, order, ...result })
     }
+
+    const prev = await prisma.shopOrder.findUnique({
+      where: { id },
+      select: { status: true },
+    })
 
     const order = await prisma.shopOrder.update({
       where: { id },
@@ -141,8 +167,53 @@ export async function PATCH(request: NextRequest) {
         status: status || undefined,
         notes: body.notes !== undefined ? String(body.notes) : undefined,
       },
-      include: { items: true, customer: { select: { id: true, companyName: true, email: true } } },
+      include: {
+        items: true,
+        customer: {
+          select: { id: true, companyName: true, email: true, contactPerson: true },
+        },
+      },
     })
+
+    const nextStatus = String(order.status || "").toLowerCase()
+    const prevStatus = String(prev?.status || "").toLowerCase()
+    if (
+      order.customer?.email &&
+      nextStatus !== prevStatus &&
+      (nextStatus === "shipped" || nextStatus === "dispatched")
+    ) {
+      const itemSummary = order.items.map((i) => `${i.productName} × ${i.quantity}`).join(", ")
+      const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+      await sendNotificationEmail({
+        templateId: "kraftreborn_dispatched",
+        to: order.customer.email,
+        vars: {
+          name: order.customer.contactPerson?.split(" ")[0] || order.customer.companyName,
+          company: order.customer.companyName,
+          orderNumber: order.orderNumber,
+          itemSummary: itemSummary || "Your KraftReborn products",
+        },
+      }).catch((err) => console.error("Dispatched email failed:", err))
+    }
+
+    if (
+      order.customer?.email &&
+      nextStatus !== prevStatus &&
+      nextStatus === "delivered"
+    ) {
+      const itemSummary = order.items.map((i) => `${i.productName} × ${i.quantity}`).join(", ")
+      const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+      await sendNotificationEmail({
+        templateId: "kraftreborn_delivered",
+        to: order.customer.email,
+        vars: {
+          name: order.customer.contactPerson?.split(" ")[0] || order.customer.companyName,
+          company: order.customer.companyName,
+          orderNumber: order.orderNumber,
+          itemSummary: itemSummary || "Your KraftReborn products",
+        },
+      }).catch((err) => console.error("Delivered email failed:", err))
+    }
 
     return NextResponse.json({ success: true, order })
   } catch (error) {

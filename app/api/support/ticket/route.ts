@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Resend } from "resend"
+import { sendNotificationEmail } from "@/lib/send-notification-email"
 
 export async function POST(request: Request) {
   try {
@@ -45,19 +46,36 @@ export async function POST(request: Request) {
       },
     })
 
+    const ticketId = ticket.id.slice(-8).toUpperCase()
+
+    // Customer confirmation
+    await sendNotificationEmail({
+      templateId: "support_ticket_received",
+      to: email,
+      vars: {
+        name: name.split(" ")[0] || "Partner",
+        ticketId,
+        subject,
+        category,
+        message: message.slice(0, 500),
+      },
+    }).catch((err) => console.error("Support received email failed:", err))
+
+    // Admin notify (simple text)
     const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_FROM
     const resendKey = process.env.RESEND_API_KEY
-
     if (resendKey && adminEmail) {
       const resend = new Resend(resendKey)
       const from = process.env.RESEND_FROM || "Buffindia Portal <onboarding@resend.dev>"
-      await resend.emails.send({
-        from,
-        to: adminEmail,
-        replyTo: email,
-        subject: `[Support] ${subject}`,
-        text: `New support ticket (#${ticket.id.slice(-8)})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\n\n${message}`,
-      }).catch(() => {})
+      await resend.emails
+        .send({
+          from,
+          to: adminEmail,
+          replyTo: email,
+          subject: `[Support] ${subject}`,
+          text: `New support ticket (#${ticketId})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\n\n${message}`,
+        })
+        .catch(() => {})
     }
 
     return NextResponse.json({ ok: true, id: ticket.id })

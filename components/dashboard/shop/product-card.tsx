@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 import { type ShopProduct } from "@/lib/cart-context"
+import { formatInr } from "@/lib/kraftreborn-products"
 import { Heart, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -17,56 +18,58 @@ export function ProductCard({ product, forceImage }: ProductCardProps) {
   const img = forceImage || product.imageUrl
 
   return (
-    <article className="portal-card overflow-hidden flex flex-col group h-full">
-      <div className="aspect-square relative overflow-hidden bg-[#F4F4F0] shrink-0">
-        <Link href={`/dashboard/shop/${product.id}`} className="block absolute inset-0">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-black/[0.06] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+      <div className="relative aspect-square shrink-0 overflow-hidden bg-[#F4F3EE]">
+        <Link href={`/dashboard/shop/${product.id}`} className="absolute inset-0 block">
           {img ? (
             <Image
               src={img}
               alt={product.name}
               fill
-              className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
+              className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
               sizes="220px"
             />
           ) : (
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}
+              className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${product.imageGradient}`}
             >
-              <Sparkles className="w-6 h-6 text-[#1B7339]/35" />
+              <Sparkles className="h-6 w-6 text-[#1B7339]/35" />
             </div>
           )}
         </Link>
         <button
           type="button"
           onClick={() => setLiked((v) => !v)}
-          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/95 border border-[#E8E8E8] flex items-center justify-center z-10"
+          className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-[#E8E8E8] bg-white/95"
           aria-label="Favorite"
         >
           <Heart
-            className={cn("w-3.5 h-3.5", liked ? "fill-[#E53935] text-[#E53935]" : "text-[#8A8A8A]")}
+            className={cn("h-3.5 w-3.5", liked ? "fill-[#E53935] text-[#E53935]" : "text-[#8A8A8A]")}
             strokeWidth={1.75}
           />
         </button>
       </div>
 
-      <div className="p-3 flex flex-col flex-1">
+      <div className="flex flex-1 flex-col p-3.5">
         <Link href={`/dashboard/shop/${product.id}`}>
-          <h3 className="text-[13px] font-semibold text-[#1A1A1A] line-clamp-1 hover:text-[#1B7339]">
+          <h3 className="line-clamp-1 font-[family-name:var(--font-display)] text-[14px] font-semibold tracking-tight text-[#141414] hover:text-[#1B7339]">
             {product.name}
           </h3>
         </Link>
-        <p className="text-[11px] text-[#8A8A8A] mt-1 line-clamp-2 leading-snug min-h-[28px]">
+        <p className="mt-1 min-h-[28px] line-clamp-2 text-[11px] leading-snug text-[#8A8A8A]">
           {product.tagline || product.description}
         </p>
-        <span className="inline-flex self-start mt-2 px-2 py-[3px] rounded-full bg-[#E8F5E9] text-[#1B7339] text-[11px] font-semibold">
-          {product.price} Credits
+        <span className="mt-2 inline-flex self-start rounded-full bg-[#E8F5E9] px-2.5 py-[3px] text-[11px] font-semibold text-[#1B7339]">
+          {formatInr(product.price)}
         </span>
-        <Link
-          href={`/dashboard/shop/${product.id}`}
-          className="mt-auto pt-2.5 inline-flex items-center justify-center h-8 rounded-lg border border-[#1B7339] text-[#1B7339] text-[12px] font-semibold hover:bg-[#E8F5E9]"
-        >
-          View Details
-        </Link>
+        <div className="mt-auto pt-2.5">
+          <Link
+            href={`/dashboard/shop/${product.id}`}
+            className="inline-flex h-8 w-full items-center justify-center rounded-full border border-[#1B7339] text-[12px] font-semibold text-[#1B7339] hover:bg-[#E8F5E9]"
+          >
+            View Details
+          </Link>
+        </div>
       </div>
     </article>
   )

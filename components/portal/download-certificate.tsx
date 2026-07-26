@@ -127,7 +127,7 @@ export function DownloadCertificate({
             [
               {
                 id: "services" as const,
-                label: "Certificate of Services",
+                label: "Clean Environmental Partnership",
                 hint: "Partnership & waste management attestation",
               },
               {

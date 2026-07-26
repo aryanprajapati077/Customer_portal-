@@ -1,24 +1,72 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sql } from "@/lib/db"
 import { ensureShopProductsSeeded } from "@/lib/shop"
 import { saveUploadedFile } from "@/lib/upload"
+import {
+  DEFAULT_PRODUCT_COLORS,
+  parseProductColors,
+  serializeProductColors,
+} from "@/lib/product-colors"
 
-function formatProduct(p: {
-  id: string
-  name: string
-  description: string
-  price: number
-  category: string
-  tagline: string | null
-  buttsRescued: number
-  imageUrl: string | null
-  imageGradient: string
-  allowsLogo: boolean
-  active: boolean
-  sortOrder: number
-  createdAt: Date
-  updatedAt: Date
-}) {
+async function ensureProductColorColumn() {
+  await sql.query(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "availableColors" TEXT`)
+}
+
+async function loadColorMap() {
+  try {
+    await ensureProductColorColumn()
+    const rows = await sql`SELECT id, "availableColors" FROM "Product"`
+    const map = new Map<string, string[]>()
+    for (const row of rows as { id: string; availableColors?: string | null }[]) {
+      map.set(row.id, parseProductColors(row.availableColors))
+    }
+    return map
+  } catch {
+    return new Map<string, string[]>()
+  }
+}
+
+async function setProductColors(id: string, raw: unknown) {
+  await ensureProductColorColumn()
+  let colors = [...DEFAULT_PRODUCT_COLORS] as string[]
+  if (typeof raw === "string") {
+    try {
+      colors = parseProductColors(raw.startsWith("[") ? raw : JSON.stringify(String(raw).split(",")))
+    } catch {
+      colors = parseProductColors(null)
+    }
+  } else if (Array.isArray(raw)) {
+    colors = parseProductColors(JSON.stringify(raw))
+  }
+  const serialized = serializeProductColors(colors)
+  await sql`
+    UPDATE "Product"
+    SET "availableColors" = ${serialized}, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE id = ${id}
+  `
+  return colors
+}
+
+function formatProduct(
+  p: {
+    id: string
+    name: string
+    description: string
+    price: number
+    category: string
+    tagline: string | null
+    buttsRescued: number
+    imageUrl: string | null
+    imageGradient: string
+    allowsLogo: boolean
+    active: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+  },
+  availableColors: string[],
+) {
   return {
     id: p.id,
     name: p.name,
@@ -32,6 +80,7 @@ function formatProduct(p: {
     allowsLogo: p.allowsLogo,
     active: p.active,
     sortOrder: p.sortOrder,
+    availableColors,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   }
@@ -40,10 +89,18 @@ function formatProduct(p: {
 export async function GET() {
   try {
     await ensureShopProductsSeeded()
-    const products = await prisma.product.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    const [products, colorMap] = await Promise.all([
+      prisma.product.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+      loadColorMap(),
+    ])
+    return NextResponse.json({
+      success: true,
+      products: products.map((p) =>
+        formatProduct(p, colorMap.get(p.id) || [...DEFAULT_PRODUCT_COLORS]),
+      ),
     })
-    return NextResponse.json({ success: true, products: products.map(formatProduct) })
   } catch (error) {
     console.error("Admin products GET error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
@@ -79,7 +136,8 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      return NextResponse.json({ success: true, product: formatProduct(product) })
+      const availableColors = await setProductColors(product.id, form.get("availableColors"))
+      return NextResponse.json({ success: true, product: formatProduct(product, availableColors) })
     }
 
     const body = await request.json()
@@ -99,7 +157,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true, product: formatProduct(product) })
+    const availableColors = await setProductColors(product.id, body.availableColors)
+    return NextResponse.json({ success: true, product: formatProduct(product, availableColors) })
   } catch (error) {
     console.error("Admin products POST error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
@@ -135,7 +194,8 @@ export async function PUT(request: NextRequest) {
       }
 
       const product = await prisma.product.update({ where: { id }, data })
-      return NextResponse.json({ success: true, product: formatProduct(product) })
+      const availableColors = await setProductColors(id, form.get("availableColors"))
+      return NextResponse.json({ success: true, product: formatProduct(product, availableColors) })
     }
 
     const body = await request.json()
@@ -159,7 +219,8 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true, product: formatProduct(product) })
+    const availableColors = await setProductColors(id, body.availableColors)
+    return NextResponse.json({ success: true, product: formatProduct(product, availableColors) })
   } catch (error) {
     console.error("Admin products PUT error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

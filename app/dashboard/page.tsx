@@ -28,6 +28,7 @@ import {
   formatKg,
   formatWaterL,
 } from "@/lib/portal-metrics"
+import { SERVICE_STATUS, normalizeServiceStatus } from "@/lib/service-status"
 
 export default function DashboardPage() {
   const {
@@ -35,7 +36,6 @@ export default function DashboardPage() {
     authLoading,
     dataLoading,
     isRefreshing,
-    lastRefresh,
     reports,
     metrics,
     handleRefresh,
@@ -51,6 +51,10 @@ export default function DashboardPage() {
   const reportPeriodKey =
     latestReport?.period ||
     `${period.year}-${String(new Date(latestReport?.date || Date.now()).getMonth() + 1).padStart(2, "0")}`
+  const statusCode = normalizeServiceStatus(
+    (customer as { serviceStatus?: string } | null)?.serviceStatus || customer?.status,
+  )
+  const statusMeta = SERVICE_STATUS[statusCode]
 
   const metricItems = [
     {
@@ -94,9 +98,9 @@ export default function DashboardPage() {
       icon: Sparkles,
       iconBg: "bg-[#FFF3E0]",
       iconColor: "text-[#EF6C00]",
-      label: "KraftReborn Credits",
+      label: "Amount to be claim pending",
       value: formatIndianNumber(metrics.kraftrebornCredits),
-      description: "1 credit = ₹1",
+      description: "Pending claim amount",
       footer: (
         <Link href="/dashboard/shop" className="inline-block mt-2 text-[12px] font-semibold text-[#1565C0]">
           Shop KraftReborn →
@@ -119,11 +123,11 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[12px] text-[#8A8A8A] mr-1">
-                Last updated:{" "}
-                {lastRefresh
-                  ? lastRefresh.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-                  : "—"}
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold ${statusMeta.badgeClass}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
+                {statusMeta.label}
               </span>
               <DownloadImpactReport customerId={customer?.id}>
                 <button type="button" className="portal-btn-outline">

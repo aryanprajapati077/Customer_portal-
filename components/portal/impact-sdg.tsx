@@ -209,7 +209,7 @@ export function ImpactSdg({ metrics }: ImpactSdgProps) {
             },
             {
               icon: Sparkles,
-              text: `${formatIndianNumber(metrics.kraftrebornCredits)} KraftReborn credits earned`,
+              text: `${formatIndianNumber(metrics.kraftrebornCredits)} amount to be claim pending`,
               bg: "bg-[#F3E5F5]",
               color: "text-[#7B1FA2]",
             },

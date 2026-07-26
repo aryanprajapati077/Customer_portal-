@@ -59,7 +59,7 @@ interface ImpactCircularProps {
 }
 
 export function ImpactCircular({ metrics }: ImpactCircularProps) {
-  const productsCreated = Math.max(1, Math.round(metrics.microplasticsKg * 222))
+  const productsCreated = Math.max(0, Math.round(metrics.totalWasteKg * 8))
 
   return (
     <div className="space-y-5">
@@ -102,9 +102,9 @@ export function ImpactCircular({ metrics }: ImpactCircularProps) {
           icon={Sparkles}
           iconBg="bg-[#F3E5F5]"
           iconColor="text-[#7B1FA2]"
-          label="KraftReborn Credits Earned"
+          label="Amount to be claim pending"
           value={formatIndianNumber(metrics.kraftrebornCredits)}
-          description="Equivalent credits in your account."
+          description="Pending claim amount in your account."
         />
       </div>
 
@@ -157,7 +157,7 @@ export function ImpactCircular({ metrics }: ImpactCircularProps) {
             {[
               {
                 icon: TreePine,
-                value: formatIndianNumber(metrics.treesEquivalent),
+                value: "Coming Soon",
                 label: "Trees planted",
                 title: "Trees Equivalent",
                 bg: "bg-[#E8F5E9]",
@@ -173,7 +173,7 @@ export function ImpactCircular({ metrics }: ImpactCircularProps) {
               },
               {
                 icon: Cloud,
-                value: `${formatIndianNumber(metrics.co2AvoidedKg)} kg CO2e`,
+                value: "Coming Soon",
                 label: "Emissions avoided",
                 title: "CO2 Emissions Avoided",
                 bg: "bg-[#E8F5E9]",

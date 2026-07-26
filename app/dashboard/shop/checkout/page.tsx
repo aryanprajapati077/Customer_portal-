@@ -61,12 +61,12 @@ export default function CheckoutPage() {
     if (!customer || lines.length === 0) return
 
     if (!useKrCredits) {
-      setError("KR credits are required for checkout in the partner portal shop.")
+      setError("Rupee amount balance is required for checkout in the partner portal shop.")
       return
     }
 
     if (!canPayWithCredits) {
-      setError(`Insufficient KR credits. You need ${formatInr(subtotal)} but have ${formatInr(credits)}.`)
+      setError(`Insufficient rupee amount. You need ${formatInr(subtotal)} but have ${formatInr(credits)}.`)
       return
     }
 
@@ -220,30 +220,30 @@ export default function CheckoutPage() {
             </Card>
           )}
 
-          <Card className="border-stone-200/60 bg-white/80 rounded-2xl shadow-sm">
+          <Card className="border-[#E5E2DA] bg-[#F7F6F2]/80 rounded-[1.35rem] shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg font-serif">Payment</CardTitle>
+              <CardTitle className="text-lg font-[family-name:var(--font-display)]">Payment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div
                 className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-colors cursor-pointer ${
-                  useKrCredits ? "border-amber-500 bg-amber-50/50" : "border-stone-200 bg-white/50"
+                  useKrCredits ? "border-[#1B7339] bg-[#E8F5E9]/70" : "border-[#E5E2DA] bg-white/50"
                 }`}
                 onClick={() => setUseKrCredits(true)}
               >
                 <Checkbox checked={useKrCredits} onCheckedChange={() => setUseKrCredits(true)} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span className="font-semibold">Use KR Credits</span>
+                    <Sparkles className="w-4 h-4 text-[#1B7339]" />
+                    <span className="font-semibold">Use Rupee Amount</span>
                     <Badge variant="outline" className="text-[10px]">Recommended</Badge>
                   </div>
-                  <p className="text-sm text-stone-600 mt-1">
-                    Balance: <strong>{formatInr(credits)}</strong> · Credits deducted when order is completed
+                  <p className="text-sm text-[#5A5A5A] mt-1">
+                    Available: <strong>{formatInr(credits)}</strong> · Deducted when order is completed
                   </p>
                   {!canPayWithCredits && (
                     <p className="text-sm text-destructive mt-2">
-                      Need {formatInr(subtotal - credits)} more credits for this order.
+                      Need {formatInr(subtotal - credits)} more for this order.
                     </p>
                   )}
                 </div>
@@ -281,8 +281,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <p className="text-xs text-stone-500 bg-stone-50 rounded-lg p-3">
-                Your order will be reviewed by our team. KR credits are deducted only when the order status is marked
+              <p className="text-xs text-[#6B6B6B] bg-[#F7F6F2] rounded-lg p-3">
+                Your order will be reviewed by our team. Rupee amount is deducted only when the order status is marked
                 completed.
               </p>
 
@@ -290,7 +290,7 @@ export default function CheckoutPage() {
 
               <Button
                 size="lg"
-                className="w-full rounded-full h-12"
+                className="w-full rounded-full h-12 bg-[#1B7339] hover:bg-[#145a2c]"
                 onClick={handlePlaceOrder}
                 disabled={submitting || !useKrCredits || !canPayWithCredits}
               >
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <ShieldCheck className="w-4 h-4 mr-2" />
-                    Place order with KR credits
+                    Place order with rupee amount
                   </>
                 )}
               </Button>

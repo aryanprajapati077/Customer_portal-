@@ -21,12 +21,14 @@ export interface ShopProduct {
   imageUrl?: string | null
   imageGradient: string
   allowsLogo: boolean
+  availableColors?: string[]
 }
 
 export interface CartItem {
   productId: string
   quantity: number
   product: ShopProduct
+  color?: string
 }
 
 export interface CartLine extends CartItem {
@@ -40,8 +42,8 @@ interface CartContextType {
   lines: CartLine[]
   itemCount: number
   subtotal: number
-  addItem: (product: ShopProduct, quantity?: number) => void
-  removeItem: (productId: string) => void
+  addItem: (product: ShopProduct, quantity?: number, color?: string) => void
+  removeItem: (productId: string, color?: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
 }
@@ -87,20 +89,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const itemCount = useMemo(() => lines.reduce((sum, l) => sum + l.quantity, 0), [lines])
   const subtotal = useMemo(() => lines.reduce((sum, l) => sum + l.lineTotal, 0), [lines])
 
-  const addItem = useCallback((product: ShopProduct, quantity = 1) => {
+  const addItem = useCallback((product: ShopProduct, quantity = 1, color?: string) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === product.id)
+      const existing = prev.find(
+        (i) => i.productId === product.id && (i.color || "") === (color || ""),
+      )
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + quantity, product } : i,
+          i.productId === product.id && (i.color || "") === (color || "")
+            ? { ...i, quantity: i.quantity + quantity, product, color }
+            : i,
         )
       }
-      return [...prev, { productId: product.id, quantity, product }]
+      return [...prev, { productId: product.id, quantity, product, color }]
     })
   }, [])
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId))
+  const removeItem = useCallback((productId: string, color?: string) => {
+    setItems((prev) =>
+      prev.filter((i) => !(i.productId === productId && (color === undefined || (i.color || "") === color))),
+    )
   }, [])
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {

@@ -101,9 +101,18 @@ function thinBorder(cell: ExcelJS.Cell) {
 
 export async function generateImpactReportExcel(
   customerId: string,
-  options?: { period?: string },
+  options?: { period?: string; range?: string; startDate?: string; endDate?: string },
 ) {
-  const asOfDate = parsePeriodMonth(options?.period)
+  const { resolveReportDateWindow } = await import("@/lib/report-date-range")
+  const window = resolveReportDateWindow({
+    range: options?.range,
+    period: options?.period,
+    startDate: options?.startDate,
+    endDate: options?.endDate,
+  })
+  const asOfDate = window.endDate || parsePeriodMonth(options?.period)
+  const startIso = window.startDate?.toISOString()
+  const endIso = window.endDate?.toISOString()
 
   const [customerRows, collectionRows] = await Promise.all([
     sql`
@@ -113,20 +122,29 @@ export async function generateImpactReportExcel(
       WHERE id = ${customerId}
       LIMIT 1
     `,
-    asOfDate
+    startIso && endIso
       ? sql`
           SELECT weight, date, status, notes
           FROM "Collection"
           WHERE "customerId" = ${customerId}
-            AND date <= ${asOfDate.toISOString()}
+            AND date >= ${startIso}
+            AND date <= ${endIso}
           ORDER BY date ASC
         `
-      : sql`
-          SELECT weight, date, status, notes
-          FROM "Collection"
-          WHERE "customerId" = ${customerId}
-          ORDER BY date ASC
-        `,
+      : endIso
+        ? sql`
+            SELECT weight, date, status, notes
+            FROM "Collection"
+            WHERE "customerId" = ${customerId}
+              AND date <= ${endIso}
+            ORDER BY date ASC
+          `
+        : sql`
+            SELECT weight, date, status, notes
+            FROM "Collection"
+            WHERE "customerId" = ${customerId}
+            ORDER BY date ASC
+          `,
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
@@ -146,6 +164,9 @@ export async function generateImpactReportExcel(
     collections,
     asOfDate,
   )
+  reportData.reportingPeriod = window.label
+  reportData.reportingPeriodLabel = window.label
+  reportData.reportingPeriodRange = window.label
 
   // Month-wise aggregation
   const byMonth = new Map<

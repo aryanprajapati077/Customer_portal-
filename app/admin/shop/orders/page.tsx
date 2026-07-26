@@ -308,7 +308,9 @@ export default function AdminOrdersPage() {
                   </div>
                   {selected.status !== "completed" && (
                     <p className="text-xs text-muted-foreground">
-                      Marking as <strong>Completed</strong> deducts KR credits and generates the customer impact certificate.
+                      <strong>Shipped</strong> emails the dispatch notice.{" "}
+                      <strong>Completed</strong> deducts KR credits, generates the impact
+                      certificate, and emails the delivered notice.
                     </p>
                   )}
                 </div>

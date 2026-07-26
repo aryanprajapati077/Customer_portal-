@@ -37,8 +37,8 @@ const STORY_SLIDES = [
   },
   {
     eyebrow: "Chapter 04",
-    title: "Redeem your impact credits",
-    subtitle: "Use KraftReborn credits in the shop and bring circular design into your space.",
+    title: "Redeem your rupee amount",
+    subtitle: "Shop KraftReborn with your available rupee balance and bring circular design home.",
     icon: Sparkles,
     image: "/portal/stories/story-04.png",
     tint: "from-[#E8F5E9] to-[#FFF8F0]",
@@ -107,7 +107,7 @@ export function WhatsNewBanner({
                 </h2>
                 <p className="text-[13px] text-[#6B6B6B]">{current.subtitle}</p>
                 <Link
-                  href="/dashboard/shop"
+                  href={variant === "kraft" ? "/dashboard/shop/store" : "/dashboard/shop"}
                   className="portal-btn-solid mt-1 group inline-flex !gap-2 transition-all duration-300 hover:-translate-y-0.5 hover:!bg-[#145a2c]"
                 >
                   {variant === "kraft" ? "Explore Collection" : "Explore Now"}

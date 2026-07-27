@@ -60,37 +60,55 @@ const ZONE_PRESETS = [
 ]
 
 export function LandingCalculator() {
-  const [industry, setIndustry] = useState<Industry>("Corporate Office")
-  const [employees, setEmployees] = useState(EMP_PRESETS[1].value)
-  const [locations, setLocations] = useState(LOC_PRESETS[1].value)
-  const [smokingZones, setSmokingZones] = useState(ZONE_PRESETS[1].value)
-  const [kioskType, setKioskType] = useState<KioskType>("Advanced")
+  const [industry, setIndustry] = useState<Industry | "">("")
+  const [employees, setEmployees] = useState<number | null>(null)
+  const [locations, setLocations] = useState<number | null>(null)
+  const [smokingZones, setSmokingZones] = useState<number | null>(null)
+  const [kioskType, setKioskType] = useState<KioskType | "">("")
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
   const [pdfDownload, setPdfDownload] = useState<{ filename: string; href: string } | null>(null)
 
-  const estimate = useMemo(
-    () =>
-      calculateImpact({
-        industry,
-        employees,
-        locations,
-        smokingZones,
-        kioskType,
-      }),
-    [industry, employees, locations, smokingZones, kioskType],
-  )
-
   const needsKiosk = industry === "Corporate Office" || industry === "Hotel"
   const needsEmployees = industry === "Corporate Office"
   const needsZones = industry === "Hotel"
+
+  const ready =
+    Boolean(industry) &&
+    (!needsEmployees || (employees != null && locations != null)) &&
+    (!needsZones || smokingZones != null) &&
+    (!needsKiosk || Boolean(kioskType))
+
+  const estimate = useMemo(() => {
+    if (!ready || !industry) return null
+    return calculateImpact({
+      industry,
+      employees: employees ?? undefined,
+      locations: locations ?? undefined,
+      smokingZones: smokingZones ?? undefined,
+      kioskType: kioskType || undefined,
+    })
+  }, [ready, industry, employees, locations, smokingZones, kioskType])
+
   const fieldTrigger =
     "mt-1.5 h-11 w-full rounded-xl border border-[#E5E2DA] bg-[#FBFBF8] px-3 text-[14px] text-[#141414] outline-none transition focus:border-[#1B7339] focus:bg-white focus:ring-2 focus:ring-[#1B7339]/15"
 
+  const onIndustryChange = (v: string) => {
+    setIndustry(v as Industry)
+    setEmployees(null)
+    setLocations(null)
+    setSmokingZones(null)
+    setKioskType("")
+  }
+
   const submitProposal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!ready || !industry) {
+      setError("Please complete the calculator selections first.")
+      return
+    }
     setLoading(true)
     setError("")
     const form = new FormData(e.currentTarget)
@@ -153,9 +171,9 @@ export function LandingCalculator() {
           <div className="mt-8 space-y-4">
             <div>
               <p className="text-[13px] font-medium text-[#374151]">Industry Type</p>
-              <Select value={industry} onValueChange={(v) => setIndustry(v as Industry)}>
+              <Select value={industry || undefined} onValueChange={onIndustryChange}>
                 <SelectTrigger className={fieldTrigger}>
-                  <SelectValue />
+                  <SelectValue placeholder="- -" />
                 </SelectTrigger>
                 <SelectContent>
                   {INDUSTRIES.map((o) => (
@@ -172,11 +190,11 @@ export function LandingCalculator() {
                 <div>
                   <p className="text-[13px] font-medium text-[#374151]">No. of Employees</p>
                   <Select
-                    value={String(employees)}
+                    value={employees != null ? String(employees) : undefined}
                     onValueChange={(v) => setEmployees(Number(v))}
                   >
                     <SelectTrigger className={fieldTrigger}>
-                      <SelectValue />
+                      <SelectValue placeholder="- -" />
                     </SelectTrigger>
                     <SelectContent>
                       {EMP_PRESETS.map((o) => (
@@ -190,11 +208,11 @@ export function LandingCalculator() {
                 <div>
                   <p className="text-[13px] font-medium text-[#374151]">No. of Locations</p>
                   <Select
-                    value={String(locations)}
+                    value={locations != null ? String(locations) : undefined}
                     onValueChange={(v) => setLocations(Number(v))}
                   >
                     <SelectTrigger className={fieldTrigger}>
-                      <SelectValue />
+                      <SelectValue placeholder="- -" />
                     </SelectTrigger>
                     <SelectContent>
                       {LOC_PRESETS.map((o) => (
@@ -212,11 +230,11 @@ export function LandingCalculator() {
               <div>
                 <p className="text-[13px] font-medium text-[#374151]">No. of Smoking Zones</p>
                 <Select
-                  value={String(smokingZones)}
+                  value={smokingZones != null ? String(smokingZones) : undefined}
                   onValueChange={(v) => setSmokingZones(Number(v))}
                 >
                   <SelectTrigger className={fieldTrigger}>
-                    <SelectValue />
+                    <SelectValue placeholder="- -" />
                   </SelectTrigger>
                   <SelectContent>
                     {ZONE_PRESETS.map((o) => (
@@ -232,9 +250,12 @@ export function LandingCalculator() {
             {needsKiosk ? (
               <div>
                 <p className="text-[13px] font-medium text-[#374151]">Kiosk Preference</p>
-                <Select value={kioskType} onValueChange={(v) => setKioskType(v as KioskType)}>
+                <Select
+                  value={kioskType || undefined}
+                  onValueChange={(v) => setKioskType(v as KioskType)}
+                >
                   <SelectTrigger className={fieldTrigger}>
-                    <SelectValue />
+                    <SelectValue placeholder="- -" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Basic">Basic</SelectItem>
@@ -244,7 +265,7 @@ export function LandingCalculator() {
               </div>
             ) : null}
 
-            {estimate.mode === "package" || estimate.mode === "contact" ? (
+            {estimate && (estimate.mode === "package" || estimate.mode === "contact") ? (
               <p className="rounded-xl bg-[#F4F9F5] px-4 py-3 text-[13px] leading-relaxed text-[#2A4A32]">
                 {estimate.impactNote || estimate.summaryLine}
               </p>
@@ -257,142 +278,201 @@ export function LandingCalculator() {
             Your estimated impact
           </p>
 
-          {estimate.mode === "quantified" ? (
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              <Metric
-                icon={Cigarette}
-                label="Cigarette Butts Diverted"
-                value={formatInr(estimate.buttsDiverted || 0)}
-                note="per year"
-              />
-              <Metric
-                icon={Droplets}
-                label="Water Pollution Prevented"
-                value={formatCompactLitres(estimate.waterLitres || 0)}
-                note="litres"
-              />
-              <Metric
-                icon={Building2}
-                label="Est. Annual Investment"
-                value={
-                  estimate.annualInvestment != null ? `₹${formatInr(estimate.annualInvestment)}` : "—"
-                }
-                note={
-                  estimate.pricing
-                    ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
-                    : "excl. GST / year"
-                }
-              />
-              <Metric
-                icon={Recycle}
-                label="Waste Recycled"
-                value={`${estimate.wasteRecycledPct}%`}
-                note="recovery rate"
-              />
-            </div>
-          ) : estimate.mode === "survey" || estimate.mode === "package" ? (
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              <Metric
-                icon={Building2}
-                label="Recommended Package"
-                value={estimate.packageName}
-                note={
-                  estimate.recommendedKiosks != null
-                    ? `${estimate.recommendedKiosks} kiosks`
-                    : "fixed annual plan"
-                }
-              />
-              <Metric
-                icon={Leaf}
-                label="Est. Annual Investment"
-                value={
-                  estimate.annualInvestment != null ? `₹${formatInr(estimate.annualInvestment)}` : "—"
-                }
-                note={
-                  estimate.pricing
-                    ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
-                    : estimate.annualInvestmentNote || ""
-                }
-              />
-              <Metric
-                icon={Recycle}
-                label="Waste Recycled"
-                value={`${estimate.wasteRecycledPct}%`}
-                note="recovery rate"
-              />
-              <Metric
-                icon={Droplets}
-                label="Impact timing"
-                value="Post-survey"
-                note="site assessment required"
-              />
-            </div>
-          ) : (
-            <div className="mt-6 rounded-2xl bg-[#F4F9F5] px-4 py-6 text-[14px] leading-relaxed text-[#2A4A32]">
-              {estimate.impactNote}
-            </div>
-          )}
-
-          <div className="mt-7 rounded-2xl bg-[#F4F9F5] px-4 py-4">
-            <p className="text-[13px] text-[#2A4A32]">
-              Recommended: <span className="font-semibold">{estimate.packageName}</span>
-              {estimate.kioskType ? (
-                <span className="text-[#5A5A5A]"> · {estimate.kioskType} kiosk</span>
-              ) : null}
-              {estimate.recommendedKiosks != null ? (
-                <span className="text-[#5A5A5A]"> · {estimate.recommendedKiosks} units</span>
-              ) : null}
-            </p>
-            {estimate.pricing ? (
-              <div className="mt-2 space-y-1 text-[13px] text-[#5A5A5A]">
-                {estimate.pricing.lineItems.map((item) => (
-                  <p key={item.label} className="flex justify-between gap-3">
-                    <span>{item.label}</span>
-                    <span className="shrink-0 font-medium text-[#141414]">
-                      ₹{formatInr(item.amount)}
-                    </span>
+          {!estimate ? (
+            <>
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                <Metric
+                  icon={Cigarette}
+                  label="Cigarette Butts Diverted"
+                  value="- -"
+                  note="per year"
+                />
+                <Metric
+                  icon={Droplets}
+                  label="Water Pollution Prevented"
+                  value="- -"
+                  note="litres"
+                />
+                <Metric
+                  icon={Building2}
+                  label="Est. Annual Investment"
+                  value="- -"
+                  note="excl. GST / year"
+                />
+                <Metric icon={Recycle} label="Waste Recycled" value="- -" note="recovery rate" />
+              </div>
+              <div className="mt-7 rounded-2xl bg-[#F4F9F5] px-4 py-4">
+                <p className="text-[13px] text-[#2A4A32]">
+                  Recommended: <span className="font-semibold">- -</span>
+                </p>
+                <div className="mt-2 space-y-1 text-[13px] text-[#5A5A5A]">
+                  <p className="flex justify-between gap-3">
+                    <span>Subtotal excl. GST</span>
+                    <span className="shrink-0 font-medium text-[#141414]">- -</span>
                   </p>
-                ))}
-                <p className="flex justify-between gap-3 border-t border-[#D7E8DB] pt-2">
-                  <span>Subtotal excl. GST</span>
-                  <span className="font-semibold text-[#141414]">
-                    ₹{formatInr(estimate.pricing.subtotalExclGst)}
-                  </span>
-                </p>
-                <p className="flex justify-between gap-3">
-                  <span>GST @ {estimate.pricing.gstRatePct}%</span>
-                  <span className="font-medium text-[#141414]">
-                    ₹{formatInr(estimate.pricing.gstAmount)}
-                  </span>
-                </p>
-                <p className="flex justify-between gap-3 text-[#2A4A32]">
-                  <span className="font-semibold">Total incl. GST / year</span>
-                  <span className="font-bold">₹{formatInr(estimate.pricing.totalInclGst)}</span>
+                  <p className="flex justify-between gap-3">
+                    <span>GST</span>
+                    <span className="font-medium text-[#141414]">- -</span>
+                  </p>
+                  <p className="flex justify-between gap-3 text-[#2A4A32]">
+                    <span className="font-semibold">Total incl. GST / year</span>
+                    <span className="font-bold">- -</span>
+                  </p>
+                </div>
+                <p className="mt-2 text-[13px] text-[#5A5A5A]">
+                  Complimentary KraftReborn value ={" "}
+                  <span className="font-semibold text-[#141414]">- -</span>
                 </p>
               </div>
-            ) : null}
-            {estimate.kraftRebornValue != null ? (
-              <p className="mt-2 text-[13px] text-[#5A5A5A]">
-                Complimentary KraftReborn value ={" "}
-                <span className="font-semibold text-[#141414]">
-                  ₹{formatInr(estimate.kraftRebornValue)}
-                </span>
-              </p>
-            ) : null}
-            {estimate.impactNote && estimate.mode === "survey" ? (
-              <p className="mt-2 text-[12px] leading-relaxed text-[#5A5A5A]">{estimate.impactNote}</p>
-            ) : null}
-          </div>
+            </>
+          ) : (
+            <>
+              {estimate.mode === "quantified" ? (
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                  <Metric
+                    icon={Cigarette}
+                    label="Cigarette Butts Diverted"
+                    value={formatInr(estimate.buttsDiverted || 0)}
+                    note="per year"
+                  />
+                  <Metric
+                    icon={Droplets}
+                    label="Water Pollution Prevented"
+                    value={formatCompactLitres(estimate.waterLitres || 0)}
+                    note="litres"
+                  />
+                  <Metric
+                    icon={Building2}
+                    label="Est. Annual Investment"
+                    value={
+                      estimate.annualInvestment != null
+                        ? `₹${formatInr(estimate.annualInvestment)}`
+                        : "—"
+                    }
+                    note={
+                      estimate.pricing
+                        ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
+                        : "excl. GST / year"
+                    }
+                  />
+                  <Metric
+                    icon={Recycle}
+                    label="Waste Recycled"
+                    value={`${estimate.wasteRecycledPct}%`}
+                    note="recovery rate"
+                  />
+                </div>
+              ) : estimate.mode === "survey" || estimate.mode === "package" ? (
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                  <Metric
+                    icon={Building2}
+                    label="Recommended Package"
+                    value={estimate.packageName}
+                    note={
+                      estimate.recommendedKiosks != null
+                        ? `${estimate.recommendedKiosks} kiosks`
+                        : "fixed annual plan"
+                    }
+                  />
+                  <Metric
+                    icon={Leaf}
+                    label="Est. Annual Investment"
+                    value={
+                      estimate.annualInvestment != null
+                        ? `₹${formatInr(estimate.annualInvestment)}`
+                        : "—"
+                    }
+                    note={
+                      estimate.pricing
+                        ? `excl. GST · ₹${formatInr(estimate.pricing.totalInclGst)} incl. GST`
+                        : estimate.annualInvestmentNote || ""
+                    }
+                  />
+                  <Metric
+                    icon={Recycle}
+                    label="Waste Recycled"
+                    value={`${estimate.wasteRecycledPct}%`}
+                    note="recovery rate"
+                  />
+                  <Metric
+                    icon={Droplets}
+                    label="Impact timing"
+                    value="Post-survey"
+                    note="site assessment required"
+                  />
+                </div>
+              ) : (
+                <div className="mt-6 rounded-2xl bg-[#F4F9F5] px-4 py-6 text-[14px] leading-relaxed text-[#2A4A32]">
+                  {estimate.impactNote}
+                </div>
+              )}
+
+              <div className="mt-7 rounded-2xl bg-[#F4F9F5] px-4 py-4">
+                <p className="text-[13px] text-[#2A4A32]">
+                  Recommended: <span className="font-semibold">{estimate.packageName}</span>
+                  {estimate.kioskType ? (
+                    <span className="text-[#5A5A5A]"> · {estimate.kioskType} kiosk</span>
+                  ) : null}
+                  {estimate.recommendedKiosks != null ? (
+                    <span className="text-[#5A5A5A]"> · {estimate.recommendedKiosks} units</span>
+                  ) : null}
+                </p>
+                {estimate.pricing ? (
+                  <div className="mt-2 space-y-1 text-[13px] text-[#5A5A5A]">
+                    {estimate.pricing.lineItems.map((item) => (
+                      <p key={item.label} className="flex justify-between gap-3">
+                        <span>{item.label}</span>
+                        <span className="shrink-0 font-medium text-[#141414]">
+                          ₹{formatInr(item.amount)}
+                        </span>
+                      </p>
+                    ))}
+                    <p className="flex justify-between gap-3 border-t border-[#D7E8DB] pt-2">
+                      <span>Subtotal excl. GST</span>
+                      <span className="font-semibold text-[#141414]">
+                        ₹{formatInr(estimate.pricing.subtotalExclGst)}
+                      </span>
+                    </p>
+                    <p className="flex justify-between gap-3">
+                      <span>GST @ {estimate.pricing.gstRatePct}%</span>
+                      <span className="font-medium text-[#141414]">
+                        ₹{formatInr(estimate.pricing.gstAmount)}
+                      </span>
+                    </p>
+                    <p className="flex justify-between gap-3 text-[#2A4A32]">
+                      <span className="font-semibold">Total incl. GST / year</span>
+                      <span className="font-bold">₹{formatInr(estimate.pricing.totalInclGst)}</span>
+                    </p>
+                  </div>
+                ) : null}
+                {estimate.kraftRebornValue != null ? (
+                  <p className="mt-2 text-[13px] text-[#5A5A5A]">
+                    Complimentary KraftReborn value ={" "}
+                    <span className="font-semibold text-[#141414]">
+                      ₹{formatInr(estimate.kraftRebornValue)}
+                    </span>
+                  </p>
+                ) : null}
+                {estimate.impactNote && estimate.mode === "survey" ? (
+                  <p className="mt-2 text-[12px] leading-relaxed text-[#5A5A5A]">
+                    {estimate.impactNote}
+                  </p>
+                ) : null}
+              </div>
+            </>
+          )}
 
           <button
             type="button"
+            disabled={!ready || !estimate}
             onClick={() => {
+              if (!ready || !estimate) return
               setDone(false)
               setError("")
               setPdfDownload(null)
               setOpen(true)
             }}
-            className="landing-btn-primary mt-6 w-full"
+            className="landing-btn-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-45"
           >
             Get detailed proposal
             <ArrowRight className="h-4 w-4" />
@@ -450,7 +530,7 @@ export function LandingCalculator() {
                 Close
               </Button>
             </div>
-          ) : (
+          ) : estimate ? (
             <>
               <div className="space-y-3 rounded-xl border border-[#E5E2DA] bg-white px-4 py-3 text-[13px] text-[#374151]">
                 <p>
@@ -592,7 +672,7 @@ export function LandingCalculator() {
                 </Button>
               </form>
             </>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </section>

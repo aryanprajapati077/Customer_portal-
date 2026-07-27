@@ -9,7 +9,6 @@ import {
   Image,
   Svg,
   Path,
-  Circle,
   Link,
 } from "@react-pdf/renderer"
 
@@ -358,10 +357,11 @@ function CigaretteIcon() {
   )
 }
 
-function Co2Icon() {
+function ButtsIcon() {
   return (
     <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path d="M12 3c3 4 6 7 6 11a6 6 0 11-12 0c0-4 3-7 6-11z" stroke={GREEN} strokeWidth={1.5} fill="none" />
+      <Path d="M4 14h10v3H4zM14 14h3v3h-3zM18 12c.8-1.5 1.5-2.8 2.5-4" stroke={GREEN} strokeWidth={1.5} fill="none" />
+      <Path d="M7 10v4M10 10v4" stroke={GREEN} strokeWidth={1.2} fill="none" />
     </Svg>
   )
 }
@@ -374,12 +374,11 @@ function RecycleIcon() {
   )
 }
 
-function PeopleIcon() {
+function LoopIcon() {
   return (
     <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Circle cx="9" cy="8" r="3" stroke={GREEN} strokeWidth={1.4} fill="none" />
-      <Circle cx="17" cy="9" r="2.2" stroke={GREEN} strokeWidth={1.3} fill="none" />
-      <Path d="M3 19c1-3 3.5-5 6-5s5 2 6 5M14 14c2 0 4 1 5 3" stroke={GREEN} strokeWidth={1.4} fill="none" />
+      <Path d="M4 12a8 8 0 0114-5l2 2M20 12a8 8 0 01-14 5l-2-2" stroke={GREEN} strokeWidth={1.4} fill="none" />
+      <Path d="M20 4v5h-5M4 20v-5h5" stroke={GREEN} strokeWidth={1.4} fill="none" />
     </Svg>
   )
 }
@@ -390,10 +389,9 @@ export interface ServiceCertificateData {
   location: string
   fiscalYear: string
   totalWasteKg: number
-  co2PreventedKg: number
-  tobaccoAshKg: number
+  cigaretteButts: number
+  microplasticUpcycledKg: number
   recycledPercent: number
-  peopleImpacted: number
   issuedBy: string
   issueDate: string
   validTill: string
@@ -405,35 +403,40 @@ export interface ServiceCertificateData {
 
 export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateData }) {
   const waste = Number(data.totalWasteKg || 0)
+  const butts = Math.max(0, Math.round(Number(data.cigaretteButts || 0)))
+  const micro = Number(data.microplasticUpcycledKg || 0)
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=4&data=${encodeURIComponent(data.verifyUrl)}`
 
   const isos = [
-    { standard: "ISO 9001:2015", scope: "Quality Management" },
-    { standard: "ISO 14001:2015", scope: "Environmental Mgmt" },
-    { standard: "ISO 45001:2018", scope: "Health & Safety" },
-    { standard: "ISO 27001:2022", scope: "Information Security" },
+    { standard: "ISO 9001:2015", scope: "Quality Management System" },
+    { standard: "ISO 14001:2015", scope: "Environmental Management System" },
+    { standard: "ISO 45001:2018", scope: "Occupational Health & Safety" },
   ]
 
   const metrics = [
-    { icon: <CigaretteIcon />, value: waste.toFixed(2), unit: "KG", label: "CIGARETTE WASTE\nCOLLECTED" },
     {
-      icon: <Co2Icon />,
-      value: data.co2PreventedKg.toLocaleString("en-IN"),
-      unit: "KG CO₂",
-      label: "CO₂ EMISSIONS\nPREVENTED",
+      icon: <CigaretteIcon />,
+      value: waste.toFixed(2),
+      unit: "KG",
+      label: "CIGARETTE WASTE\nCOLLECTED",
     },
-    { icon: <Leaf size={9} />, value: data.tobaccoAshKg.toFixed(2), unit: "KG", label: "TOBACCO & ASH\nCOMPOSTED" },
+    {
+      icon: <ButtsIcon />,
+      value: butts.toLocaleString("en-IN"),
+      unit: "BUTTS",
+      label: "NO. OF CIGARETTE\nBUTTS COLLECTED",
+    },
     {
       icon: <RecycleIcon />,
-      value: String(data.recycledPercent),
-      unit: "%",
-      label: "RECYCLED INTO\nSUSTAINABLE PRODUCTS",
+      value: micro.toFixed(2),
+      unit: "KG",
+      label: "MICROPLASTIC\nRECYCLED",
     },
     {
-      icon: <PeopleIcon />,
-      value: data.peopleImpacted.toLocaleString("en-IN"),
-      unit: "PEOPLE",
-      label: "IMPACTING HEALTHIER\nCOMMUNITIES",
+      icon: <LoopIcon />,
+      value: String(data.recycledPercent || 80),
+      unit: "%",
+      label: "RECYCLED INTO\nSUSTAINABLE PRODUCTS",
     },
   ]
 
@@ -448,10 +451,9 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
             <View style={styles.header}>
               <View>
                 <Image
-                  src={asset("buffindia-logo-clear.png")}
-                  style={{ width: 148, height: 50, objectFit: "contain" }}
+                  src={asset("buffindia-logo-original.png")}
+                  style={{ width: 156, height: 52, objectFit: "contain" }}
                 />
-                <Text style={styles.brandSub}>CIGARETTE WASTE MANAGEMENT</Text>
               </View>
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={styles.supported}>Proudly supported by</Text>
@@ -512,17 +514,14 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
                 <Text style={styles.orgName}>{data.companyName || "Partner Organization"}</Text>
                 <Text style={styles.narrative}>
                   is an esteemed partner of Buffindia Receptacles Pvt. Ltd. for responsible cigarette
-                  waste management. Through this partnership, they have contributed to a cleaner
-                  environment, reduced toxic litter, and advanced circular recovery of cigarette waste
-                  into sustainable products — creating measurable environmental and social impact for a
-                  Butt Free India.
+                  waste management and contributing to a cleaner, healthier and more sustainable
+                  environment. This partnership supports the circular economy and drives measurable
+                  environmental and social impact.
                 </Text>
 
                 <View style={styles.panel}>
                   <View style={styles.panelHead}>
-                    <Text style={styles.panelHeadText}>
-                      YOUR IMPACT WITH BUFFINDIA ({data.fiscalYear})
-                    </Text>
+                    <Text style={styles.panelHeadText}>YOUR IMPACT WITH BUFFINDIA</Text>
                   </View>
                   <View style={styles.panelBody}>
                     <View style={styles.metricsRow}>
@@ -551,10 +550,10 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
                           <Text style={styles.isoScope}>{iso.scope}</Text>
                         </View>
                       ))}
-                      <View style={[styles.isoCard, { flex: 1.1 }]}>
+                      <View style={[styles.isoCard, { flex: 1.15 }]}>
                         <Text style={styles.isoEyebrow}>GRS CERTIFIED</Text>
                         <Text style={styles.isoTitle}>Global Recycled Standard</Text>
-                        <Text style={styles.isoScope}>Circular product recovery</Text>
+                        <Text style={styles.isoScope}>GRS Certificate No. ACL25050801</Text>
                       </View>
                       <View
                         style={{

@@ -42,9 +42,7 @@ export async function generateServiceCertificatePdf(customerId: string, certific
 
   const totalWaste = Number(sync.totalWaste) || 0
   const cigaretteButts = Math.round(totalWaste * 3000)
-  const co2PreventedKg = Math.round(cigaretteButts * 0.014)
-  const tobaccoAshKg = +(totalWaste * 0.2).toFixed(2)
-  const peopleImpacted = Math.max(1, Math.round(cigaretteButts / 80))
+  const microplasticUpcycledKg = +(totalWaste * 0.8).toFixed(2)
 
   const location =
     [customer.city, customer.state].filter(Boolean).join(", ") ||
@@ -61,10 +59,9 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     location: location || "India",
     fiscalYear: getIndianFiscalYear(),
     totalWasteKg: totalWaste,
-    co2PreventedKg,
-    tobaccoAshKg,
-    recycledPercent: 99,
-    peopleImpacted,
+    cigaretteButts,
+    microplasticUpcycledKg,
+    recycledPercent: 80,
     issuedBy: "Ketan Prajapati",
     issueDate: formatInstallDate(new Date().toISOString()) || new Date().toLocaleDateString("en-IN"),
     validTill: "Lifetime",

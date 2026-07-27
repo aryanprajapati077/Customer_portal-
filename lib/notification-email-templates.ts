@@ -13,6 +13,7 @@ export type NotificationTemplateId =
   | "service_renewal"
   | "kraftreborn_dispatched"
   | "kraftreborn_delivered"
+  | "impact_proposal"
 
 export type NotificationTemplateCopy = {
   subject: string
@@ -243,6 +244,40 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateMeta[] = [
       signOff: "Team BuffIndia",
       footerLine: "Buffindia Receptacles Pvt. Ltd. · support@buffindia.com · www.buffindia.com",
       trigger: "When admin marks shop order as Delivered (or Completed fulfilment)",
+    },
+  },
+  {
+    id: "impact_proposal",
+    name: "Detailed Impact Proposal",
+    description:
+      "Sent to the lead when they request a detailed proposal from the Impact Calculator. PDF is attached separately.",
+    placeholders: [
+      "name",
+      "company",
+      "industry",
+      "packageName",
+      "summaryLine",
+      "investmentLine",
+      "kioskLine",
+      "buttsLine",
+      "waterLine",
+      "kraftLine",
+      "city",
+      "phone",
+      "portalUrl",
+    ],
+    defaults: {
+      subject: "Your BuffIndia detailed proposal — {{company}}",
+      eyebrow: "BuffIndia · Impact Calculator",
+      title: "Your detailed commercial proposal is ready",
+      intro: "Hi {{name}},",
+      body: "Thank you for using the BuffIndia Impact Calculator. Your branded commercial proposal for {{company}} is attached to this email.\n\nIndustry: {{industry}}\nRecommended: {{packageName}}\n{{summaryLine}}{{investmentLine}}{{kioskLine}}{{buttsLine}}{{waterLine}}{{kraftLine}}\n\nOur sales team has also been notified and will follow up shortly. Reply to this email with any questions about scope, sites, or timelines.",
+      ctaLabel: "Explore BuffIndia",
+      ctaUrl: "{{portalUrl}}",
+      closing: "Looking forward to building a cleaner India with you,",
+      signOff: "Team BuffIndia",
+      footerLine: "Buffindia Receptacles Pvt. Ltd. · campaign@buffindia.com · www.buffindia.com",
+      trigger: "When a visitor submits Get detailed proposal on the Impact Calculator",
     },
   },
 ]

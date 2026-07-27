@@ -44,7 +44,15 @@ export async function PATCH(request: Request) {
       data: { status },
     })
 
-    if (status === "resolved" && prev?.status !== "resolved" && ticket.email) {
+    if (
+      status === "resolved" &&
+      prev?.status !== "resolved" &&
+      ticket.email &&
+      ticket.category !== "proposal" &&
+      ticket.source !== "impact-calculator" &&
+      ticket.category !== "contact" &&
+      ticket.source !== "contact"
+    ) {
       await sendNotificationEmail({
         templateId: "support_ticket_resolved",
         to: ticket.email,

@@ -105,6 +105,8 @@ export async function sendNotificationEmail(options: {
   otpHighlight?: string
   queue?: boolean
   label?: string
+  attachments?: { filename: string; content: Buffer | string }[]
+  replyTo?: string
 }) {
   const to = String(options.to || "")
     .toLowerCase()
@@ -126,9 +128,14 @@ export async function sendNotificationEmail(options: {
     await resend.emails.send({
       from: getResendFrom(),
       to,
+      replyTo: options.replyTo,
       subject: built.subject,
       html: built.html,
       text: built.text,
+      attachments: options.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+      })),
     })
     return { sent: true as const, ...built }
   }

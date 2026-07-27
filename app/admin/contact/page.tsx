@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Mail, RefreshCw, LifeBuoy, Paperclip, ExternalLink } from "lucide-react"
+import { Loader2, Mail, RefreshCw, MessageSquare } from "lucide-react"
 
 type Ticket = {
   id: string
@@ -23,10 +23,13 @@ type Ticket = {
   status: string
   source: string
   createdAt: string
-  attachmentUrl?: string | null
 }
 
-export default function AdminSupportPage() {
+function isContactLead(t: Ticket) {
+  return t.category === "contact" || t.source === "contact"
+}
+
+export default function AdminContactPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -38,7 +41,9 @@ export default function AdminSupportPage() {
     try {
       const res = await fetch("/api/admin/support/tickets")
       const data = await res.json()
-      if (data.tickets) setTickets(data.tickets)
+      if (data.tickets) {
+        setTickets((data.tickets as Ticket[]).filter(isContactLead))
+      }
     } finally {
       setLoading(false)
     }
@@ -48,15 +53,11 @@ export default function AdminSupportPage() {
     load()
   }, [load])
 
-  const supportTickets = tickets.filter(
-    (t) =>
-      t.category !== "proposal" &&
-      t.source !== "impact-calculator" &&
-      t.category !== "contact" &&
-      t.source !== "contact",
-  )
-  const filtered = supportTickets.filter((t) => filter === "all" || t.status === filter)
-  const openCount = supportTickets.filter((t) => t.status === "open").length
+  const filtered = useMemo(() => {
+    return tickets.filter((t) => filter === "all" || t.status === filter)
+  }, [tickets, filter])
+
+  const openCount = tickets.filter((t) => t.status === "open").length
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(true)
@@ -81,13 +82,12 @@ export default function AdminSupportPage() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-            <LifeBuoy className="w-3.5 h-3.5" />
-            Customer Support
+            <MessageSquare className="w-3.5 h-3.5" />
+            Website Contact
           </div>
-          <h1 className="text-3xl font-bold">Support Tickets</h1>
+          <h1 className="text-3xl font-bold">Contact Us</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tickets from the help chatbot and support center. Contact form messages live under Contact
-            Us; calculator leads under Proposal Leads. {openCount} open.
+            Messages submitted from the public Contact form. {openCount} open.
           </p>
         </div>
         <div className="flex gap-2">
@@ -111,7 +111,9 @@ export default function AdminSupportPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Inbox</CardTitle>
-            <CardDescription>{filtered.length} ticket(s)</CardDescription>
+            <CardDescription>
+              {filtered.length} message{filtered.length === 1 ? "" : "s"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -119,7 +121,9 @@ export default function AdminSupportPage() {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : filtered.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12 px-4">No tickets yet.</p>
+              <p className="text-sm text-muted-foreground text-center py-12 px-4">
+                No contact messages yet.
+              </p>
             ) : (
               <ul className="divide-y divide-border/50 max-h-[520px] overflow-y-auto">
                 {filtered.map((t) => (
@@ -133,18 +137,18 @@ export default function AdminSupportPage() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium text-sm truncate">{t.subject}</p>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {t.attachmentUrl ? (
-                            <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
-                          ) : null}
-                          <Badge variant={t.status === "open" ? "default" : "secondary"} className="text-[10px]">
-                            {t.status}
-                          </Badge>
-                        </div>
+                        <Badge
+                          variant={t.status === "open" ? "default" : "secondary"}
+                          className="text-[10px] shrink-0"
+                        >
+                          {t.status}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">{t.name} · {t.email}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {t.name} · {t.email}
+                      </p>
                       <p className="text-[11px] text-muted-foreground mt-1">
-                        {new Date(t.createdAt).toLocaleString()} · {t.source}
+                        {new Date(t.createdAt).toLocaleString()}
                       </p>
                     </button>
                   </li>
@@ -156,11 +160,13 @@ export default function AdminSupportPage() {
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base">Ticket details</CardTitle>
+            <CardTitle className="text-base">Message details</CardTitle>
           </CardHeader>
           <CardContent>
             {!selected ? (
-              <p className="text-sm text-muted-foreground py-12 text-center">Select a ticket to view details</p>
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                Select a message to view contact form details
+              </p>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -175,7 +181,11 @@ export default function AdminSupportPage() {
                   </div>
                   <div className="flex gap-2">
                     {selected.status === "open" ? (
-                      <Button size="sm" disabled={updating} onClick={() => updateStatus(selected.id, "resolved")}>
+                      <Button
+                        size="sm"
+                        disabled={updating}
+                        onClick={() => updateStatus(selected.id, "resolved")}
+                      >
                         Mark resolved
                       </Button>
                     ) : (
@@ -189,7 +199,9 @@ export default function AdminSupportPage() {
                       </Button>
                     )}
                     <Button size="sm" variant="outline" asChild>
-                      <a href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject)}`}>
+                      <a
+                        href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject)}`}
+                      >
                         <Mail className="w-4 h-4 mr-1" />
                         Reply
                       </a>
@@ -199,40 +211,13 @@ export default function AdminSupportPage() {
                 <div className="flex flex-wrap gap-2 text-xs">
                   <Badge variant="outline">{selected.category}</Badge>
                   <Badge variant="outline">{selected.source}</Badge>
-                  <span className="text-muted-foreground">{new Date(selected.createdAt).toLocaleString()}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(selected.createdAt).toLocaleString()}
+                  </span>
                 </div>
                 <div className="rounded-xl bg-muted/40 border border-border/50 p-4 text-sm whitespace-pre-wrap leading-relaxed">
                   {selected.message}
                 </div>
-                {selected.attachmentUrl ? (
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
-                    <p className="text-sm font-semibold flex items-center gap-2">
-                      <Paperclip className="w-4 h-4 text-primary" />
-                      Attachment
-                    </p>
-                    {selected.attachmentUrl.startsWith("data:image/") ||
-                    selected.attachmentUrl.match(/\.(png|jpe?g|webp)(\?|$)/i) ||
-                    selected.attachmentUrl.includes("/uploads/") ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={selected.attachmentUrl}
-                        alt="Ticket attachment"
-                        className="max-h-56 w-auto max-w-full rounded-lg border bg-white object-contain"
-                      />
-                    ) : null}
-                    <a
-                      href={selected.attachmentUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      Open / download attachment
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No photo or file attached to this ticket.</p>
-                )}
               </div>
             )}
           </CardContent>

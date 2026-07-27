@@ -2,8 +2,10 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resend, getResendFrom } from "@/lib/resend"
 import { generateProposalPdf } from "@/lib/generate-proposal-pdf"
+import { sendNotificationEmail } from "@/lib/send-notification-email"
 import {
   calculateImpact,
+  formatInr,
   isIndustry,
   type CalculatorInput,
   type Industry,
@@ -89,54 +91,60 @@ export async function POST(request: Request) {
     })
 
     const { pdfBuffer, filename } = await generateProposalPdf(lead, estimate)
-    const from = getResendFrom()
     const salesTo = process.env.SALES_EMAIL || process.env.ADMIN_EMAIL
+    const firstName = fullName.split(" ")[0] || "there"
 
-    if (resend) {
+    const investmentLine = pricing
+      ? `\nEst. annual investment: ₹${formatInr(pricing.subtotalExclGst)} excl. GST · ₹${formatInr(pricing.totalInclGst)} incl. GST (${pricing.gstRatePct}%)`
+      : estimate.annualInvestment != null
+        ? `\nEst. annual investment: ₹${formatInr(estimate.annualInvestment)} ${estimate.annualInvestmentNote || ""}`
+        : ""
+
+    await sendNotificationEmail({
+      templateId: "impact_proposal",
+      to: email,
+      queue: false,
+      label: "impact_proposal_customer",
+      vars: {
+        name: firstName,
+        company: companyName,
+        industry: estimate.industry,
+        packageName: estimate.packageName,
+        summaryLine: estimate.summaryLine,
+        investmentLine,
+        kioskLine:
+          estimate.recommendedKiosks != null
+            ? `\nRecommended kiosks: ${estimate.recommendedKiosks}${estimate.kioskType ? ` (${estimate.kioskType})` : ""}`
+            : "",
+        buttsLine:
+          estimate.buttsDiverted != null
+            ? `\nCigarette butts diverted / year: ${formatInr(estimate.buttsDiverted)}`
+            : "",
+        waterLine:
+          estimate.waterLitres != null
+            ? `\nWater pollution prevented: ${formatInr(Math.round(estimate.waterLitres))} litres`
+            : "",
+        kraftLine:
+          estimate.kraftRebornValue != null
+            ? `\nComplimentary KraftReborn value: ₹${formatInr(estimate.kraftRebornValue)}`
+            : "",
+        city,
+        phone,
+      },
+      attachments: [{ filename, content: pdfBuffer }],
+    }).catch((err) => console.error("Proposal customer email failed:", err))
+
+    if (resend && salesTo) {
       await resend.emails
         .send({
-          from,
-          to: email,
-          subject: `Your Buffindia impact proposal — ${companyName}`,
-          html: `
-            <p>Hi ${fullName.split(" ")[0] || "there"},</p>
-            <p>Thank you for using the Buffindia Impact Calculator. Please find your <strong>detailed commercial proposal</strong> attached (package, kiosk quantity, full pricing with GST, impact summary, and KraftReborn entitlement).</p>
-            <p><strong>Recommended:</strong> ${estimate.packageName}<br/>
-            ${estimate.summaryLine}</p>
-            ${
-              pricing
-                ? `<p><strong>Est. annual investment:</strong> ₹${Math.round(pricing.subtotalExclGst).toLocaleString("en-IN")} excl. GST · ₹${Math.round(pricing.totalInclGst).toLocaleString("en-IN")} incl. GST (${pricing.gstRatePct}%)</p>`
-                : ""
-            }
-            <p>Our team will follow up shortly. Meanwhile, reply to this email with any questions.</p>
-            <p>— Buffindia</p>
-          `,
-          attachments: [
-            {
-              filename,
-              content: pdfBuffer,
-            },
-          ],
+          from: getResendFrom(),
+          to: salesTo,
+          replyTo: email,
+          subject: `[Lead] Impact proposal — ${companyName}`,
+          text: `New Impact Calculator lead (#${ticket.id.slice(-8).toUpperCase()})\n\n${message}`,
+          attachments: [{ filename, content: pdfBuffer }],
         })
-        .catch((err) => console.error("Proposal customer email failed:", err))
-
-      if (salesTo) {
-        await resend.emails
-          .send({
-            from,
-            to: salesTo,
-            replyTo: email,
-            subject: `[Lead] Impact proposal — ${companyName}`,
-            text: `New Impact Calculator lead (#${ticket.id.slice(-8).toUpperCase()})\n\n${message}`,
-            attachments: [
-              {
-                filename,
-                content: pdfBuffer,
-              },
-            ],
-          })
-          .catch((err) => console.error("Proposal sales email failed:", err))
-      }
+        .catch((err) => console.error("Proposal sales email failed:", err))
     }
 
     return NextResponse.json({

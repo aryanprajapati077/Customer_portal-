@@ -24,6 +24,8 @@ import {
   ExternalLink,
   ListTree,
   Mail,
+  Calculator,
+  MessageSquare,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -40,6 +42,8 @@ const nav = [
   { href: "/admin/shop/orders", label: "Shop Orders", icon: ClipboardList },
   { href: "/admin/certificates", label: "Certificates", icon: Award },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin/proposals", label: "Proposal Leads", icon: Calculator },
+  { href: "/admin/contact", label: "Contact Us", icon: MessageSquare },
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
 ]
 

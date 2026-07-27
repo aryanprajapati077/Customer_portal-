@@ -16,318 +16,249 @@ const GREEN = "#1B4332"
 const GOLD = "#B8954A"
 const DARK = "#1A1A1A"
 const MUTED = "#5C6570"
-const LINE = "#D8DDE3"
-const CREAM = "#F7F4EC"
+const LINE = "#C9CED4"
 const WHITE = "#FFFFFF"
+const PAGE_BG = "#FAFAF8"
 
 function asset(...parts: string[]) {
   return path.join(process.cwd(), "public", "report-assets", ...parts)
 }
 
-/** A4 landscape usable area after page padding */
-const PAGE_PAD = 10
+const PAGE_PAD = 14
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
-    fontSize: 8,
+    fontSize: 9,
     color: DARK,
-    backgroundColor: CREAM,
+    backgroundColor: PAGE_BG,
     padding: PAGE_PAD,
   },
-  frame: {
+  outer: {
     height: 595.28 - PAGE_PAD * 2,
     width: 841.89 - PAGE_PAD * 2,
-    borderWidth: 2.2,
-    borderColor: GOLD,
-    padding: 3,
+    borderWidth: 2.4,
+    borderColor: GREEN,
+    padding: 4,
   },
   inner: {
     flex: 1,
-    borderWidth: 1.1,
-    borderColor: GREEN,
-    paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 12,
-    position: "relative",
+    borderWidth: 1.2,
+    borderColor: GOLD,
+    paddingTop: 16,
+    paddingBottom: 14,
+    paddingHorizontal: 22,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: LINE,
-  },
-  brandSub: {
-    fontSize: 5.5,
-    color: GREEN,
-    letterSpacing: 0.8,
-    marginTop: 2,
-    fontWeight: "bold",
+    alignItems: "flex-start",
+    marginBottom: 10,
   },
   supported: {
-    fontSize: 6,
+    fontSize: 7,
     color: MUTED,
     textAlign: "right",
-    marginBottom: 2,
-  },
-  body: {
-    flexDirection: "row",
-    height: 430,
-  },
-  sidebar: {
-    width: 145,
-    paddingRight: 10,
-    borderRightWidth: 1,
-    borderRightColor: LINE,
-  },
-  main: {
-    flex: 1,
-    paddingLeft: 12,
-  },
-  seal: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2.5,
-    borderColor: GOLD,
-    backgroundColor: WHITE,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
     marginBottom: 4,
-    padding: 6,
-  },
-  sealText: {
-    fontSize: 5,
-    color: GREEN,
-    textAlign: "center",
-    marginTop: 2,
-    lineHeight: 1.2,
-    fontWeight: "bold",
-  },
-  ribbon: {
-    alignSelf: "center",
-    backgroundColor: GREEN,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  ribbonText: {
-    color: WHITE,
-    fontSize: 5,
-    fontWeight: "bold",
-  },
-  metaLabel: {
-    fontSize: 6,
-    color: MUTED,
-    fontWeight: "bold",
-    letterSpacing: 0.3,
-    marginBottom: 1,
-  },
-  metaValue: {
-    fontSize: 8,
-    color: DARK,
-    fontWeight: "bold",
-    marginBottom: 7,
   },
   title: {
     fontFamily: "Times-Bold",
-    fontSize: 26,
+    fontSize: 34,
     color: GREEN,
     textAlign: "center",
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
-  goldRule: {
+  subtitleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+    marginBottom: 2,
+    gap: 10,
+  },
+  goldLine: {
     height: 1,
+    width: 88,
     backgroundColor: GOLD,
-    width: "65%",
-    alignSelf: "center",
-    marginVertical: 3,
   },
   subtitle: {
-    fontSize: 9,
+    fontSize: 10,
     color: GOLD,
-    fontWeight: "bold",
-    letterSpacing: 1,
+    fontFamily: "Times-Bold",
+    letterSpacing: 1.4,
     textAlign: "center",
-    marginBottom: 6,
   },
-  certify: {
-    fontSize: 8,
-    color: MUTED,
-    textAlign: "center",
-    marginBottom: 2,
+  flourish: {
+    alignSelf: "center",
+    marginBottom: 12,
   },
   orgName: {
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
     color: GREEN,
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 8,
+    marginTop: 2,
   },
   narrative: {
-    fontSize: 7,
-    lineHeight: 1.4,
+    fontSize: 9,
+    lineHeight: 1.45,
     color: "#3F4A55",
     textAlign: "center",
-    marginBottom: 8,
-    paddingHorizontal: 4,
+    maxWidth: 620,
+    alignSelf: "center",
+    marginBottom: 16,
   },
   panel: {
     borderWidth: 1,
     borderColor: LINE,
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: "hidden",
-    marginBottom: 7,
+    marginBottom: 12,
     backgroundColor: WHITE,
   },
   panelHead: {
+    alignSelf: "center",
+    marginTop: -1,
     backgroundColor: GREEN,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 18,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
   },
   panelHeadText: {
     color: WHITE,
-    fontSize: 7.5,
-    fontWeight: "bold",
-    letterSpacing: 0.7,
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 1,
     textAlign: "center",
   },
   panelBody: {
-    padding: 6,
+    paddingTop: 14,
+    paddingBottom: 12,
+    paddingHorizontal: 12,
   },
   metricsRow: {
     flexDirection: "row",
-    gap: 4,
+    justifyContent: "space-between",
+    gap: 8,
   },
   metricCard: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: LINE,
-    borderRadius: 3,
-    paddingVertical: 5,
-    paddingHorizontal: 3,
     alignItems: "center",
-    backgroundColor: CREAM,
+    paddingHorizontal: 4,
   },
   metricValue: {
-    fontSize: 9,
-    fontWeight: "bold",
+    fontSize: 13,
+    fontFamily: "Helvetica-Bold",
     color: GREEN,
     textAlign: "center",
-    marginTop: 3,
+    marginTop: 6,
   },
   metricUnit: {
-    fontSize: 5.5,
+    fontSize: 8,
     color: MUTED,
     textAlign: "center",
+    marginTop: 1,
   },
   metricLabel: {
-    fontSize: 5,
+    fontSize: 6.5,
     color: MUTED,
     textAlign: "center",
-    marginTop: 2,
-    lineHeight: 1.2,
-    fontWeight: "bold",
+    marginTop: 4,
+    lineHeight: 1.25,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 0.3,
   },
   certRow: {
     flexDirection: "row",
-    gap: 4,
+    gap: 8,
+    alignItems: "stretch",
   },
   isoCard: {
     flex: 1,
     borderWidth: 1,
     borderColor: LINE,
     borderRadius: 3,
-    padding: 4,
-    backgroundColor: CREAM,
+    padding: 8,
+    backgroundColor: "#F7F9F7",
+    alignItems: "center",
   },
   isoEyebrow: {
-    fontSize: 5,
+    fontSize: 6,
     color: GOLD,
-    fontWeight: "bold",
-    marginBottom: 1,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 3,
+    letterSpacing: 0.4,
   },
   isoTitle: {
-    fontSize: 6.5,
-    fontWeight: "bold",
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
     color: GREEN,
+    textAlign: "center",
   },
   isoScope: {
-    fontSize: 5.5,
+    fontSize: 6.5,
     color: MUTED,
-    marginTop: 1,
+    marginTop: 3,
+    textAlign: "center",
+    lineHeight: 1.25,
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+    marginTop: 4,
   },
   signBlock: {
-    alignItems: "flex-end",
+    alignItems: "center",
+    minWidth: 180,
+  },
+  signLine: {
+    width: 150,
+    height: 1,
+    backgroundColor: GOLD,
     marginTop: 2,
-  },
-  signName: {
-    fontFamily: "Times-Italic",
-    fontSize: 12,
-    color: GREEN,
-  },
-  signTitle: {
-    fontSize: 7,
-    fontWeight: "bold",
-    color: DARK,
-  },
-  signRole: {
-    fontSize: 6,
-    color: MUTED,
-  },
-  footer: {
-    marginTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: LINE,
-    paddingTop: 5,
-  },
-  valuesRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     marginBottom: 4,
   },
-  valueText: {
-    fontSize: 5.5,
-    color: MUTED,
+  signTitle: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: DARK,
+    letterSpacing: 0.4,
   },
-  contactRow: {
+  signRole: {
+    fontSize: 7,
+    color: MUTED,
+    marginTop: 1,
+    textAlign: "center",
+  },
+  metaStrip: {
     flexDirection: "row",
     justifyContent: "center",
     gap: 18,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: LINE,
   },
-  contactText: {
-    fontSize: 6,
+  metaText: {
+    fontSize: 6.5,
     color: MUTED,
+  },
+  metaStrong: {
+    fontSize: 6.5,
+    color: DARK,
+    fontFamily: "Helvetica-Bold",
   },
 })
 
-function Corner({ position }: { position: "tl" | "br" }) {
-  if (position === "tl") {
-    return (
-      <Svg style={{ position: "absolute", top: 0, left: 0 }} width={42} height={42} viewBox="0 0 42 42">
-        <Path d="M0 0 H42 L0 42 Z" fill={GREEN} />
-        <Path d="M0 0 H30 L0 30 Z" fill={GOLD} />
-      </Svg>
-    )
-  }
+function GoldFlourish() {
   return (
-    <Svg style={{ position: "absolute", bottom: 0, right: 0 }} width={42} height={42} viewBox="0 0 42 42">
-      <Path d="M42 42 H0 L42 0 Z" fill={GREEN} />
-      <Path d="M42 42 H12 L42 12 Z" fill={GOLD} />
-    </Svg>
-  )
-}
-
-function Leaf({ size = 14 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path d="M12 3c5 2 8 7 8 12-4 1-8 1-12-1C6 10 8 5 12 3z" stroke={GREEN} strokeWidth={1.6} fill="none" />
-      <Path d="M12 21V9" stroke={GREEN} strokeWidth={1.4} fill="none" />
+    <Svg width={28} height={10} viewBox="0 0 28 10" style={styles.flourish}>
+      <Path d="M2 5 H11" stroke={GOLD} strokeWidth={1} />
+      <Path d="M14 2 L16 5 L14 8 L12 5 Z" fill={GOLD} />
+      <Path d="M17 5 H26" stroke={GOLD} strokeWidth={1} />
     </Svg>
   )
 }
@@ -336,10 +267,10 @@ function IconCircle({ children }: { children: React.ReactNode }) {
   return (
     <View
       style={{
-        width: 16,
-        height: 16,
-        borderRadius: 8,
-        backgroundColor: "#E7F2EA",
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#E8F2EA",
         alignItems: "center",
         justifyContent: "center",
       }}
@@ -349,34 +280,38 @@ function IconCircle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function CigaretteIcon() {
+function BinIcon() {
   return (
-    <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path d="M2 13h13v4H2zM15 13h4v4h-4zM20 11c1-2 2-3.5 3-5" stroke={GREEN} strokeWidth={1.5} fill="none" />
+    <Svg width={14} height={14} viewBox="0 0 24 24">
+      <Path d="M6 8h12l-1 12H7L6 8zM9 8V6h6v2M4 8h16" stroke={GREEN} strokeWidth={1.6} fill="none" />
     </Svg>
   )
 }
 
 function ButtsIcon() {
   return (
-    <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path d="M4 14h10v3H4zM14 14h3v3h-3zM18 12c.8-1.5 1.5-2.8 2.5-4" stroke={GREEN} strokeWidth={1.5} fill="none" />
-      <Path d="M7 10v4M10 10v4" stroke={GREEN} strokeWidth={1.2} fill="none" />
+    <Svg width={14} height={14} viewBox="0 0 24 24">
+      <Path d="M3 13h12v4H3zM15 13h4v4h-4zM20 11c1-2 2-3.5 3-5" stroke={GREEN} strokeWidth={1.5} fill="none" />
     </Svg>
   )
 }
 
 function RecycleIcon() {
   return (
-    <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path d="M7 8l2-4h6l2 4M4 13l-2 4h7m9-4l2 4h-7M9 20l3-4 3 4" stroke={GREEN} strokeWidth={1.4} fill="none" />
+    <Svg width={14} height={14} viewBox="0 0 24 24">
+      <Path
+        d="M7 8l2-4h6l2 4M4 13l-2 4h7m9-4l2 4h-7M9 20l3-4 3 4"
+        stroke={GREEN}
+        strokeWidth={1.4}
+        fill="none"
+      />
     </Svg>
   )
 }
 
 function LoopIcon() {
   return (
-    <Svg width={9} height={9} viewBox="0 0 24 24">
+    <Svg width={14} height={14} viewBox="0 0 24 24">
       <Path d="M4 12a8 8 0 0114-5l2 2M20 12a8 8 0 01-14 5l-2-2" stroke={GREEN} strokeWidth={1.4} fill="none" />
       <Path d="M20 4v5h-5M4 20v-5h5" stroke={GREEN} strokeWidth={1.4} fill="none" />
     </Svg>
@@ -405,37 +340,32 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
   const waste = Number(data.totalWasteKg || 0)
   const butts = Math.max(0, Math.round(Number(data.cigaretteButts || 0)))
   const micro = Number(data.microplasticUpcycledKg || 0)
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=4&data=${encodeURIComponent(data.verifyUrl)}`
 
   const isos = [
     { standard: "ISO 9001:2015", scope: "Quality Management System" },
     { standard: "ISO 14001:2015", scope: "Environmental Management System" },
-    { standard: "ISO 45001:2018", scope: "Occupational Health & Safety" },
+    { standard: "ISO 45001:2018", scope: "Occupational Health & Safety\nManagement System" },
   ]
 
   const metrics = [
     {
-      icon: <CigaretteIcon />,
-      value: waste.toFixed(2),
-      unit: "KG",
+      icon: <BinIcon />,
+      value: `${waste.toFixed(2)} KG`,
       label: "CIGARETTE WASTE\nCOLLECTED",
     },
     {
       icon: <ButtsIcon />,
       value: butts.toLocaleString("en-IN"),
-      unit: "BUTTS",
       label: "NO. OF CIGARETTE\nBUTTS COLLECTED",
     },
     {
       icon: <RecycleIcon />,
-      value: micro.toFixed(2),
-      unit: "KG",
+      value: `${micro.toFixed(2)} KG`,
       label: "MICROPLASTIC\nRECYCLED",
     },
     {
       icon: <LoopIcon />,
-      value: String(data.recycledPercent || 80),
-      unit: "%",
+      value: `${data.recycledPercent || 80}%`,
       label: "RECYCLED INTO\nSUSTAINABLE PRODUCTS",
     },
   ]
@@ -443,170 +373,113 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
   return (
     <Document title={`Certificate of Clean Environmental Partnership — ${data.companyName}`}>
       <Page size="A4" orientation="landscape" wrap={false} style={styles.page}>
-        <View style={styles.frame} wrap={false}>
+        <View style={styles.outer} wrap={false}>
           <View style={styles.inner} wrap={false}>
-            <Corner position="tl" />
-            <Corner position="br" />
-
             <View style={styles.header}>
-              <View>
-                <Image
-                  src={asset("buffindia-logo-original.png")}
-                  style={{ width: 156, height: 52, objectFit: "contain" }}
-                />
-              </View>
+              <Image
+                src={asset("buffindia-logo-brand.png")}
+                style={{ width: 168, height: 40, objectFit: "contain" }}
+              />
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={styles.supported}>Proudly supported by</Text>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                   <Link src="https://iimaventures.com">
-                    <Image src={asset("iima.png")} style={{ width: 48, height: 22, objectFit: "contain" }} />
+                    <Image src={asset("iima.png")} style={{ width: 52, height: 24, objectFit: "contain" }} />
                   </Link>
                   <Link src="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html">
-                    <Image src={asset("kotak.png")} style={{ width: 68, height: 20, objectFit: "contain" }} />
+                    <Image src={asset("kotak.png")} style={{ width: 72, height: 22, objectFit: "contain" }} />
                   </Link>
                 </View>
               </View>
             </View>
 
-            <View style={styles.body}>
-              <View style={styles.sidebar}>
-                <View style={styles.seal}>
-                  <Leaf size={18} />
-                  <Text style={styles.sealText}>Towards a Cleaner{"\n"}Tomorrow. Together.</Text>
-                </View>
-                <View style={styles.ribbon}>
-                  <Text style={styles.ribbonText}>OFFICIAL PARTNERSHIP</Text>
-                </View>
+            <Text style={styles.title}>CERTIFICATE</Text>
+            <View style={styles.subtitleWrap}>
+              <View style={styles.goldLine} />
+              <Text style={styles.subtitle}>OF CLEAN ENVIRONMENTAL PARTNERSHIP</Text>
+              <View style={styles.goldLine} />
+            </View>
+            <GoldFlourish />
 
-                {data.logoUrl ? (
-                  <View
-                    style={{
-                      borderWidth: 1,
-                      borderColor: LINE,
-                      borderRadius: 4,
-                      padding: 4,
-                      marginBottom: 8,
-                      alignItems: "center",
-                      backgroundColor: WHITE,
-                    }}
-                  >
-                    <Image src={data.logoUrl} style={{ width: 72, height: 34, objectFit: "contain" }} />
-                  </View>
-                ) : null}
+            <Text style={styles.orgName}>{data.companyName || "Partner Organization"}</Text>
+            <Text style={styles.narrative}>
+              is an esteemed partner of Buffindia Receptacles Pvt. Ltd. for responsible cigarette waste
+              management and contributing to a cleaner, healthier and more sustainable environment. This
+              partnership supports the circular economy and drives measurable environmental and social
+              impact.
+            </Text>
 
-                <Text style={styles.metaLabel}>CERTIFICATE NO.</Text>
-                <Text style={styles.metaValue}>{data.certificateNumber || "BUFF-CEP-000"}</Text>
-                <Text style={styles.metaLabel}>DATE OF ISSUE</Text>
-                <Text style={styles.metaValue}>{data.issueDate || "—"}</Text>
-                <Text style={styles.metaLabel}>VALID TILL</Text>
-                <Text style={styles.metaValue}>{data.validTill || "Lifetime"}</Text>
-                <Text style={styles.metaLabel}>CUSTOMER ID</Text>
-                <Text style={styles.metaValue}>{data.customerId || "—"}</Text>
-                <Text style={styles.metaLabel}>LOCATION(S)</Text>
-                <Text style={styles.metaValue}>{data.location || "India"}</Text>
+            <View style={styles.panel}>
+              <View style={styles.panelHead}>
+                <Text style={styles.panelHeadText}>YOUR IMPACT WITH BUFFINDIA</Text>
               </View>
-
-              <View style={styles.main}>
-                <Text style={styles.title}>CERTIFICATE</Text>
-                <View style={styles.goldRule} />
-                <Text style={styles.subtitle}>OF CLEAN ENVIRONMENTAL PARTNERSHIP</Text>
-                <Text style={styles.certify}>This is to certify that</Text>
-                <Text style={styles.orgName}>{data.companyName || "Partner Organization"}</Text>
-                <Text style={styles.narrative}>
-                  is an esteemed partner of Buffindia Receptacles Pvt. Ltd. for responsible cigarette
-                  waste management and contributing to a cleaner, healthier and more sustainable
-                  environment. This partnership supports the circular economy and drives measurable
-                  environmental and social impact.
-                </Text>
-
-                <View style={styles.panel}>
-                  <View style={styles.panelHead}>
-                    <Text style={styles.panelHeadText}>YOUR IMPACT WITH BUFFINDIA</Text>
-                  </View>
-                  <View style={styles.panelBody}>
-                    <View style={styles.metricsRow}>
-                      {metrics.map((m) => (
-                        <View key={m.label} style={styles.metricCard}>
-                          <IconCircle>{m.icon}</IconCircle>
-                          <Text style={styles.metricValue}>{m.value}</Text>
-                          <Text style={styles.metricUnit}>{m.unit}</Text>
-                          <Text style={styles.metricLabel}>{m.label}</Text>
-                        </View>
-                      ))}
+              <View style={styles.panelBody}>
+                <View style={styles.metricsRow}>
+                  {metrics.map((m) => (
+                    <View key={m.label} style={styles.metricCard}>
+                      <IconCircle>{m.icon}</IconCircle>
+                      <Text style={styles.metricValue}>{m.value}</Text>
+                      <Text style={styles.metricLabel}>{m.label}</Text>
                     </View>
-                  </View>
-                </View>
-
-                <View style={styles.panel}>
-                  <View style={styles.panelHead}>
-                    <Text style={styles.panelHeadText}>YOUR CERTIFICATIONS</Text>
-                  </View>
-                  <View style={styles.panelBody}>
-                    <View style={styles.certRow}>
-                      {isos.map((iso) => (
-                        <View key={iso.standard} style={styles.isoCard}>
-                          <Text style={styles.isoEyebrow}>ISO CERTIFIED</Text>
-                          <Text style={styles.isoTitle}>{iso.standard}</Text>
-                          <Text style={styles.isoScope}>{iso.scope}</Text>
-                        </View>
-                      ))}
-                      <View style={[styles.isoCard, { flex: 1.15 }]}>
-                        <Text style={styles.isoEyebrow}>GRS CERTIFIED</Text>
-                        <Text style={styles.isoTitle}>Global Recycled Standard</Text>
-                        <Text style={styles.isoScope}>GRS Certificate No. ACL25050801</Text>
-                      </View>
-                      <View
-                        style={{
-                          width: 72,
-                          borderWidth: 1,
-                          borderColor: LINE,
-                          borderRadius: 3,
-                          padding: 4,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: WHITE,
-                        }}
-                      >
-                        <Image src={qrSrc} style={{ width: 44, height: 44 }} />
-                        <Text style={{ fontSize: 4.5, color: MUTED, textAlign: "center", marginTop: 2 }}>
-                          Scan to verify
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.signBlock}>
-                  <Text style={styles.signName}>Ketan Prajapati</Text>
-                  <Text style={styles.signTitle}>KETAN PRAJAPATI</Text>
-                  <Text style={styles.signRole}>Founder & CEO, Buffindia Receptacles Pvt. Ltd.</Text>
+                  ))}
                 </View>
               </View>
             </View>
 
-            <View style={styles.footer}>
-              <View style={styles.valuesRow}>
-                {[
-                  "End-to-End Waste Management",
-                  "Environmentally Responsible",
-                  "Measurable Impact",
-                  "Driving the Circular Economy",
-                  "Aligned with UN SDGs",
-                ].map((label) => (
-                  <View key={label} style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: GREEN }} />
-                    <Text style={styles.valueText}>{label}</Text>
+            <View style={styles.panel}>
+              <View style={styles.panelHead}>
+                <Text style={styles.panelHeadText}>YOUR CERTIFICATIONS</Text>
+              </View>
+              <View style={styles.panelBody}>
+                <View style={styles.certRow}>
+                  {isos.map((iso) => (
+                    <View key={iso.standard} style={styles.isoCard}>
+                      <Text style={styles.isoEyebrow}>ISO CERTIFIED</Text>
+                      <Text style={styles.isoTitle}>{iso.standard}</Text>
+                      <Text style={styles.isoScope}>{iso.scope}</Text>
+                    </View>
+                  ))}
+                  <View style={[styles.isoCard, { flex: 1.15 }]}>
+                    <Text style={styles.isoEyebrow}>GRS CERTIFIED</Text>
+                    <Text style={styles.isoTitle}>Global Recycled Standard</Text>
+                    <Text style={styles.isoScope}>GRS CERTIFICATE NO.{"\n"}ACL25050801</Text>
                   </View>
-                ))}
+                </View>
               </View>
-              <View style={styles.contactRow}>
-                <Text style={styles.contactText}>www.buffindia.com</Text>
-                <Text style={styles.contactText}>info@buffindia.com</Text>
-                <Text style={styles.contactText}>{data.phone || "+91 63595 66528"}</Text>
-                <Link src={data.verifyUrl}>
-                  <Text style={[styles.contactText, { color: GREEN, fontWeight: "bold" }]}>Verify online</Text>
-                </Link>
+            </View>
+
+            <View style={styles.bottomRow}>
+              <View style={styles.signBlock}>
+                <Image
+                  src={asset("ketan-signature.png")}
+                  style={{ width: 120, height: 28, objectFit: "contain", marginBottom: 2 }}
+                />
+                <View style={styles.signLine} />
+                <Text style={styles.signTitle}>KETAN PRAJAPATI</Text>
+                <Text style={styles.signRole}>Founder & CEO</Text>
+                <Text style={styles.signRole}>Buffindia Receptacles Pvt. Ltd.</Text>
               </View>
+            </View>
+
+            <View style={styles.metaStrip}>
+              <Text style={styles.metaText}>
+                Cert No. <Text style={styles.metaStrong}>{data.certificateNumber}</Text>
+              </Text>
+              <Text style={styles.metaText}>
+                Issued <Text style={styles.metaStrong}>{data.issueDate}</Text>
+              </Text>
+              <Text style={styles.metaText}>
+                Valid <Text style={styles.metaStrong}>{data.validTill || "Lifetime"}</Text>
+              </Text>
+              <Text style={styles.metaText}>
+                ID <Text style={styles.metaStrong}>{data.customerId}</Text>
+              </Text>
+              <Text style={styles.metaText}>
+                Location <Text style={styles.metaStrong}>{data.location || "India"}</Text>
+              </Text>
+              <Link src={data.verifyUrl}>
+                <Text style={[styles.metaStrong, { color: GREEN }]}>Verify online</Text>
+              </Link>
             </View>
           </View>
         </View>

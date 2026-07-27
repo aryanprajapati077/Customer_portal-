@@ -378,7 +378,7 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
             <View style={styles.header}>
               <Image
                 src={asset("buffindia-logo-brand.png")}
-                style={{ width: 190, height: 44, objectFit: "contain" }}
+                style={{ width: 200, height: 84, objectFit: "contain" }}
               />
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={styles.supported}>Proudly supported by</Text>

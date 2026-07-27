@@ -58,7 +58,7 @@ export default function AdminCollectionsPage() {
 
   const loadCustomers = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/customers")
+      const res = await fetch("/api/admin/customers?fields=options")
       const data = await res.json()
       if (data?.success && data.customers?.length) {
         setCustomers(

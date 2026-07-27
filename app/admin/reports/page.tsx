@@ -142,14 +142,16 @@ export default function AdminReportsPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const [reportsRes, customersRes, templateRes] = await Promise.all([
+      const [reportsRes, customersRes, templateRes, deliveriesRes] = await Promise.all([
         fetch("/api/admin/reports"),
-        fetch("/api/admin/customers"),
+        fetch("/api/admin/customers?fields=options"),
         fetch("/api/admin/email-templates"),
+        fetch("/api/admin/email-deliveries"),
       ])
       const reportsData = await reportsRes.json()
       const customersData = await customersRes.json()
       const templateData = await templateRes.json()
+      const deliveriesData = await deliveriesRes.json().catch(() => null)
       if (reportsData?.success) {
         setReports(reportsData.reports || [])
         setStats(reportsData.stats || null)
@@ -163,7 +165,10 @@ export default function AdminReportsPage() {
       if (templateData?.success && templateData.renewal) {
         setRenewalPreview(templateData.renewal)
       }
-      await loadDeliveries()
+      if (deliveriesData?.success) {
+        setDeliveryIssues(deliveriesData.deliveries || [])
+        setDeliveryCounts(deliveriesData.counts || {})
+      }
     } finally {
       setLoading(false)
     }

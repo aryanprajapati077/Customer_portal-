@@ -54,7 +54,7 @@ export default function AdminCertificatesPage() {
     try {
       const [certsRes, customersRes] = await Promise.all([
         fetch("/api/admin/certificates"),
-        fetch("/api/admin/customers"),
+        fetch("/api/admin/customers?fields=options"),
       ])
       const certsData = await certsRes.json()
       const customersData = await customersRes.json()

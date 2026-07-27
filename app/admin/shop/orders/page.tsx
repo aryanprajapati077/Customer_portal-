@@ -95,13 +95,31 @@ export default function AdminOrdersPage() {
       })
       const data = await res.json()
       if (data?.success) {
-        await load()
-        if (selected?.id === id) {
-          const res2 = await fetch(`/api/admin/orders${statusFilter !== "all" ? `?status=${statusFilter}` : ""}`)
-          const data2 = await res2.json()
-          const updated = (data2.orders as OrderRow[] | undefined)?.find((o) => o.id === id)
-          if (updated) setSelected(updated)
-        }
+        const updated = data.order
+          ? {
+              ...data.order,
+              createdAt:
+                typeof data.order.createdAt === "string"
+                  ? data.order.createdAt
+                  : new Date(data.order.createdAt).toISOString(),
+              completedAt: data.order.completedAt
+                ? typeof data.order.completedAt === "string"
+                  ? data.order.completedAt
+                  : new Date(data.order.completedAt).toISOString()
+                : null,
+              itemCount: Array.isArray(data.order.items)
+                ? data.order.items.reduce(
+                    (s: number, i: { quantity?: number }) => s + (i.quantity || 0),
+                    0,
+                  )
+                : 0,
+            }
+          : null
+        setRows((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status, ...(updated || {}) } : r)),
+        )
+        if (selected?.id === id && updated) setSelected({ ...selected, ...updated, status })
+        else if (selected?.id === id) setSelected({ ...selected, status })
       } else {
         alert(data.error || "Update failed")
       }

@@ -36,7 +36,7 @@ export default function AdminSupportPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/support/tickets")
+      const res = await fetch("/api/admin/support/tickets?inbox=support&attachments=1&take=100")
       const data = await res.json()
       if (data.tickets) setTickets(data.tickets)
     } finally {
@@ -48,15 +48,8 @@ export default function AdminSupportPage() {
     load()
   }, [load])
 
-  const supportTickets = tickets.filter(
-    (t) =>
-      t.category !== "proposal" &&
-      t.source !== "impact-calculator" &&
-      t.category !== "contact" &&
-      t.source !== "contact",
-  )
-  const filtered = supportTickets.filter((t) => filter === "all" || t.status === filter)
-  const openCount = supportTickets.filter((t) => t.status === "open").length
+  const filtered = tickets.filter((t) => filter === "all" || t.status === filter)
+  const openCount = tickets.filter((t) => t.status === "open").length
 
   const updateStatus = async (id: string, status: string) => {
     setUpdating(true)

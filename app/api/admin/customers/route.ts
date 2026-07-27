@@ -18,7 +18,12 @@ type CollectionPoc = {
 }
 
 async function ensureCustomerColumns() {
-  await sql.query(`
+  // Run once per server process — avoid ALTER TABLE on every list request
+  const g = globalThis as typeof globalThis & { __buffCustomerCols?: Promise<void> }
+  if (!g.__buffCustomerCols) {
+    g.__buffCustomerCols = sql
+      .query(
+        `
     ALTER TABLE "Customer"
       ADD COLUMN IF NOT EXISTS "tradeName" TEXT,
       ADD COLUMN IF NOT EXISTS "city" TEXT,
@@ -42,7 +47,15 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
-  `)
+  `,
+      )
+      .then(() => undefined)
+      .catch((err) => {
+        g.__buffCustomerCols = undefined
+        throw err
+      })
+  }
+  await g.__buffCustomerCols
 }
 
 async function nextCustomerId(): Promise<string> {
@@ -71,8 +84,22 @@ function normalizeCollectionPocs(raw: unknown): CollectionPoc[] {
 
 export async function GET(request: NextRequest) {
   try {
-    await ensureCustomerColumns()
     const nextIdOnly = request.nextUrl.searchParams.get("nextId") === "1"
+    const fields = request.nextUrl.searchParams.get("fields") || ""
+
+    // Slim dropdown payload — skip DDL and heavy columns
+    if (fields === "options") {
+      const rows = await sql`
+        SELECT id, email, "companyName", status
+        FROM "Customer"
+        ORDER BY "companyName" ASC NULLS LAST, id ASC
+        LIMIT 500
+      `
+      return NextResponse.json({ success: true, customers: rows })
+    }
+
+    await ensureCustomerColumns()
+
     if (nextIdOnly) {
       const id = await nextCustomerId()
       return NextResponse.json({ success: true, nextId: id })

@@ -65,13 +65,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isAuthPage) return
+    let cancelled = false
+    try {
+      const cached = sessionStorage.getItem("buff_admin_me")
+      if (cached) {
+        const parsed = JSON.parse(cached) as AdminMe
+        if (parsed?.id && parsed?.email) setAdmin(parsed)
+      }
+    } catch {
+      /* ignore */
+    }
     fetch("/api/admin/me")
       .then((r) => r.json())
       .then((d) => {
-        if (d.admin) setAdmin(d.admin)
+        if (cancelled || !d.admin) return
+        setAdmin(d.admin)
+        try {
+          sessionStorage.setItem("buff_admin_me", JSON.stringify(d.admin))
+        } catch {
+          /* ignore */
+        }
       })
       .catch(() => {})
-  }, [isAuthPage, pathname])
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthPage])
 
   useEffect(() => {
     setMobileOpen(false)
@@ -80,6 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logout = async () => {
     setIsLoggingOut(true)
     try {
+      sessionStorage.removeItem("buff_admin_me")
       await fetch("/api/admin/logout", { method: "POST" })
     } finally {
       router.push("/admin/login")

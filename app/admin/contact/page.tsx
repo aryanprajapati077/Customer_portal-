@@ -25,10 +25,6 @@ type Ticket = {
   createdAt: string
 }
 
-function isContactLead(t: Ticket) {
-  return t.category === "contact" || t.source === "contact"
-}
-
 export default function AdminContactPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,10 +35,10 @@ export default function AdminContactPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/support/tickets")
+      const res = await fetch("/api/admin/support/tickets?inbox=contact&take=100")
       const data = await res.json()
       if (data.tickets) {
-        setTickets((data.tickets as Ticket[]).filter(isContactLead))
+        setTickets(data.tickets as Ticket[])
       }
     } finally {
       setLoading(false)

@@ -22,35 +22,29 @@ export default async function AdminOverviewPage() {
   let totalWaste = 0
 
   try {
-    const [customerRow] = (await sql`SELECT COUNT(*)::int AS customers FROM "Customer"`) as {
+    const [statsRow] = (await sql`
+      SELECT
+        (SELECT COUNT(*)::int FROM "Customer") AS customers,
+        (SELECT COUNT(*)::int FROM "Customer" WHERE status = 'Active') AS active,
+        (SELECT COUNT(*)::int FROM "Collection") AS collections,
+        (SELECT COUNT(*)::int FROM "Notification" WHERE "readAt" IS NULL) AS unread,
+        (SELECT COUNT(*)::int FROM "Report" WHERE type = 'monthly') AS monthly,
+        (SELECT COALESCE(SUM("totalWasteCollected"), 0)::float FROM "Customer") AS waste
+    `) as {
       customers: number
-    }[]
-    const [activeRow] =
-      (await sql`SELECT COUNT(*)::int AS active FROM "Customer" WHERE status = 'Active'`) as {
-        active: number
-      }[]
-    const [collectionRow] = (await sql`SELECT COUNT(*)::int AS collections FROM "Collection"`) as {
+      active: number
       collections: number
+      unread: number
+      monthly: number
+      waste: number
     }[]
-    const [unreadRow] =
-      (await sql`SELECT COUNT(*)::int AS unread FROM "Notification" WHERE "readAt" IS NULL`) as {
-        unread: number
-      }[]
-    const [reportRow] =
-      (await sql`SELECT COUNT(*)::int AS monthly FROM "Report" WHERE type = 'monthly'`) as {
-        monthly: number
-      }[]
-    const [wasteRow] =
-      (await sql`SELECT COALESCE(SUM("totalWasteCollected"), 0)::float AS waste FROM "Customer"`) as {
-        waste: number
-      }[]
 
-    customers = customerRow?.customers ?? 0
-    activeCustomers = activeRow?.active ?? 0
-    collections = collectionRow?.collections ?? 0
-    unread = unreadRow?.unread ?? 0
-    monthlyReports = reportRow?.monthly ?? 0
-    totalWaste = wasteRow?.waste ?? 0
+    customers = statsRow?.customers ?? 0
+    activeCustomers = statsRow?.active ?? 0
+    collections = statsRow?.collections ?? 0
+    unread = statsRow?.unread ?? 0
+    monthlyReports = statsRow?.monthly ?? 0
+    totalWaste = statsRow?.waste ?? 0
   } catch (error) {
     console.error("[admin] Database connection failed:", error)
   }

@@ -25,10 +25,6 @@ type Ticket = {
   createdAt: string
 }
 
-function isProposalLead(t: Ticket) {
-  return t.category === "proposal" || t.source === "impact-calculator"
-}
-
 export default function AdminProposalsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,10 +36,10 @@ export default function AdminProposalsPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/support/tickets")
+      const res = await fetch("/api/admin/support/tickets?inbox=proposal&take=100")
       const data = await res.json()
       if (data.tickets) {
-        setTickets((data.tickets as Ticket[]).filter(isProposalLead))
+        setTickets(data.tickets as Ticket[])
       }
     } finally {
       setLoading(false)

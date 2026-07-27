@@ -4,22 +4,68 @@ import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { sql } from "@/lib/db"
 
 async function ensureSupportAttachmentColumn() {
-  await sql.query(`ALTER TABLE "SupportTicket" ADD COLUMN IF NOT EXISTS "attachmentUrl" TEXT`)
+  const g = globalThis as typeof globalThis & { __buffSupportAttach?: Promise<void> }
+  if (!g.__buffSupportAttach) {
+    g.__buffSupportAttach = sql
+      .query(`ALTER TABLE "SupportTicket" ADD COLUMN IF NOT EXISTS "attachmentUrl" TEXT`)
+      .then(() => undefined)
+      .catch((err) => {
+        g.__buffSupportAttach = undefined
+        throw err
+      })
+  }
+  await g.__buffSupportAttach
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await ensureSupportAttachmentColumn()
+    const { searchParams } = new URL(request.url)
+    const inbox = String(searchParams.get("inbox") || "all").toLowerCase()
+    const includeAttachment = searchParams.get("attachments") === "1"
+    const take = Math.min(200, Math.max(20, Number(searchParams.get("take") || 100) || 100))
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let where: any = {}
+    if (inbox === "proposal") {
+      where = {
+        OR: [{ category: "proposal" }, { source: "impact-calculator" }, { source: "landing" }],
+      }
+    } else if (inbox === "contact") {
+      where = { OR: [{ category: "contact" }, { source: "contact" }] }
+    } else if (inbox === "support") {
+      where = {
+        AND: [
+          { NOT: { category: "proposal" } },
+          { NOT: { source: "impact-calculator" } },
+          { NOT: { category: "contact" } },
+          { NOT: { source: "contact" } },
+        ],
+      }
+    }
+
     const tickets = await prisma.supportTicket.findMany({
+      where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      take,
     })
+
     const rows = tickets as Array<(typeof tickets)[number] & { attachmentUrl?: string | null }>
+
     return NextResponse.json({
       success: true,
       tickets: rows.map((t) => ({
-        ...t,
-        attachmentUrl: t.attachmentUrl || null,
+        id: t.id,
+        name: t.name,
+        email: t.email,
+        subject: t.subject,
+        message: t.message,
+        category: t.category,
+        status: t.status,
+        source: t.source,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+        attachmentUrl: includeAttachment ? t.attachmentUrl || null : null,
       })),
     })
   } catch (err) {

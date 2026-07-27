@@ -177,9 +177,7 @@ export default function AdminEmailTemplatesPage() {
             <Sparkles className="h-3.5 w-3.5" />
             Email Studio
           </div>
-          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
-            Notification <em className="italic text-[#1B7339]">templates</em>
-          </h1>
+          <h1 className="admin-page-title">Notification templates</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Edit copy for collections, KraftReborn, support, password reset, and renewals.
           </p>

@@ -77,9 +77,7 @@ export default async function AdminOverviewPage() {
             <Sparkles className="h-3.5 w-3.5" />
             Command Center
           </p>
-          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.9rem,3vw,2.6rem)] leading-tight tracking-tight text-[#141414]">
-            Admin <em className="italic text-[#1B7339]">Overview</em>
-          </h1>
+          <h1 className="admin-page-title">Admin Overview</h1>
           <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
             Clients, collections, shop orders, ESG reports, and support — one place.
           </p>

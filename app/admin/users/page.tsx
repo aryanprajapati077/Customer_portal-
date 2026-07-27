@@ -97,9 +97,7 @@ export default function AdminUsersPage() {
           <Shield className="h-3.5 w-3.5" />
           Super Admin
         </p>
-        <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
-          Admin <em className="italic text-[#1B7339]">Users</em>
-        </h1>
+        <h1 className="admin-page-title">Admin Users</h1>
         <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
           Create and manage admin accounts. New users can enable authenticator from Security.
         </p>

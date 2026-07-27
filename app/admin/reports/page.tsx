@@ -365,9 +365,7 @@ export default function AdminReportsPage() {
             <Sparkles className="h-3.5 w-3.5" />
             Reports & Email Hub
           </div>
-          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.9rem,3vw,2.6rem)] leading-tight tracking-tight">
-            Monthly <em className="italic text-[#1B7339]">ESG Reports</em>
-          </h1>
+          <h1 className="admin-page-title">Monthly ESG Reports</h1>
           <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
             Generate by Customer ID + month, email personally or in bulk — each send includes PDF and
             Excel attachments.

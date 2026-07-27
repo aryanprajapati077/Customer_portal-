@@ -135,9 +135,7 @@ export default function AdminSecurityPage() {
           <ShieldCheck className="h-3.5 w-3.5" />
           Security
         </p>
-        <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
-          Authenticator <em className="italic text-[#1B7339]">(2FA)</em>
-        </h1>
+        <h1 className="admin-page-title">Authenticator (2FA)</h1>
         <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
           Use Google Authenticator, Authy, or 1Password for an extra layer of security on admin sign-in.
         </p>

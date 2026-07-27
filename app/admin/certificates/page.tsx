@@ -177,9 +177,7 @@ export default function AdminCertificatesPage() {
             <Award className="h-3.5 w-3.5" />
             Certificates
           </p>
-          <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
-            Generate & <em className="italic text-[#1B7339]">share</em>
-          </h1>
+          <h1 className="admin-page-title">Generate & share</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Uses customer logo and details from the customer record. Email includes a storytelling
             Inspire template + PDF attachment.

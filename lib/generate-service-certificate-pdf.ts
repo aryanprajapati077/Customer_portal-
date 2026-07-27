@@ -53,6 +53,27 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     `/api/customer/certificate-pdf?customerId=${encodeURIComponent(customer.id)}&type=services`,
   )
 
+  const issueDateRaw = (sync as { issueDate?: Date }).issueDate || cert.issueDate || new Date()
+  const issueDate =
+    formatInstallDate(
+      issueDateRaw instanceof Date ? issueDateRaw.toISOString() : String(issueDateRaw),
+    ) || new Date(String(issueDateRaw)).toLocaleDateString("en-IN")
+
+  const syncValidLabel = (sync as { validUntilLabel?: string }).validUntilLabel
+  const rawValid = String(cert.validUntil || "").trim()
+  let validTill = syncValidLabel || rawValid || "1 year"
+  if (!syncValidLabel && rawValid && !/^lifetime$/i.test(rawValid)) {
+    const t = Date.parse(rawValid)
+    if (!Number.isNaN(t)) {
+      validTill = new Date(t).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    }
+  }
+  if (/^lifetime$/i.test(validTill)) validTill = "1 year"
+
   const data = {
     certificateNumber,
     companyName: customer.companyName?.trim() || customer.tradeName?.trim() || "Partner Organization",
@@ -63,8 +84,8 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     microplasticUpcycledKg,
     recycledPercent: 80,
     issuedBy: "Ketan Prajapati",
-    issueDate: formatInstallDate(new Date().toISOString()) || new Date().toLocaleDateString("en-IN"),
-    validTill: "Lifetime",
+    issueDate,
+    validTill,
     customerId: formatCustomerCode(customer.id) || customer.id,
     logoUrl: resolveLogoForPdf(customer.logoUrl),
     verifyUrl,

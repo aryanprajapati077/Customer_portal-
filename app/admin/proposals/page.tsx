@@ -91,7 +91,7 @@ export default function AdminProposalsPage() {
             <Calculator className="w-3.5 h-3.5" />
             Impact Calculator
           </div>
-          <h1 className="text-3xl font-bold">Proposal Leads</h1>
+          <h1 className="admin-page-title">Proposal Leads</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Entries from Get detailed proposal and landing proposal forms. {openCount} open.
           </p>

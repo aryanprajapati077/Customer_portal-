@@ -157,7 +157,7 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="admin-page-title flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-primary" />
             Shop Products
           </h1>

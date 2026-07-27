@@ -84,7 +84,7 @@ export default function AdminSupportPage() {
             <LifeBuoy className="w-3.5 h-3.5" />
             Customer Support
           </div>
-          <h1 className="text-3xl font-bold">Support Tickets</h1>
+          <h1 className="admin-page-title">Support Tickets</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Tickets from the help chatbot and support center. Contact form messages live under Contact
             Us; calculator leads under Proposal Leads. {openCount} open.

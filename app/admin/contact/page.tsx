@@ -85,7 +85,7 @@ export default function AdminContactPage() {
             <MessageSquare className="w-3.5 h-3.5" />
             Website Contact
           </div>
-          <h1 className="text-3xl font-bold">Contact Us</h1>
+          <h1 className="admin-page-title">Contact Us</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Messages submitted from the public Contact form. {openCount} open.
           </p>

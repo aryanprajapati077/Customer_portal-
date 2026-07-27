@@ -91,9 +91,7 @@ export default function AdminDropdownsPage() {
           <ListTree className="h-3.5 w-3.5" />
           Dropdowns
         </p>
-        <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,3vw,2.4rem)] leading-tight tracking-tight">
-          LSU <em className="italic text-[#1B7339]">teams</em>
-        </h1>
+        <h1 className="admin-page-title">LS teams</h1>
         <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
           Add LSU Name with its Technician. On Create Customer, choosing an LSU fills the technician
           automatically. Inactive rows stay hidden from the form.

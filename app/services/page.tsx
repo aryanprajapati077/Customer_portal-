@@ -42,7 +42,7 @@ const services = [
   },
   {
     icon: Palette,
-    title: "EcoArt upcycled products",
+    title: "KraftReborn upcycled products",
     description:
       "Filter fibre becomes décor and gifting — circular design your brand can show off.",
   },
@@ -62,7 +62,7 @@ const services = [
     icon: Users,
     title: "Community livelihoods",
     description:
-      "Partnerships support artisans and local labour who handcraft EcoArt products.",
+      "Partnerships support artisans and local labour who handcraft KraftReborn products.",
   },
   {
     icon: Building2,

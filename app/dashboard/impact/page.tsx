@@ -118,10 +118,21 @@ function ImpactContent() {
                 metrics={metrics}
                 collections={collections}
                 yearlyGoalKg={customer?.monthlyTarget ? customer.monthlyTarget * 12 : 1200}
+                serviceStartDate={
+                  (customer as { serviceStartDate?: string } | null)?.serviceStartDate ||
+                  customer?.joinDate
+                }
               />
             )}
             {tab === "analytics" && (
-              <ImpactAnalytics metrics={metrics} collections={collections} />
+              <ImpactAnalytics
+                metrics={metrics}
+                collections={collections}
+                serviceStartDate={
+                  (customer as { serviceStartDate?: string } | null)?.serviceStartDate ||
+                  customer?.joinDate
+                }
+              />
             )}
             {tab === "sdg" && <ImpactSdg metrics={metrics} />}
             {tab === "circular" && <ImpactCircular metrics={metrics} />}

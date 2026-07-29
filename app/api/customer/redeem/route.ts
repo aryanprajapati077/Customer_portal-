@@ -3,11 +3,18 @@ import { sql } from "@/lib/db"
 import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-certificate-pdf"
 import { syncKraftRebornCertificate } from "@/lib/sync-certificates"
 import { computeKraftRebornImpact, creditsToRupees, generateOrderId } from "@/lib/kraftreborn"
+import { assertCustomerAccess, requireCustomerSession } from "@/lib/customer-api-auth"
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+
     const body = await request.json()
-    const customerId = String(body?.customerId || "")
+    const denied = assertCustomerAccess(session.customerId, body?.customerId)
+    if (denied) return denied
+
+    const customerId = session.customerId
     const amount = Number(body?.amount)
     const productCount = Number(body?.productCount) || 1
     const orderId = body?.orderId ? String(body.orderId) : generateOrderId(customerId)

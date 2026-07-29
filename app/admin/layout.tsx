@@ -26,6 +26,10 @@ import {
   Mail,
   Calculator,
   MessageSquare,
+  Coins,
+  Newspaper,
+  UsersRound,
+  BarChart3,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -33,9 +37,13 @@ type AdminMe = { id: string; email: string; name: string; role: string }
 
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/analytics", label: "Portal Analytics", icon: BarChart3 },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/group-clients", label: "Group Clients", icon: UsersRound },
+  { href: "/admin/kr-credits", label: "KR Credits", icon: Coins },
   { href: "/admin/dropdowns", label: "Dropdowns", icon: ListTree },
   { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
   { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
   { href: "/admin/collections", label: "Collections", icon: Package },
   { href: "/admin/shop/products", label: "Shop Products", icon: ShoppingBag },

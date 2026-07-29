@@ -1,13 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { assertCustomerAccess, requireCustomerSession } from "@/lib/customer-api-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
+    const auth = await requireCustomerSession()
+    if (!auth.ok) return auth.response
 
+    const requested = request.nextUrl.searchParams.get("customerId")
+    const denied = assertCustomerAccess(auth.customerId, requested)
+    if (denied) return denied
+
+    const customerId = auth.customerId
     const limitRaw = Number(request.nextUrl.searchParams.get("limit") || 20)
     const limit = Number.isFinite(limitRaw) ? Math.min(100, Math.max(1, Math.floor(limitRaw))) : 20
 
@@ -29,11 +33,14 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+
     const body = await request.json()
-    const customerId = String(body.customerId || "").trim()
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
+    const denied = assertCustomerAccess(session.customerId, body?.customerId)
+    if (denied) return denied
+
+    const customerId = session.customerId
 
     if (body.markAllRead) {
       await sql`

@@ -7,6 +7,7 @@ import {
   Box,
   CheckCircle2,
   Gift,
+  Heart,
   Leaf,
   Loader2,
   Package,
@@ -21,49 +22,20 @@ import { HowItWorksDialog } from "@/components/dashboard/shop/how-it-works-dialo
 import { ProductCard } from "@/components/dashboard/shop/product-card"
 import { usePortalData } from "@/hooks/use-portal-data"
 import type { ShopProduct } from "@/lib/cart-context"
-import { SHOWCASE_PRODUCTS } from "@/lib/portal-showcase-products"
+import { SHOP_FILTER_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
 import { formatIndianNumber, formatKg } from "@/lib/portal-metrics"
 import { creditsToRupees } from "@/lib/kraftreborn"
-import { formatInr } from "@/lib/kraftreborn-products"
+import { useShopFavourites } from "@/hooks/use-shop-favourites"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
-  { id: "all", label: "All Products", icon: Gift },
-  { id: "elegant-combos", label: "Elegant Combos" },
-  { id: "decor", label: "Décor" },
-  { id: "gifting", label: "Corporate Gifts" },
-  { id: "stationery", label: "Stationery" },
-  { id: "planters", label: "Planters" },
+  { id: "favourites", label: "Favourites", icon: Heart },
+  ...SHOP_FILTER_CATEGORIES.map((c) => ({ ...c, icon: Gift })),
 ] as const
-
-function toShopProduct(p: (typeof SHOWCASE_PRODUCTS)[number]): ShopProduct {
-  const name = p.name.toLowerCase()
-  const category =
-    name.includes("planter")
-      ? "decor"
-      : name.includes("desk") || name.includes("organizer")
-        ? "stationery"
-        : name.includes("tag") || name.includes("key")
-          ? "gifting"
-          : name.includes("frame") || name.includes("bowl")
-            ? "decor"
-            : "decor"
-  return {
-    id: p.id,
-    name: p.name,
-    description: p.tagline,
-    price: p.price,
-    category,
-    tagline: p.tagline,
-    buttsRescued: Math.round(p.price / 2),
-    imageUrl: p.image,
-    imageGradient: "from-stone-100 to-emerald-50",
-    allowsLogo: false,
-  }
-}
 
 function ShopContent() {
   const { customer, authLoading, dataLoading, metrics } = usePortalData()
+  const { favouriteIds } = useShopFavourites()
   const searchParams = useSearchParams()
   const orderedId = searchParams.get("ordered")
   const [category, setCategory] = useState<string>("all")
@@ -109,27 +81,13 @@ function ShopContent() {
     })()
   }, [customer?.id])
 
-  const showcase = useMemo(() => SHOWCASE_PRODUCTS.map(toShopProduct), [])
-  const catalog = apiProducts.length > 0 ? apiProducts : showcase
+  const catalog = apiProducts
 
   const filtered = useMemo(() => {
     if (category === "all") return catalog
-    const q = category.toLowerCase()
-    return catalog.filter((p) => {
-      const cat = (p.category || "").toLowerCase()
-      const hay = `${p.name} ${p.tagline || ""} ${p.description || ""} ${cat}`.toLowerCase()
-      if (cat === q) return true
-      if (q === "planters") return hay.includes("planter")
-      if (q === "stationery")
-        return hay.includes("desk") || hay.includes("organizer") || hay.includes("stationery")
-      if (q === "decor")
-        return hay.includes("decor") || hay.includes("frame") || hay.includes("bowl") || hay.includes("vase")
-      if (q === "gifting")
-        return hay.includes("gift") || hay.includes("corporate") || hay.includes("tag") || hay.includes("key")
-      if (q === "elegant-combos") return hay.includes("combo") || cat === "elegant-combos"
-      return false
-    })
-  }, [category, catalog])
+    if (category === "favourites") return catalog.filter((p) => favouriteIds.includes(p.id))
+    return catalog.filter((p) => (p.category || "").toLowerCase() === category.toLowerCase())
+  }, [category, catalog, favouriteIds])
 
   const visible = showAll ? filtered : filtered.slice(0, 10)
   const rupeeAmount = creditsToRupees(Number(metrics.kraftrebornCredits) || 0)

@@ -375,7 +375,9 @@ export function CreateCustomerForm({
           </div>
         </div>
         <p className="text-[11px] text-[#6B6B6B]">
-          Portal username = Primary POC Email. A random 10-character password is emailed to them with a welcome message.
+          Portal username = Primary POC Email. Password is generated on create; welcome email is not
+          sent yet — use <strong>Send welcome emails</strong> on the Customers page after all clients
+          are entered.
         </p>
       </div>
 

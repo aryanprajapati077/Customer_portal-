@@ -1,17 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateImpactReportExcel } from "@/lib/generate-impact-report-excel"
+import { resolveCustomerId } from "@/lib/customer-api-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
+    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
+    if (!auth.ok) return auth.response
+    const customerId = auth.customerId
     const period = request.nextUrl.searchParams.get("period") || undefined
     const range = request.nextUrl.searchParams.get("range") || undefined
     const startDate = request.nextUrl.searchParams.get("startDate") || undefined
     const endDate = request.nextUrl.searchParams.get("endDate") || undefined
-
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
 
     const { buffer, filename } = await generateImpactReportExcel(customerId, {
       period,

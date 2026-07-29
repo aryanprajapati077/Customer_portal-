@@ -17,40 +17,21 @@ import {
 } from "recharts"
 import { Cigarette, Droplets, Leaf, Recycle, Sparkles, TrendingUp } from "lucide-react"
 import type { CollectionLike, PortalMetrics } from "@/lib/portal-metrics"
-import { formatIndianNumber, formatKg, formatWaterL } from "@/lib/portal-metrics"
-
-function buildMonthly(collections: CollectionLike[]) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  const year = new Date().getFullYear()
-  const totals = months.map((m) => ({ month: m, kg: 0, butts: 0 }))
-  for (const c of collections) {
-    if (!c.date) continue
-    const d = new Date(c.date)
-    if (d.getFullYear() !== year) continue
-    const i = d.getMonth()
-    totals[i].kg += Number(c.weight) || 0
-    totals[i].butts += Math.round((Number(c.weight) || 0) * 3000)
-  }
-  const hasData = totals.some((t) => t.kg > 0)
-  if (!hasData) {
-    return months.map((m, i) => ({
-      month: m,
-      kg: +(0.4 + i * 0.18).toFixed(2),
-      butts: Math.round((0.4 + i * 0.18) * 3000),
-    }))
-  }
-  return totals.map((t) => ({ ...t, kg: +t.kg.toFixed(2) }))
-}
+import { buildMonthlyTrend, formatIndianNumber, formatKg, formatWaterL } from "@/lib/portal-metrics"
 
 interface ImpactAnalyticsProps {
   metrics: PortalMetrics
   collections: CollectionLike[]
+  serviceStartDate?: string | Date | null
 }
 
 const PIE_COLORS = ["#1B7339", "#EF6C00", "#1565C0", "#7B1FA2"]
 
-export function ImpactAnalytics({ metrics, collections }: ImpactAnalyticsProps) {
-  const monthly = buildMonthly(collections)
+export function ImpactAnalytics({ metrics, collections, serviceStartDate }: ImpactAnalyticsProps) {
+  const monthly = buildMonthlyTrend(collections, {
+    startDate: serviceStartDate,
+    includeButts: true,
+  })
   const mix = [
     { name: "Upcycled fibre", value: Math.max(1, metrics.microplasticsKg) },
     { name: "Ash / other", value: Math.max(0.1, metrics.totalWasteKg - metrics.microplasticsKg) },

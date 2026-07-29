@@ -157,11 +157,14 @@ function corporateImpact(
   locations: number,
   kioskType: KioskType,
 ): ImpactEstimate {
+  const employeesPerLocation = employees / locations
   const smokers = employees * 0.18
+  const smokersPerLocation = employeesPerLocation * 0.18
   const butts = smokers * 2 * 20 * 10
   const wasteKg = butts / 3000
   const waterLitres = butts * 100
-  const recommendedKiosks = Math.max(2, ceilDiv(smokers, 35))
+  const kiosksPerLocation = Math.max(2, ceilDiv(smokersPerLocation, 35))
+  const recommendedKiosks = kiosksPerLocation * locations
   const pricing = priceKioskFleet(kioskType, recommendedKiosks)
   const annualInvestment = pricing.subtotalExclGst
   const co2Tonnes = butts * 0.0005

@@ -6,8 +6,7 @@ import {
   formatCustomerId,
   parseCustomerIdNumber,
 } from "@/lib/india-locations"
-import { generatePortalPassword, sendWelcomeEmail } from "@/lib/welcome-email"
-import { queueEmail } from "@/lib/email-queue"
+import { generatePortalPassword } from "@/lib/welcome-email"
 import { saveBase64Image } from "@/lib/upload"
 
 type CollectionPoc = {
@@ -46,7 +45,8 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "gstin" TEXT,
       ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
-      ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
+      ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3)
   `,
       )
       .then(() => undefined)
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       const pattern = q ? `%${q}%` : null
       const rows = pattern
         ? await sql`
-            SELECT id, email, "companyName", status
+            SELECT id, email, "companyName", status, "kraftrebornCredits"
             FROM "Customer"
             WHERE id ILIKE ${pattern}
                OR email ILIKE ${pattern}
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
             LIMIT ${take}
           `
         : await sql`
-            SELECT id, email, "companyName", status
+            SELECT id, email, "companyName", status, "kraftrebornCredits"
             FROM "Customer"
             ORDER BY "companyName" ASC NULLS LAST, id ASC
             LIMIT ${take}
@@ -357,23 +357,12 @@ export async function POST(request: NextRequest) {
             state,
           }
 
-    queueEmail("welcome", () =>
-      sendWelcomeEmail({
-        to: emailLower,
-        brandName,
-        contactName: primaryPocName,
-        customerId: id,
-        email: emailLower,
-        password: tempPassword,
-      }),
-    )
-
+    // Welcome email is NOT sent on create — admin sends in bulk after entering all clients.
     return NextResponse.json({
       success: true,
       customer: customerData,
-      temporaryPassword: tempPassword,
-      welcomeEmailSent: true,
-      welcomeEmailQueued: true,
+      welcomeEmailSent: false,
+      welcomeEmailDeferred: true,
     })
   } catch (error: unknown) {
     console.error("Error creating customer:", error)

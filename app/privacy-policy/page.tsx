@@ -12,7 +12,7 @@ const sections: { title: string; body: ReactNode }[] = [
         BuffIndia Receptacles Private Limited (&quot;we,&quot; &quot;our,&quot; &quot;us&quot;) is committed to
         protecting the privacy of visitors to our website, customers of our cigarette waste management services, and
         users of related portals. This Privacy Policy outlines how we collect, use, disclose, and safeguard your
-        information when you visit our website, submit inquiry or partner forms, purchase EcoArt products, or access
+        information when you visit our website, submit inquiry or partner forms, purchase KraftReborn products, or access
         customer-facing digital services.
       </p>
     ),
@@ -58,7 +58,7 @@ const sections: { title: string; body: ReactNode }[] = [
         <ul className="list-disc space-y-1 pl-5">
           <li>To process inquiries, purchases, partner applications, and service onboarding.</li>
           <li>To provide, operate, and improve our website, customer portal, and related features.</li>
-          <li>To deliver waste collection services, impact reporting, certificates, and EcoArt fulfilment.</li>
+          <li>To deliver waste collection services, impact reporting, certificates, and KraftReborn fulfilment.</li>
           <li>To send updates, newsletters, and promotional materials, subject to your consent.</li>
           <li>To analyze website performance and enhance user experience.</li>
           <li>To comply with legal and regulatory requirements.</li>
@@ -160,7 +160,7 @@ const sections: { title: string; body: ReactNode }[] = [
     title: "9. Links to Third-Party Websites",
     body: (
       <p>
-        Our website may contain links to third-party websites (including EcoArt storefronts and partner signup forms). We
+        Our website may contain links to third-party websites (including KraftReborn storefronts and partner signup forms). We
         are not responsible for the privacy practices of these external sites and encourage you to read their privacy
         policies.
       </p>

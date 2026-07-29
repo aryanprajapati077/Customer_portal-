@@ -8,6 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Package, Plus, Search, Filter } from "lucide-react"
+import { AdminListRow } from "@/components/admin/admin-list-card"
+import {
+  AdminDetailSheet,
+  AdminSheetField,
+  AdminSheetSection,
+} from "@/components/admin/admin-detail-sheet"
 
 type Row = {
   id: string
@@ -45,6 +51,7 @@ export default function AdminCollectionsPage() {
   const [filterMonth, setFilterMonth] = useState<string>("all")
   const [isAdding, setIsAdding] = useState(false)
   const [monthCollectionMode, setMonthCollectionMode] = useState(false)
+  const [selectedRow, setSelectedRow] = useState<Row | null>(null)
   const months = useMemo(() => monthOptions(), [])
 
   const [draft, setDraft] = useState({
@@ -332,6 +339,8 @@ export default function AdminCollectionsPage() {
           <CardDescription>
             {filtered.length} rows
             {filterClient !== "all" || filterMonth !== "all" ? " (filtered)" : ""}
+            {" · "}
+            click any row to open sheet
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -343,20 +352,16 @@ export default function AdminCollectionsPage() {
             <p className="text-sm text-muted-foreground text-center py-8">No collections match your filters.</p>
           ) : (
             <div className="space-y-3">
-              {filtered.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="p-4 rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/30 hover:shadow-md transition-all duration-300"
-                  style={{ animationDelay: `${idx * 15}ms` }}
-                >
+              {filtered.map((r) => (
+                <AdminListRow key={r.id} onClick={() => setSelectedRow(r)}>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground truncate">{r.companyName}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground">{r.companyName}</p>
                         <Badge variant="outline" className="bg-muted/30">
                           {r.customerId}
                         </Badge>
-                        <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
+                        <Badge variant="outline" className="border-secondary/30 bg-secondary/10 text-secondary">
                           {r.status}
                         </Badge>
                       </div>
@@ -371,12 +376,40 @@ export default function AdminCollectionsPage() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </AdminListRow>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AdminDetailSheet
+        open={!!selectedRow}
+        onOpenChange={(open) => !open && setSelectedRow(null)}
+        title={selectedRow ? selectedRow.companyName : ""}
+        description={selectedRow ? `Collection sheet · ${selectedRow.id}` : undefined}
+      >
+        {selectedRow && (
+          <AdminSheetSection title="Collection">
+            <AdminSheetField label="Customer" value={selectedRow.companyName} />
+            <AdminSheetField label="Customer ID" value={selectedRow.customerId} />
+            <AdminSheetField
+              label="Date"
+              value={new Date(selectedRow.date).toLocaleString("en-IN")}
+            />
+            <AdminSheetField label="Location" value={selectedRow.location || "N/A"} />
+            <AdminSheetField label="Status" value={selectedRow.status} />
+            <AdminSheetField
+              label="Weight"
+              value={`${Number(selectedRow.weight || 0).toFixed(1)} kg`}
+            />
+            <AdminSheetField
+              label="Microplastics"
+              value={`${(Number(selectedRow.weight || 0) * 0.8).toFixed(1)} kg`}
+            />
+          </AdminSheetSection>
+        )}
+      </AdminDetailSheet>
     </div>
   )
 }

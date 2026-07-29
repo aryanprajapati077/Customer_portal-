@@ -3,13 +3,13 @@ import { prisma } from "@/lib/prisma"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { formatOrderNumber } from "@/lib/shop-constants"
 import { saveBase64Image } from "@/lib/upload"
+import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "customerId required" }, { status: 400 })
-    }
+    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
+    if (!auth.ok) return auth.response
+    const customerId = auth.customerId
 
     const orders = await prisma.shopOrder.findMany({
       where: { customerId },
@@ -39,8 +39,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+
     const body = await request.json()
-    const customerId = String(body?.customerId || "")
+    const denied = assertCustomerAccess(session.customerId, body?.customerId)
+    if (denied) return denied
+
+    const customerId = session.customerId
     const items = Array.isArray(body?.items) ? body.items : []
     const useKrCredits = body?.useKrCredits !== false
     const logoRequested = Boolean(body?.logoRequested)

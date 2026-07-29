@@ -23,7 +23,7 @@ const recognitions = [
   {
     icon: Lightbulb,
     title: "India's First End-to-End Solution",
-    desc: "Recognized as India's first comprehensive cigarette waste management solution—from self-educative disposal and collection to recycling, EcoArt, and impact reporting.",
+    desc: "Recognized as India's first comprehensive cigarette waste management solution—from self-educative disposal and collection to recycling, KraftReborn, and impact reporting.",
   },
   {
     icon: Target,
@@ -50,7 +50,7 @@ export default function RecognitionsPage() {
       eyebrow="Awards & achievements"
       title="Our"
       accent="recognitions"
-      subtitle="BuffIndia has been recognized for innovation and impact in cigarette waste management—building India's first end-to-end path from littered filters to recycled materials, EcoArt products, and measurable ESG outcomes."
+      subtitle="BuffIndia has been recognized for innovation and impact in cigarette waste management—building India's first end-to-end path from littered filters to recycled materials, KraftReborn products, and measurable ESG outcomes."
       cta={{ href: "/contact", label: "Partner With BuffIndia" }}
     >
       <div className="mb-14 grid gap-4 sm:grid-cols-2">

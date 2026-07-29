@@ -21,7 +21,7 @@ const sections: { title: string; body: ReactNode }[] = [
     body: (
       <p>
         BuffIndia Receptacles Private Limited provides end-to-end cigarette waste management in India, including disposal
-        unit installation, awareness activities, door-to-door collection, recycling, impact reporting, and related EcoArt
+        unit installation, awareness activities, door-to-door collection, recycling, impact reporting, and related KraftReborn
         / upcycled product offerings. Descriptions on marketing pages are for general information; specific commercial
         terms are set out in quotations, proposals, or service agreements.
       </p>
@@ -51,7 +51,7 @@ const sections: { title: string; body: ReactNode }[] = [
         Disposal units and related equipment provided on a rental or service basis remain the property of BuffIndia unless
         otherwise agreed in writing. Customers are responsible for reasonable care of units on their premises, providing
         safe access for installation and collection, and complying with site-specific obligations in their service
-        agreement. Fees, term length, renewal, and deliverables (including branded EcoArt where applicable) are governed
+        agreement. Fees, term length, renewal, and deliverables (including branded KraftReborn where applicable) are governed
         by the applicable commercial contract.
       </p>
     ),
@@ -67,10 +67,10 @@ const sections: { title: string; body: ReactNode }[] = [
     ),
   },
   {
-    title: "6. EcoArt Products & Purchases",
+    title: "6. KraftReborn Products & Purchases",
     body: (
       <p>
-        Product descriptions on this site are illustrative. Purchases made via EcoArt or other storefronts may be subject
+        Product descriptions on this site are illustrative. Purchases made via KraftReborn or other storefronts may be subject
         to separate checkout terms, shipping policies, and refund rules of that storefront. Custom branding requests
         depend on artwork quality, lead times, and confirmation by our team.
       </p>

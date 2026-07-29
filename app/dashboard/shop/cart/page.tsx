@@ -59,12 +59,12 @@ export default function CartPage() {
                     {line.product.name}
                   </Link>
                   <p className="flex flex-wrap items-baseline gap-1.5 text-[13px] text-[#6B6B6B]">
-                    <span>{formatInr(line.product.price)} each</span>
                     {line.product.originalPrice && line.product.originalPrice > line.product.price ? (
                       <span className="text-[12px] text-[#A0A0A0] line-through">
                         {formatInr(line.product.originalPrice)}
                       </span>
                     ) : null}
+                    <span>{formatInr(line.product.price)} each</span>
                     {line.color ? <span>· {line.color}</span> : null}
                   </p>
                   <div className="flex flex-wrap items-center gap-3">

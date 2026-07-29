@@ -17,19 +17,9 @@ export const EMAIL_PROUDLY_SUPPORTED_BY =
 export function emailSupporterFooterHtml(): string {
   const iimaSrc = absoluteUrl(IIMA_LOGO_PORTAL)
   const kotakSrc = absoluteUrl(KOTAK_LOGO_PORTAL)
-  const buffindiaLogoSrc = absoluteUrl("/report-assets/buffindia-logo-original.png")
 
   return `
 <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E8E8E8;text-align:center;">
-  <div style="margin:0 auto 14px auto;">
-    <img
-      src="${buffindiaLogoSrc}"
-      alt="BuffIndia"
-      width="120"
-      height="40"
-      style="display:block;height:30px;width:auto;max-width:140px;object-fit:contain;border:0;outline:none;margin:0 auto;"
-    />
-  </div>
   <p style="margin:0 0 12px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#8A8A8A;">
     Proudly supported by
   </p>

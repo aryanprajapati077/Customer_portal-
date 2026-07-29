@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { syncMonthlyReportsForCustomer } from "@/lib/monthly-reports"
+import { resolveCustomerScope } from "@/lib/customer-api-auth"
 
 function formatReport(row: {
   id: string
@@ -28,34 +29,46 @@ function formatReport(row: {
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
+    const locationId = request.nextUrl.searchParams.get("locationId")
+    const auth = await resolveCustomerScope(
+      request.nextUrl.searchParams.get("customerId"),
+      locationId,
+    )
+    if (!auth.ok) return auth.response
 
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
+    for (const cid of auth.customerIds) {
+      const customer = await prisma.customer.findUnique({
+        where: { id: cid },
+        select: { id: true, joinDate: true },
+      })
+      if (customer) {
+        await syncMonthlyReportsForCustomer(cid, {
+          months: 12,
+          joinDate: customer.joinDate,
+        })
+      }
     }
-
-    const customer = await prisma.customer.findUnique({
-      where: { id: customerId },
-      select: { id: true, joinDate: true },
-    })
-
-    if (!customer) {
-      return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 })
-    }
-
-    await syncMonthlyReportsForCustomer(customerId, {
-      months: 12,
-      joinDate: customer.joinDate,
-    })
 
     const reports = await prisma.report.findMany({
-      where: { customerId },
+      where: { customerId: { in: auth.customerIds } },
       orderBy: { date: "desc" },
     })
 
+    const customerMap = new Map<string, string>()
+    if (auth.customerIds.length > 1) {
+      const customers = await prisma.customer.findMany({
+        where: { id: { in: auth.customerIds } },
+        select: { id: true, companyName: true },
+      })
+      for (const c of customers) customerMap.set(c.id, c.companyName)
+    }
+
     return NextResponse.json({
       success: true,
-      reports: reports.map(formatReport),
+      reports: reports.map((r) => ({
+        ...formatReport(r),
+        locationName: customerMap.get(r.customerId),
+      })),
     })
   } catch (error) {
     console.error("Error fetching reports:", error)

@@ -59,7 +59,7 @@ export default function ContactPage() {
       eyebrow="Contact"
       title="Get in"
       accent="touch"
-      subtitle="We're here to answer your questions and explore how we can work together on cigarette waste management, EcoArt, or partnership."
+      subtitle="We're here to answer your questions and explore how we can work together on cigarette waste management, KraftReborn, or partnership."
     >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">

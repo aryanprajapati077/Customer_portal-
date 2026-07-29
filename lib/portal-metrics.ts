@@ -68,3 +68,46 @@ export function formatPortalDate(date?: string | Date | null): string {
   if (Number.isNaN(d.getTime())) return String(date)
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
 }
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const
+
+/** Month buckets from installation/service start (no leading empty months before install). */
+export function buildMonthlyTrend(
+  collections: CollectionLike[] | undefined,
+  opts?: {
+    year?: number
+    /** Service start / installation — chart starts at this month */
+    startDate?: string | Date | null
+    includeButts?: boolean
+  },
+): { month: string; kg: number; butts?: number }[] {
+  const year = opts?.year ?? new Date().getFullYear()
+  const includeButts = Boolean(opts?.includeButts)
+  let startMonth = 0
+  if (opts?.startDate) {
+    const s = new Date(opts.startDate)
+    if (!Number.isNaN(s.getTime()) && s.getFullYear() === year) {
+      startMonth = s.getMonth()
+    } else if (!Number.isNaN(s.getTime()) && s.getFullYear() > year) {
+      return []
+    }
+  }
+
+  const totals = MONTH_LABELS.map((m) => ({ month: m, kg: 0, butts: 0 }))
+  for (const c of collections || []) {
+    if (!c.date) continue
+    const d = new Date(c.date)
+    if (d.getFullYear() !== year) continue
+    const i = d.getMonth()
+    if (i < startMonth) continue
+    totals[i].kg += Number(c.weight) || 0
+    totals[i].butts += Math.round((Number(c.weight) || 0) * 3000)
+  }
+
+  const sliced = totals.slice(startMonth)
+  return sliced.map((t) =>
+    includeButts
+      ? { month: t.month, kg: +t.kg.toFixed(2), butts: t.butts }
+      : { month: t.month, kg: +t.kg.toFixed(2) },
+  )
+}

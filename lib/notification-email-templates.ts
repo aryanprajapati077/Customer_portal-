@@ -14,6 +14,7 @@ export type NotificationTemplateId =
   | "kraftreborn_dispatched"
   | "kraftreborn_delivered"
   | "impact_proposal"
+  | "group_portal_welcome"
 
 export type NotificationTemplateCopy = {
   subject: string
@@ -278,6 +279,34 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateMeta[] = [
       signOff: "Team BuffIndia",
       footerLine: "Buffindia Receptacles Pvt. Ltd. · campaign@buffindia.com · www.buffindia.com",
       trigger: "When a visitor submits Get detailed proposal on the Impact Calculator",
+    },
+  },
+  {
+    id: "group_portal_welcome",
+    name: "Group Portal Welcome",
+    description:
+      "Sent when a group client account is created (or credentials are resent). Includes login email and temporary password.",
+    placeholders: [
+      "name",
+      "company",
+      "customerId",
+      "email",
+      "password",
+      "locationCount",
+      "portalUrl",
+    ],
+    defaults: {
+      subject: "Welcome to BuffIndia Group Portal — {{company}}",
+      eyebrow: "BuffIndia · Group Portal",
+      title: "Your group account is ready",
+      intro: "Hi {{name}},",
+      body: "Your BuffIndia group portal for {{company}} is ready.\n\nGroup ID: {{customerId}}\nUsername (email): {{email}}\nTemporary password: shown above\n\nWith this login you can view impact across all linked locations — collections, reports, and certificates — and switch location-wise anytime.\n\nLinked locations so far: {{locationCount}}\n\nPlease change your password after the first sign-in.",
+      ctaLabel: "Sign in to Group Portal",
+      ctaUrl: "{{portalUrl}}/login",
+      closing: "Warm regards,",
+      signOff: "Team BuffIndia",
+      footerLine: "Buffindia Receptacles Pvt. Ltd. · support@buffindia.com · www.buffindia.com",
+      trigger: "When admin creates a group client or resends group login credentials",
     },
   },
 ]

@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Gift,
+  Heart,
   Loader2,
   Search,
   ShoppingBag,
@@ -16,49 +17,22 @@ import {
 import { ShopShell } from "@/components/dashboard/shop/shop-shell"
 import { useAuth } from "@/lib/auth-context"
 import { useCart, type ShopProduct } from "@/lib/cart-context"
-import { SHOWCASE_PRODUCTS } from "@/lib/portal-showcase-products"
-import { formatInr } from "@/lib/kraftreborn-products"
+import { SHOP_FILTER_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
+import { ProductPrice } from "@/components/dashboard/shop/product-price"
 import { formatIndianNumber } from "@/lib/portal-metrics"
 import { creditsToRupees } from "@/lib/kraftreborn"
+import { useShopFavourites } from "@/hooks/use-shop-favourites"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "elegant-combos", label: "Elegant Combos" },
-  { id: "decor", label: "Décor" },
-  { id: "gifting", label: "Corporate Gifts" },
-  { id: "stationery", label: "Stationery" },
-  { id: "planters", label: "Planters" },
-] as const
-
-function toShopProduct(p: (typeof SHOWCASE_PRODUCTS)[number]): ShopProduct {
-  const name = p.name.toLowerCase()
-  const category =
-    name.includes("planter")
-      ? "decor"
-      : name.includes("desk") || name.includes("organizer")
-        ? "stationery"
-        : name.includes("tag") || name.includes("key")
-          ? "gifting"
-          : "decor"
-  return {
-    id: p.id,
-    name: p.name,
-    description: p.tagline,
-    price: p.price,
-    category,
-    tagline: p.tagline,
-    buttsRescued: Math.round(p.price / 2),
-    imageUrl: p.image,
-    imageGradient: "from-[#E8F5E9] via-[#F7F6F2] to-[#FFF8E1]",
-    allowsLogo: false,
-    availableColors: ["Blue", "Green", "Yellow", "Red", "White", "Mix"],
-  }
-}
+  { id: "favourites", label: "Favourites" },
+  ...SHOP_FILTER_CATEGORIES,
+]
 
 export default function KraftStorePage() {
   const { customer } = useAuth()
   const { itemCount } = useCart()
+  const { favouriteIds, toggle, isFavourite } = useShopFavourites()
   const [category, setCategory] = useState("all")
   const [query, setQuery] = useState("")
   const [products, setProducts] = useState<ShopProduct[]>([])
@@ -72,13 +46,13 @@ export default function KraftStorePage() {
       try {
         const res = await fetch("/api/customer/products")
         const data = await res.json()
-        if (data?.success && Array.isArray(data.products) && data.products.length > 0) {
+        if (data?.success && Array.isArray(data.products)) {
           setProducts(data.products)
         } else {
-          setProducts(SHOWCASE_PRODUCTS.map(toShopProduct))
+          setProducts([])
         }
       } catch {
-        setProducts(SHOWCASE_PRODUCTS.map(toShopProduct))
+        setProducts([])
       } finally {
         setLoading(false)
       }
@@ -91,20 +65,15 @@ export default function KraftStorePage() {
       const cat = (p.category || "").toLowerCase()
       const hay = `${p.name} ${p.tagline || ""} ${p.description || ""} ${cat}`.toLowerCase()
       const catOk =
-        category === "all" ||
-        cat === category ||
-        (category === "planters" && hay.includes("planter")) ||
-        (category === "stationery" &&
-          (hay.includes("desk") || hay.includes("organizer") || hay.includes("stationery"))) ||
-        (category === "decor" &&
-          (hay.includes("decor") || hay.includes("frame") || hay.includes("bowl"))) ||
-        (category === "gifting" &&
-          (hay.includes("gift") || hay.includes("corporate") || hay.includes("tag"))) ||
-        (category === "elegant-combos" && (hay.includes("combo") || cat === "elegant-combos"))
+        category === "all"
+          ? true
+          : category === "favourites"
+            ? favouriteIds.includes(p.id)
+            : cat === category
       const searchOk = !q || hay.includes(q)
       return catOk && searchOk
     })
-  }, [products, category, query])
+  }, [products, category, query, favouriteIds])
 
   return (
     <ShopShell>
@@ -221,8 +190,14 @@ export default function KraftStorePage() {
           ) : filtered.length === 0 ? (
             <div className="rounded-[1.25rem] border border-[#E5E2DA] bg-[#F7F6F2] px-6 py-16 text-center">
               <Gift className="mx-auto mb-3 h-8 w-8 text-[#1B7339]/50" />
-              <p className="text-[15px] font-semibold text-[#141414]">No products found</p>
-              <p className="mt-1 text-[13px] text-[#6B6B6B]">Try another category or search term.</p>
+              <p className="text-[15px] font-semibold text-[#141414]">
+                {category === "favourites" ? "No favourites yet" : "No products found"}
+              </p>
+              <p className="mt-1 text-[13px] text-[#6B6B6B]">
+                {category === "favourites"
+                  ? "Tap the heart on any product to save it here."
+                  : "Try another category or search term."}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 md:gap-4">
@@ -234,26 +209,39 @@ export default function KraftStorePage() {
                   transition={{ delay: Math.min(i * 0.04, 0.35), duration: 0.4 }}
                   className="group flex flex-col overflow-hidden rounded-[1.25rem] border border-black/[0.06] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]"
                 >
-                  <Link
-                    href={`/dashboard/shop/${product.id}`}
-                    className="relative aspect-square overflow-hidden bg-[#F4F3EE]"
-                  >
-                    {product.imageUrl ? (
-                      <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                        sizes="240px"
+                  <div className="relative aspect-square overflow-hidden bg-[#F4F3EE]">
+                    <Link href={`/dashboard/shop/${product.id}`} className="absolute inset-0 block">
+                      {product.imageUrls?.[0] || product.imageUrl ? (
+                        <Image
+                          src={product.imageUrls?.[0] || product.imageUrl || ""}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                          sizes="240px"
+                        />
+                      ) : (
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}
+                        >
+                          <Sparkles className="h-7 w-7 text-[#1B7339]/30" />
+                        </div>
+                      )}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => toggle(product.id)}
+                      className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-[#E8E8E8] bg-white/95"
+                      aria-label={isFavourite(product.id) ? "Remove from favourites" : "Add to favourites"}
+                    >
+                      <Heart
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          isFavourite(product.id) ? "fill-[#E53935] text-[#E53935]" : "text-[#8A8A8A]",
+                        )}
+                        strokeWidth={1.75}
                       />
-                    ) : (
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}
-                      >
-                        <Sparkles className="h-7 w-7 text-[#1B7339]/30" />
-                      </div>
-                    )}
-                  </Link>
+                    </button>
+                  </div>
                   <div className="flex flex-1 flex-col p-3.5 sm:p-4">
                     <Link href={`/dashboard/shop/${product.id}`}>
                       <h3 className="font-[family-name:var(--font-display)] text-[15px] leading-snug tracking-tight text-[#141414] line-clamp-2 group-hover:text-[#1B7339]">
@@ -263,10 +251,12 @@ export default function KraftStorePage() {
                     <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-[#7A7A7A]">
                       {product.tagline || product.description}
                     </p>
-                    <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                      <span className="text-[14px] font-bold text-[#141414]">
-                        {formatInr(product.price)}
-                      </span>
+                    <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+                      <ProductPrice
+                        price={product.price}
+                        originalPrice={product.originalPrice}
+                        size="md"
+                      />
                       <Link
                         href={`/dashboard/shop/${product.id}`}
                         className="inline-flex h-8 items-center rounded-full bg-[#1B7339] px-3 text-[11.5px] font-semibold text-white hover:bg-[#145a2c]"

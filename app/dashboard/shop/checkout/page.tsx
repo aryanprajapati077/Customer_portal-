@@ -12,9 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, Sparkles, ShieldCheck, Upload, ImageIcon } from "lucide-react"
+import { Loader2, Sparkles, ShieldCheck, Upload, Wallet, CheckCircle2, AlertCircle, Building2, Stamp } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function CheckoutPage() {
   const { customer } = useAuth()
@@ -174,28 +173,69 @@ export default function CheckoutPage() {
           </Card>
 
           {hasLogoEligibleItems && (
-            <Card className="border-amber-200/60 bg-amber-50/30 rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-serif flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-amber-600" />
-                  Custom logo on product
-                </CardTitle>
-                <CardDescription>Some items in your cart support logo customisation</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className="flex items-start gap-3 cursor-pointer"
-                  onClick={() => setWantLogo(!wantLogo)}
-                >
-                  <Checkbox checked={wantLogo} onCheckedChange={(v) => setWantLogo(Boolean(v))} />
-                  <div>
-                    <p className="font-medium text-sm">Yes, add my company logo on products</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Upload PNG or JPG — max recommended 2MB</p>
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#E8DCC8] bg-gradient-to-br from-[#FFF9F0] via-white to-[#F4F9F4] shadow-[0_8px_30px_rgba(27,115,57,0.06)]">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#1B7339]/8 blur-2xl"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -bottom-8 left-8 h-28 w-28 rounded-full bg-[#F5A623]/10 blur-2xl"
+              />
+
+              <div className="relative p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1B7339] to-[#2E9B52] text-white shadow-md">
+                      <Stamp className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#B8860B]">
+                        Branding upgrade
+                      </p>
+                      <h2 className="mt-0.5 font-[family-name:var(--font-display)] text-[1.15rem] font-bold text-[#141414]">
+                        Custom logo on product
+                      </h2>
+                      <p className="mt-1 text-[13px] leading-relaxed text-[#6B6B6B]">
+                        Make your order uniquely yours — we&apos;ll print your logo on eligible KraftReborn items.
+                      </p>
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={wantLogo}
+                    onClick={() => setWantLogo((v) => !v)}
+                    className={cn(
+                      "relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300",
+                      wantLogo ? "bg-[#1B7339]" : "bg-[#D9D6CF]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow transition-transform duration-300",
+                        wantLogo && "translate-x-6",
+                      )}
+                    />
+                  </button>
                 </div>
 
-                {wantLogo && (
-                  <div className="space-y-3 pl-7">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {lines
+                    .filter((l) => l.product.allowsLogo)
+                    .map((l) => (
+                      <span
+                        key={l.productId}
+                        className="inline-flex items-center rounded-full border border-[#E5DCC8] bg-white/80 px-2.5 py-1 text-[11px] font-medium text-[#5A5A5A]"
+                      >
+                        {l.product.name}
+                      </span>
+                    ))}
+                </div>
+
+                {wantLogo ? (
+                  <div className="mt-5 space-y-4">
                     <input
                       ref={fileRef}
                       type="file"
@@ -203,58 +243,170 @@ export default function CheckoutPage() {
                       className="hidden"
                       onChange={(e) => handleLogoFile(e.target.files?.[0] || null)}
                     />
-                    <Button
+
+                    <button
                       type="button"
-                      variant="outline"
-                      className="rounded-full bg-white"
                       onClick={() => fileRef.current?.click()}
+                      className={cn(
+                        "group relative w-full overflow-hidden rounded-2xl border-2 border-dashed transition-all",
+                        logoPreview
+                          ? "border-[#1B7339]/40 bg-[#E8F5E9]/40"
+                          : "border-[#D4C4A8] bg-white/70 hover:border-[#1B7339]/50 hover:bg-[#FAFFF9]",
+                      )}
                     >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {logoFileName ? "Change logo" : "Upload logo"}
-                    </Button>
-                    {logoPreview && (
-                      <div className="flex items-center gap-4 p-3 rounded-xl bg-white border border-stone-200">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={logoPreview} alt="Logo preview" className="h-12 w-12 object-contain rounded" />
-                        <span className="text-sm text-stone-600 truncate">{logoFileName}</span>
+                      <div className="flex flex-col items-center justify-center gap-3 px-6 py-8 sm:flex-row sm:py-6">
+                        {logoPreview ? (
+                          <>
+                            <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white bg-white shadow-sm">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain p-2" />
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <p className="text-[14px] font-semibold text-[#141414]">{logoFileName}</p>
+                              <p className="mt-0.5 text-[12px] text-[#1B7339]">Tap to replace logo</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1B7339]/10 text-[#1B7339] transition-transform group-hover:scale-105">
+                              <Upload className="h-6 w-6" />
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <p className="text-[14px] font-semibold text-[#141414]">Drop your logo here</p>
+                              <p className="mt-0.5 text-[12px] text-[#8A8A8A]">PNG or JPG · max 2MB recommended</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </button>
+
+                    <div className="flex items-center gap-3 rounded-2xl border border-[#E5E2DA] bg-white/80 px-4 py-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F7F6F2]">
+                        <Building2 className="h-4 w-4 text-[#1B7339]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-medium uppercase tracking-wide text-[#8A8A8A]">Preview label</p>
+                        <p className="truncate text-[14px] font-semibold text-[#141414]">
+                          {customer?.companyName || "Your brand"} · KraftReborn custom print
+                        </p>
+                      </div>
+                      {logoPreview ? (
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-[#1B7339]" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 shrink-0 text-[#D4A017]" />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-4 rounded-xl bg-white/60 px-4 py-3 text-[12px] text-[#7A7A7A]">
+                    Toggle on to add your company logo — perfect for corporate gifting and brand visibility.
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
+          <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D9E8DC] bg-gradient-to-br from-[#F8FBF9] via-white to-[#F7F6F2] shadow-[0_8px_30px_rgba(27,115,57,0.08)]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -left-6 top-0 h-32 w-32 rounded-full bg-[#1B7339]/6 blur-3xl"
+            />
+
+            <div className="relative p-5 sm:p-6">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1B7339]/80">
+                    Payment method
+                  </p>
+                  <h2 className="mt-0.5 font-[family-name:var(--font-display)] text-[1.15rem] font-bold text-[#141414]">
+                    Pay with Rupee Amount
+                  </h2>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#1B7339] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  <Sparkles className="h-3 w-3" />
+                  Recommended
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setUseKrCredits(true)}
+                className={cn(
+                  "w-full rounded-2xl border-2 p-4 text-left transition-all",
+                  useKrCredits
+                    ? "border-[#1B7339] bg-white shadow-[0_4px_20px_rgba(27,115,57,0.12)]"
+                    : "border-[#E5E2DA] bg-white/60",
+                )}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1B7339] to-[#2D8F4E] text-white shadow-md">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[15px] font-bold text-[#141414]">Rupee Amount Wallet</span>
+                      {useKrCredits && (
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#1B7339] text-white">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-[13px] text-[#6B6B6B]">
+                      Deducted only when your order is marked completed
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-[#F7F6F2] px-3 py-2.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8A8A8A]">Available</p>
+                        <p className="mt-0.5 text-[18px] font-bold text-[#1B7339]">{formatInr(credits)}</p>
+                      </div>
+                      <div className="rounded-xl bg-[#F7F6F2] px-3 py-2.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8A8A8A]">Order total</p>
+                        <p className="mt-0.5 text-[18px] font-bold text-[#141414]">{formatInr(subtotal)}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="mb-1.5 flex justify-between text-[11px] font-medium">
+                        <span className="text-[#6B6B6B]">Balance coverage</span>
+                        <span className={canPayWithCredits ? "text-[#1B7339]" : "text-[#C62828]"}>
+                          {Math.min(100, Math.round((credits / subtotal) * 100))}%
+                        </span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-[#E8E8E8]">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            canPayWithCredits
+                              ? "bg-gradient-to-r from-[#1B7339] to-[#4CAF50]"
+                              : "bg-gradient-to-r from-[#F5A623] to-[#E53935]",
+                          )}
+                          style={{ width: `${Math.min(100, (credits / subtotal) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {!canPayWithCredits ? (
+                      <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#FFCDD2] bg-[#FFEBEE] px-3 py-2.5">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#C62828]" />
+                        <p className="text-[12px] leading-snug text-[#B71C1C]">
+                          You need <strong>{formatInr(subtotal - credits)}</strong> more rupee amount to complete this order.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#C8E6D4] bg-[#E8F5E9] px-3 py-2.5">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#1B7339]" />
+                        <p className="text-[12px] font-medium text-[#1B7339]">
+                          You&apos;re all set — balance covers this order.
+                        </p>
                       </div>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="border-[#E5E2DA] bg-[#F7F6F2]/80 rounded-[1.35rem] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-[family-name:var(--font-display)]">Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-colors cursor-pointer ${
-                  useKrCredits ? "border-[#1B7339] bg-[#E8F5E9]/70" : "border-[#E5E2DA] bg-white/50"
-                }`}
-                onClick={() => setUseKrCredits(true)}
-              >
-                <Checkbox checked={useKrCredits} onCheckedChange={() => setUseKrCredits(true)} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#1B7339]" />
-                    <span className="font-semibold">Use Rupee Amount</span>
-                    <Badge variant="outline" className="text-[10px]">Recommended</Badge>
-                  </div>
-                  <p className="text-sm text-[#5A5A5A] mt-1">
-                    Available: <strong>{formatInr(credits)}</strong> · Deducted when order is completed
-                  </p>
-                  {!canPayWithCredits && (
-                    <p className="text-sm text-destructive mt-2">
-                      Need {formatInr(subtotal - credits)} more for this order.
-                    </p>
-                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          </section>
         </div>
 
         <div>

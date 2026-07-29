@@ -1,9 +1,10 @@
 import { ADMIN_COOKIE } from "@/lib/auth-session"
+import { getAuthSecret } from "@/lib/auth-secret"
 
 const enc = new TextEncoder()
 
 function getSecret(): string {
-  return process.env.AUTH_SECRET || process.env.ADMIN_PASSWORD || "buffindia-auth-secret-change-me"
+  return getAuthSecret()
 }
 
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {

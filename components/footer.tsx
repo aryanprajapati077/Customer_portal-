@@ -15,7 +15,7 @@ const quickLinks = [
 const getInvolvedLinks = [
   { name: "Become a Partner", href: "/partner-program" },
   { name: "Support the Campaign", href: "/supporter-page" },
-  { name: "Shop EcoArt", href: "https://ecoart.buffindia.com" },
+  { name: "Shop KraftReborn", href: "/dashboard/shop" },
   { name: "Customer Login", href: "/login" },
   { name: "References", href: "/references" },
   { name: "Recognitions", href: "/recognitions" },

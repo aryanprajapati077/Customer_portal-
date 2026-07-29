@@ -6,6 +6,7 @@ import type { Customer } from "@/lib/auth-context"
 import { PortalSidebar } from "@/components/portal/portal-sidebar"
 import { PortalTopbar } from "@/components/portal/portal-topbar"
 import { PortalFooter } from "@/components/portal/portal-footer"
+import { PortalPresenceTracker } from "@/components/portal/portal-presence-tracker"
 import { Loader2, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import "@/app/portal.css"
@@ -33,6 +34,7 @@ export function PortalShell({ customer, loading, children, showCart = false }: P
 
   return (
     <div className="portal-root min-h-screen flex">
+      <PortalPresenceTracker />
       <div className="hidden lg:block sticky top-0 h-screen">
         <PortalSidebar />
       </div>

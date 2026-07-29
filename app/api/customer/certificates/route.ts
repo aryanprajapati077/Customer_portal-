@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { syncServiceCertificate } from "@/lib/sync-certificates"
+import { resolveCustomerScope } from "@/lib/customer-api-auth"
 
 function formatCertificate(row: {
   id: string
@@ -28,16 +29,19 @@ function formatCertificate(row: {
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
+    const locationId = request.nextUrl.searchParams.get("locationId")
+    const auth = await resolveCustomerScope(
+      request.nextUrl.searchParams.get("customerId"),
+      locationId,
+    )
+    if (!auth.ok) return auth.response
 
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
+    for (const cid of auth.customerIds) {
+      await syncServiceCertificate(cid)
     }
 
-    await syncServiceCertificate(customerId)
-
     const certificates = await prisma.certificate.findMany({
-      where: { customerId },
+      where: { customerId: { in: auth.customerIds } },
       orderBy: { issueDate: "desc" },
     })
 

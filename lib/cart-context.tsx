@@ -24,6 +24,7 @@ export interface ShopProduct {
   imageGradient: string
   allowsLogo: boolean
   availableColors?: string[]
+  colorImages?: Record<string, string>
 }
 
 export interface CartItem {

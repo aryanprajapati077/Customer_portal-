@@ -8,6 +8,10 @@ import { useAuth, type Customer } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
 import { firstName } from "@/lib/portal-metrics"
 import {
+  GroupLocationSwitcher,
+  type GroupLocationOption,
+} from "@/components/portal/group-location-switcher"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,6 +39,39 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
   const router = useRouter()
   const { itemCount } = useCart()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [groupLocations, setGroupLocations] = useState<GroupLocationOption[]>([])
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!customer.isGroup) return
+    try {
+      const saved = sessionStorage.getItem(`buffindia_group_location_${customer.id}`)
+      if (saved && saved !== "all") setSelectedLocationId(saved)
+    } catch {
+      /* ignore */
+    }
+    fetch("/api/customer/group-locations")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success && Array.isArray(d.locations)) setGroupLocations(d.locations)
+      })
+      .catch(() => {})
+  }, [customer.id, customer.isGroup])
+
+  const onLocationChange = (locationId: string | null) => {
+    setSelectedLocationId(locationId)
+    try {
+      sessionStorage.setItem(
+        `buffindia_group_location_${customer.id}`,
+        locationId || "all",
+      )
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(
+      new CustomEvent("buffindia-group-location", { detail: locationId }),
+    )
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -58,6 +95,14 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
 
   return (
     <div className="flex items-center justify-end gap-3">
+      {customer.isGroup && groupLocations.length > 0 && (
+        <GroupLocationSwitcher
+          locations={groupLocations}
+          selectedLocationId={selectedLocationId}
+          onChange={onLocationChange}
+          className="hidden sm:inline-flex"
+        />
+      )}
       {showCart && (
         <Link
           href="/dashboard/shop/cart"

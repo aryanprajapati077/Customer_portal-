@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Plus, Search, Users, Download, Table2 } from "lucide-react"
+import { Loader2, Plus, Search, Users, Download, Table2, Mail } from "lucide-react"
 import {
   CreateCustomerForm,
   EMPTY_CREATE_CUSTOMER_FORM,
@@ -123,8 +123,8 @@ export default function AdminCustomersPage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [selected, setSelected] = useState<CustomerRow | null>(null)
   const [exporting, setExporting] = useState(false)
-  const [creditAdd, setCreditAdd] = useState("")
-  const [creditAdding, setCreditAdding] = useState(false)
+  const [welcomeSending, setWelcomeSending] = useState(false)
+  const [welcomePending, setWelcomePending] = useState<number | null>(null)
   const [isPending, startTransition] = useTransition()
   const nextCustomerId = useNextCustomerId(createOpen)
 
@@ -157,10 +157,46 @@ export default function AdminCustomersPage() {
   }, [q])
 
   useEffect(() => {
-    setCreditAdd("")
-  }, [selected?.id])
+    fetch("/api/admin/customers/welcome-emails")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success) setWelcomePending(d.pending ?? 0)
+      })
+      .catch(() => {})
+  }, [rows.length, createOpen])
 
   const filtered = rows
+
+  const sendWelcomeToAll = async () => {
+    const pendingLabel =
+      welcomePending == null ? "all pending clients" : `${welcomePending} pending client(s)`
+    if (
+      !confirm(
+        `Send welcome emails to ${pendingLabel}?\n\nEach client gets a new temporary password by email.\nOnly clients who have not received a welcome email yet will be included.`,
+      )
+    ) {
+      return
+    }
+    setWelcomeSending(true)
+    try {
+      const res = await fetch("/api/admin/customers/welcome-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onlyPending: true }),
+      })
+      const data = await res.json()
+      if (data?.success) {
+        setWelcomePending(0)
+        alert(data.message || `Welcome emails queued for ${data.queued} client(s).`)
+      } else {
+        alert(data?.error || "Failed to send welcome emails")
+      }
+    } catch {
+      alert("Network error while sending welcome emails")
+    } finally {
+      setWelcomeSending(false)
+    }
+  }
 
   const loadMore = async () => {
     if (loading || loadingMore || !hasMore) return
@@ -222,15 +258,9 @@ export default function AdminCustomersPage() {
         await fetchCustomers({ reset: true })
         setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
         setCreateOpen(false)
-        if (data.welcomeEmailSent) {
-          alert(`Customer ${data.customer.id} created.\nWelcome email sent to ${data.customer.email}.`)
-        } else {
-          const reason = data.welcomeEmailError ? `\nReason: ${data.welcomeEmailError}` : ""
-          const tempPw = data.temporaryPassword
-            ? `\n\nUsername: ${data.customer.email}\nPassword: ${data.temporaryPassword}`
-            : ""
-          alert(`Customer ${data.customer.id} created, but welcome email was not sent.${reason}${tempPw}`)
-        }
+        alert(
+          `Customer ${data.customer.id} created.\nNo welcome email was sent yet — use “Send welcome emails” after all clients are entered.`,
+        )
       } else {
         setCreateError(data?.error || "Failed to create customer")
       }
@@ -328,10 +358,24 @@ export default function AdminCustomersPage() {
           </p>
           <h1 className="admin-page-title">Customers</h1>
           <p className="mt-1 text-[14px] text-[#6B6B6B]">
-            Excel-style grid — click a row for the full sheet. Export anytime.
+            Enter all clients first, then send welcome emails in one click.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9]"
+            onClick={sendWelcomeToAll}
+            disabled={welcomeSending || rows.length === 0}
+          >
+            {welcomeSending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="mr-2 h-4 w-4" />
+            )}
+            Send welcome emails
+            {welcomePending != null ? ` (${welcomePending})` : ""}
+          </Button>
           <Button
             variant="outline"
             className="rounded-full"
@@ -612,72 +656,13 @@ export default function AdminCustomersPage() {
                     }}
                   />
                   <p className="text-[11px] text-[#7A7A7A]">
-                    Save on blur. Customer can redeem this balance in the KraftReborn shop.
+                    Save on blur. Customer can redeem this balance in the KraftReborn shop. To add
+                    extra credits, use{" "}
+                    <a href="/admin/kr-credits" className="font-semibold text-[#1B7339] hover:underline">
+                      Admin → KR Credits
+                    </a>
+                    .
                   </p>
-
-                  <div className="pt-1 space-y-2">
-                    <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
-                      Add KR credits (₹) — extra credits
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={creditAdd}
-                        placeholder="e.g. 200"
-                        onChange={(e) => setCreditAdd(e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          const raw = creditAdd.trim()
-                          const delta = Math.max(0, Math.floor(Number(raw)))
-                          if (!raw || !Number.isFinite(delta) || delta <= 0 || !selected) return
-                          setCreditAdding(true)
-                          try {
-                            const res = await fetch("/api/admin/customers", {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ id: selected.id, kraftrebornCreditsDelta: delta }),
-                            })
-                            const data = await res.json()
-                            if (data?.success && data.customer) {
-                              setSelected((s) =>
-                                s ? { ...s, kraftrebornCredits: data.customer.kraftrebornCredits } : s,
-                              )
-                              setRows((prev) =>
-                                prev.map((r) =>
-                                  r.id === selected.id
-                                    ? {
-                                        ...r,
-                                        kraftrebornCredits: data.customer.kraftrebornCredits,
-                                        updatedAt: data.customer.updatedAt,
-                                      }
-                                    : r,
-                                ),
-                              )
-                              setCreditAdd("")
-                            } else {
-                              alert(data?.error || "Failed to add KR credits")
-                            }
-                          } finally {
-                            setCreditAdding(false)
-                          }
-                        }}
-                        disabled={creditAdding}
-                        className="rounded-lg bg-[#1B7339] hover:bg-[#145a2c]"
-                      >
-                        {creditAdding ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : null}
-                        Add
-                      </Button>
-                    </div>
-                    <p className="text-[11px] text-[#7A7A7A]">
-                      Client will automatically receive an email when extra credits are added.
-                    </p>
-                  </div>
                 </div>
                 {selected.collectionPocs && (
                   <div className="rounded-xl border border-[#E2EBE4] p-3">

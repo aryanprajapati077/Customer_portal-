@@ -32,7 +32,7 @@ const campaignPillars = [
   {
     icon: Recycle,
     title: "Collection & Circularity",
-    text: "Door-to-door pickup feeds BuffIndia's recovery loop: ash into bricks, tobacco into compost, and filter fibre into EcoArt products.",
+    text: "Door-to-door pickup feeds BuffIndia's recovery loop: ash into bricks, tobacco into compost, and filter fibre into KraftReborn products.",
   },
   {
     icon: Leaf,
@@ -45,7 +45,7 @@ const helpItems = [
   "Host BuffIndia disposal units at your premises",
   "Sponsor awareness drives in your city or campus",
   "Share the campaign with hotels, corporates, and venues you know",
-  "Shop EcoArt products made from recovered cigarette waste",
+  "Shop KraftReborn products made from recovered cigarette waste",
   "Join as an affiliate partner and earn while you advocate",
 ]
 
@@ -119,12 +119,12 @@ export default function SupporterPage() {
               Explore Our Services
             </Link>
             <a
-              href="https://ecoart.buffindia.com"
+              href="/dashboard/shop"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#145a2c]"
             >
-              Shop EcoArt
+              Shop KraftReborn
               <ArrowRight className="h-4 w-4" />
             </a>
           </div>

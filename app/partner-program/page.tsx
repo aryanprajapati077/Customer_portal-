@@ -7,7 +7,7 @@ import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
 const whyPartner = [
   {
     title: "Promote Transformation",
-    text: "Inspire businesses and individuals to adopt end-to-end cigarette waste solutions—from kiosk installation to EcoArt upcycling.",
+    text: "Inspire businesses and individuals to adopt end-to-end cigarette waste solutions—from kiosk installation to KraftReborn upcycling.",
   },
   {
     title: "Expand Our Reach",
@@ -85,7 +85,7 @@ export default function PartnerProgramPage() {
       eyebrow="Affiliate partner program"
       title="Partner with"
       accent="BuffIndia"
-      subtitle="Join the movement for a cleaner, greener India. As an affiliate partner, you help businesses catch waste at the source, route it into BuffIndia's recovery loop, and turn litter into EcoArt—while earning meaningful rewards."
+      subtitle="Join the movement for a cleaner, greener India. As an affiliate partner, you help businesses catch waste at the source, route it into BuffIndia's recovery loop, and turn litter into KraftReborn—while earning meaningful rewards."
       cta={{ href: "https://form.jotform.com/250602909519459", label: "Sign Up Now" }}
     >
       <section className="mb-14">

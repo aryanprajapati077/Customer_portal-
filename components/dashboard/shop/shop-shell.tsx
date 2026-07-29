@@ -37,16 +37,18 @@ export function ShopShell({
             {showBack && (
               <Link
                 href={backHref}
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#D0D0D0] bg-white text-[13px] font-medium text-[#1A1A1A] hover:bg-[#FAFAFA]"
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#5A5A5A] transition-colors hover:text-[#1B7339] -ml-0.5"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
                 Back
               </Link>
             )}
-            <div>
-              {title && <h1 className="text-[20px] font-bold text-[#1A1A1A]">{title}</h1>}
-              {subtitle && <p className="text-[13px] text-[#7A7A7A]">{subtitle}</p>}
-            </div>
+            {(title || subtitle) && (
+              <div className="min-w-0">
+                {title && <h1 className="text-[20px] font-bold text-[#1A1A1A] truncate">{title}</h1>}
+                {subtitle && <p className="text-[13px] text-[#7A7A7A]">{subtitle}</p>}
+              </div>
+            )}
           </div>
         )}
         {children}

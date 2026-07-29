@@ -4,20 +4,19 @@ import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-ce
 import { sendCertificateEmail } from "@/lib/certificate-email"
 import { queueEmail } from "@/lib/email-queue"
 import { sql } from "@/lib/db"
+import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const customerId = request.nextUrl.searchParams.get("customerId")
+    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
+    if (!auth.ok) return auth.response
+    const customerId = auth.customerId
     const type = request.nextUrl.searchParams.get("type") || "services"
     const certificateId = request.nextUrl.searchParams.get("certificateId") || undefined
     const orderId = request.nextUrl.searchParams.get("orderId") || undefined
     const amount = Number(request.nextUrl.searchParams.get("amount") || 0)
     const contactName = request.nextUrl.searchParams.get("contactName") || "Partner"
     const productCount = Number(request.nextUrl.searchParams.get("productCount") || 1)
-
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
 
     if (type === "kraftreborn") {
       if (!orderId || amount <= 0) {
@@ -61,15 +60,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+
     const body = await request.json()
+    const denied = assertCustomerAccess(session.customerId, body?.customerId)
+    if (denied) return denied
+
     const action = String(body?.action || "download")
-    const customerId = String(body?.customerId || "").trim()
+    const customerId = session.customerId
     const certificateId = body?.certificateId ? String(body.certificateId) : undefined
     const type = String(body?.type || "services")
-
-    if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
 
     if (type !== "services") {
       return NextResponse.json(

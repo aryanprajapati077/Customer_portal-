@@ -18,6 +18,14 @@ const ADMIN_API_PUBLIC = [
   "/api/admin/reset-password",
 ]
 
+function withSecurityHeaders(response: NextResponse) {
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -31,10 +39,21 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith("/api/customer")) {
+  if (pathname.startsWith("/api/customer") || pathname.startsWith("/api/notifications")) {
     const session = request.cookies.get(CUSTOMER_COOKIE)?.value
     if (!(await verifyCustomerSession(session))) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+      return withSecurityHeaders(
+        NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }),
+      )
+    }
+  }
+
+  if (pathname.startsWith("/api/support/ticket") && request.method === "GET") {
+    const session = request.cookies.get(CUSTOMER_COOKIE)?.value
+    if (!(await verifyCustomerSession(session))) {
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      )
     }
   }
 
@@ -60,9 +79,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  return withSecurityHeaders(NextResponse.next())
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/customer/:path*", "/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/api/customer/:path*",
+    "/api/notifications/:path*",
+    "/api/support/ticket",
+    "/admin/:path*",
+    "/api/admin/:path*",
+  ],
 }

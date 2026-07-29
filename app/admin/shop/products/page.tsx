@@ -45,7 +45,7 @@ const EMPTY_FORM = {
   description: "",
   price: "",
   originalPrice: "",
-  category: "elegant-combos",
+  category: "single-product-delight",
   tagline: "",
   buttsRescued: "40",
   imageGradient: "from-amber-100 via-stone-200 to-emerald-100",

@@ -9,7 +9,6 @@ import {
   Mail,
   TrendingUp,
   ArrowRight,
-  ListTree,
   Sparkles,
 } from "lucide-react"
 
@@ -131,6 +130,12 @@ export default async function AdminOverviewPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
               {
+                href: "/admin/analytics",
+                icon: TrendingUp,
+                title: "Portal Analytics",
+                desc: "Who is online, visits & sessions",
+              },
+              {
                 href: "/admin/reports",
                 icon: FileBarChart,
                 title: "Generate Monthly Reports",
@@ -147,12 +152,6 @@ export default async function AdminOverviewPage() {
                 icon: Users,
                 title: "Client Management",
                 desc: "Edit profiles, credits, and targets",
-              },
-              {
-                href: "/admin/dropdowns",
-                icon: ListTree,
-                title: "Manage Dropdowns",
-                desc: "LSU names & technicians for forms",
               },
             ].map((a) => (
               <Link

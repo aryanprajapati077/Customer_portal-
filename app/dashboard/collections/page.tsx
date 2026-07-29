@@ -48,24 +48,36 @@ function frequencyDescription(freq?: string | null) {
 }
 
 export default function CollectionsPage() {
-  const { customer, authLoading, dataLoading, collections, metrics, handleRefresh, isRefreshing } =
+  const { customer, authLoading, dataLoading, collections, metrics, handleRefresh, isRefreshing, isGroupView } =
     usePortalData()
   const [sortAsc, setSortAsc] = useState(false)
   const [period, setPeriod] = useState<Period>("this-year")
 
   const filtered = useMemo(() => {
     const now = new Date()
+    const startRaw =
+      (customer as { serviceStartDate?: string } | null)?.serviceStartDate || customer?.joinDate
+    const start = startRaw ? new Date(startRaw) : null
+    const startMonth =
+      start && !Number.isNaN(start.getTime())
+        ? Date.UTC(start.getFullYear(), start.getMonth(), 1)
+        : null
+
     return collections.filter((c) => {
-      if (!c.date || period === "all") return true
+      if (!c.date) return true
       const d = new Date(c.date)
       if (Number.isNaN(d.getTime())) return true
+      if (startMonth != null) {
+        const rowMonth = Date.UTC(d.getFullYear(), d.getMonth(), 1)
+        if (rowMonth < startMonth) return false
+      }
+      if (period === "all") return true
       if (period === "this-month") {
         return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
       }
-      // this-year
       return d.getFullYear() === now.getFullYear()
     })
-  }, [collections, period])
+  }, [collections, period, customer])
 
   const sorted = useMemo(() => {
     const list = [...filtered]
@@ -257,9 +269,16 @@ export default function CollectionsPage() {
                   sorted.map((c, idx) => (
                     <tr key={`${c.date}-${idx}`} className="border-t border-[#F0F0F0]">
                       <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-2 text-[13px] text-[#1A1A1A]">
-                          <Calendar className="w-4 h-4 text-[#1B7339]" />
-                          {formatPortalDate(c.date)}
+                        <span className="inline-flex flex-col gap-0.5">
+                          <span className="inline-flex items-center gap-2 text-[13px] text-[#1A1A1A]">
+                            <Calendar className="w-4 h-4 text-[#1B7339]" />
+                            {formatPortalDate(c.date)}
+                          </span>
+                          {isGroupView && (c as { locationName?: string }).locationName && (
+                            <span className="text-[11px] font-medium text-[#1B7339] pl-6">
+                              {(c as { locationName?: string }).locationName}
+                            </span>
+                          )}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-[13px] font-medium text-[#1A1A1A]">

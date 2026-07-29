@@ -20,21 +20,19 @@ async function ensureSupportAttachmentColumn() {
 export async function GET(request: Request) {
   try {
     await ensureSupportAttachmentColumn()
+    const { requireCustomerSession } = await import("@/lib/customer-api-auth")
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+
     const { searchParams } = new URL(request.url)
     const email = String(searchParams.get("email") || "")
       .trim()
       .toLowerCase()
-    const customerId = String(searchParams.get("customerId") || "").trim()
-
-    if (!email && !customerId) {
-      return NextResponse.json({ error: "email or customerId required" }, { status: 400 })
-    }
+    const customerId = session.customerId
 
     const tickets = await prisma.supportTicket.findMany({
       where: email
-        ? customerId
-          ? { OR: [{ email: { equals: email, mode: "insensitive" } }, { customerId }] }
-          : { email: { equals: email, mode: "insensitive" } }
+        ? { OR: [{ email: { equals: email, mode: "insensitive" } }, { customerId }] }
         : { customerId },
       orderBy: { createdAt: "desc" },
       take: 50,

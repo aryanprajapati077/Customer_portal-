@@ -34,7 +34,7 @@ const sectors = [
 
 const trustPoints = [
   "End-to-end service: install, awareness, collect, recycle, report",
-  "Upcycled EcoArt deliverables with optional brand customization",
+  "Upcycled KraftReborn deliverables with optional brand customization",
   "Monthly impact insights suitable for internal ESG storytelling",
   "Proven footprint with hotels, corporates, and hospitality groups",
 ]
@@ -52,7 +52,7 @@ export default function ReferencesPage() {
       eyebrow="Client references"
       title="Trusted by"
       accent="leaders"
-      subtitle="BuffIndia is proud to be trusted by major Fortune 500 corporates, premium hotels, and renowned establishments across India—catching cigarette waste at the source and transforming it through recycling and EcoArt."
+      subtitle="BuffIndia is proud to be trusted by major Fortune 500 corporates, premium hotels, and renowned establishments across India—catching cigarette waste at the source and transforming it through recycling and KraftReborn."
       cta={{ href: "/contact", label: "Get In Touch" }}
     >
       <div className="mb-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

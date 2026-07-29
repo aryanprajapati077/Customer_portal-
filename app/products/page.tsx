@@ -64,11 +64,11 @@ const benefits = [
 export default function ProductsPage() {
   return (
     <InspirePage
-      eyebrow="EcoArt by BuffIndia"
+      eyebrow="KraftReborn by BuffIndia"
       title="Waste becomes"
       accent="design"
       subtitle="World's first e-commerce store for sustainable décor & gifting. Handcrafted from recycled cigarette waste—budget-friendly, purposeful, and proof that litter can become design."
-      cta={{ href: "https://ecoart.buffindia.com", label: "Shop EcoArt Now" }}
+      cta={{ href: "/dashboard/shop", label: "Shop KraftReborn Now" }}
     >
       <section className="mb-14">
         <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
@@ -102,7 +102,7 @@ export default function ProductsPage() {
 
       <section className="mb-14">
         <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
-          What sets EcoArt apart
+          What sets KraftReborn apart
         </h2>
         <p className="mt-2 text-[15px] text-[#5A5A5A]">Sustainability meets craftsmanship.</p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -125,10 +125,10 @@ export default function ProductsPage() {
       <section className="mb-14">
         <InspireCard>
           <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.5rem,3vw,2rem)] tracking-tight text-[#141414]">
-            Why choose EcoArt?
+            Why choose KraftReborn?
           </h2>
           <p className="mt-2 text-[15px] text-[#5A5A5A]">Purposeful décor & gifts for every occasion.</p>
-          <p className="mt-6 text-[14px] font-medium text-[#141414]">EcoArt products are perfect for:</p>
+          <p className="mt-6 text-[14px] font-medium text-[#141414]">KraftReborn products are perfect for:</p>
           <ul className="mt-3 space-y-2">
             {useCases.map((item) => (
               <li key={item} className="flex items-start gap-2 text-[14px] text-[#5A5A5A]">
@@ -140,7 +140,7 @@ export default function ProductsPage() {
           <h3 className="mt-8 text-[17px] font-semibold tracking-tight text-[#141414]">
             The bigger picture – more than just products
           </h3>
-          <p className="mt-2 text-[14px] text-[#5A5A5A]">By choosing EcoArt, you&apos;re making a difference:</p>
+          <p className="mt-2 text-[14px] text-[#5A5A5A]">By choosing KraftReborn, you&apos;re making a difference:</p>
           <ul className="mt-3 space-y-2">
             {benefits.map((item) => (
               <li key={item} className="flex items-start gap-2 text-[14px] text-[#5A5A5A]">
@@ -154,7 +154,7 @@ export default function ProductsPage() {
             <Link href="/services" className="font-medium text-[#1B7339] hover:underline">
               annual service
             </Link>{" "}
-            often receive branded EcoArt as part of their sustainability package.
+            often receive branded KraftReborn as part of their sustainability package.
           </p>
         </InspireCard>
       </section>
@@ -164,17 +164,17 @@ export default function ProductsPage() {
           Explore the <em className="italic text-[#C8F000]">collection</em>
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-[14px] leading-relaxed text-white/70">
-          Browse sustainable décor and gifting on our EcoArt store—or learn how collection services feed this circular
+          Browse sustainable décor and gifting on our KraftReborn store—or learn how collection services feed this circular
           catalogue.
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href="https://ecoart.buffindia.com"
+            href="/dashboard/shop"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-[#C8F000] px-5 py-2.5 text-[14px] font-semibold text-[#141414] hover:bg-[#d4f53a]"
           >
-            Shop EcoArt Now
+            Shop KraftReborn Now
             <ArrowRight className="h-4 w-4" />
           </a>
           <Link

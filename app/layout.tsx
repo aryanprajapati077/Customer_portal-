@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   title: "BuffIndia | Butt Free India – End-to-End Cigarette Waste Management",
   description:
     "India's first end-to-end cigarette waste management. We collect, recycle, and transform cigarette waste into sustainable products. Join the movement for a cleaner, greener India.",
-  keywords: ["BuffIndia", "Butt Free India", "cigarette waste recycling", "sustainability", "Ahmedabad", "EcoArt"],
+  keywords: ["BuffIndia", "Butt Free India", "cigarette waste recycling", "sustainability", "Ahmedabad", "KraftReborn"],
   openGraph: {
     title: "BuffIndia | Butt Free India – Cigarette Waste to Sustainable Products",
     description: "India's first end-to-end cigarette waste management. Transform waste into eco-friendly products.",

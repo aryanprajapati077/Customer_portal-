@@ -14,35 +14,25 @@ import { Car, ChevronRight, Info, Leaf, TreePine, Zap } from "lucide-react"
 import { MetricCard } from "@/components/portal/metric-card"
 import { Cigarette, Droplets, Recycle } from "lucide-react"
 import type { PortalMetrics } from "@/lib/portal-metrics"
-import { formatIndianNumber, formatKg, formatWaterL } from "@/lib/portal-metrics"
+import { buildMonthlyTrend, formatIndianNumber, formatKg, formatWaterL } from "@/lib/portal-metrics"
 import type { CollectionLike } from "@/lib/portal-metrics"
-
-function buildTrend(collections: CollectionLike[]) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  const year = new Date().getFullYear()
-  const totals = months.map((m) => ({ month: m, kg: 0 }))
-  for (const c of collections) {
-    if (!c.date) continue
-    const d = new Date(c.date)
-    if (d.getFullYear() !== year) continue
-    totals[d.getMonth()].kg += Number(c.weight) || 0
-  }
-  // smooth empty months with slight progressive demo if no data
-  const hasData = totals.some((t) => t.kg > 0)
-  if (!hasData) {
-    return months.map((m, i) => ({ month: m, kg: +(0.3 + i * 0.15).toFixed(2) }))
-  }
-  return totals.map((t) => ({ ...t, kg: +t.kg.toFixed(2) }))
-}
 
 interface ImpactOverviewProps {
   metrics: PortalMetrics
   collections: CollectionLike[]
   yearlyGoalKg?: number
+  serviceStartDate?: string | Date | null
 }
 
-export function ImpactOverview({ metrics, collections, yearlyGoalKg = 1200 }: ImpactOverviewProps) {
-  const trend = buildTrend(collections)
+export function ImpactOverview({
+  metrics,
+  collections,
+  yearlyGoalKg = 1200,
+  serviceStartDate,
+}: ImpactOverviewProps) {
+  const trend = buildMonthlyTrend(collections, {
+    startDate: serviceStartDate,
+  })
   const collected = metrics.totalWasteKg
   const pct = Math.min(100, Math.round((collected / yearlyGoalKg) * 100))
   const radius = 54

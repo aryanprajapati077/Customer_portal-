@@ -32,3 +32,6 @@ next-env.d.ts
 .env*
 tmp-report-ref/
 public/uploads/
+
+# local import / review artifacts
+/outputs/

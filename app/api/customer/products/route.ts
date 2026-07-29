@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { sql } from "@/lib/db"
 import { ensureShopProductsSeeded } from "@/lib/shop"
 import { DEFAULT_PRODUCT_COLORS, parseProductColors } from "@/lib/product-colors"
+import { buildColorImageMap } from "@/lib/product-color-images"
 
 async function loadProductMetaMap() {
   try {
@@ -52,6 +53,7 @@ export async function GET() {
       products: products.map((p) => {
         const meta = metaMap.get(p.id)
         const imageUrls = meta?.imageUrls?.length ? meta.imageUrls : p.imageUrl ? [p.imageUrl] : []
+        const availableColors = meta?.availableColors || [...DEFAULT_PRODUCT_COLORS]
         return {
           id: p.id,
           name: p.name,
@@ -63,11 +65,12 @@ export async function GET() {
           buttsRescued: p.buttsRescued,
           imageUrl: imageUrls[0] || p.imageUrl,
           imageUrls,
+          colorImages: buildColorImageMap(availableColors, imageUrls),
           imageGradient: p.imageGradient,
           allowsLogo: p.allowsLogo,
           active: p.active,
           sortOrder: p.sortOrder,
-          availableColors: meta?.availableColors || [...DEFAULT_PRODUCT_COLORS],
+          availableColors,
         }
       }),
     })

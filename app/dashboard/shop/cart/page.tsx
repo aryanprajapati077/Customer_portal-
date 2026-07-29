@@ -33,9 +33,9 @@ export default function CartPage() {
                 className="flex gap-4 rounded-[1.25rem] border border-black/[0.06] bg-white p-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
               >
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-[#F4F3EE]">
-                  {line.product.imageUrl ? (
+                  {(line.product.imageUrls?.[0] || line.product.imageUrl) ? (
                     <Image
-                      src={line.product.imageUrl}
+                      src={line.product.imageUrls?.[0] || line.product.imageUrl || ""}
                       alt={line.product.name}
                       fill
                       className="object-cover"
@@ -58,9 +58,14 @@ export default function CartPage() {
                   >
                     {line.product.name}
                   </Link>
-                  <p className="text-[13px] text-[#6B6B6B]">
-                    {formatInr(line.product.price)} each
-                    {line.color ? ` · ${line.color}` : ""}
+                  <p className="flex flex-wrap items-baseline gap-1.5 text-[13px] text-[#6B6B6B]">
+                    <span>{formatInr(line.product.price)} each</span>
+                    {line.product.originalPrice && line.product.originalPrice > line.product.price ? (
+                      <span className="text-[12px] text-[#A0A0A0] line-through">
+                        {formatInr(line.product.originalPrice)}
+                      </span>
+                    ) : null}
+                    {line.color ? <span>· {line.color}</span> : null}
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="inline-flex items-center rounded-full border border-[#D9D6CF] bg-[#F7F6F2]">

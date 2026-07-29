@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -113,50 +113,59 @@ export default function AdminCustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+  const PAGE_TAKE = 100
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState<CreateCustomerFormState>(EMPTY_CREATE_CUSTOMER_FORM)
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [selected, setSelected] = useState<CustomerRow | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [creditAdd, setCreditAdd] = useState("")
+  const [creditAdding, setCreditAdding] = useState(false)
   const [isPending, startTransition] = useTransition()
   const nextCustomerId = useNextCustomerId(createOpen)
 
-  const load = async () => {
-    setLoading(true)
+  const fetchCustomers = async ({ reset }: { reset: boolean }) => {
+    const currentOffset = reset ? 0 : offset
+    if (reset) setLoading(true)
+    else setLoadingMore(true)
     try {
-      const res = await fetch("/api/admin/customers")
+      const url = q
+        ? `/api/admin/customers?take=${PAGE_TAKE}&offset=${currentOffset}&q=${encodeURIComponent(q)}`
+        : `/api/admin/customers?take=${PAGE_TAKE}&offset=${currentOffset}`
+      const res = await fetch(url)
       const data = await res.json()
-      if (data?.success) setRows(data.customers || [])
+      const nextRows = data?.customers || []
+      if (reset) setRows(nextRows)
+      else setRows((prev) => [...prev, ...nextRows])
+      setOffset(currentOffset + nextRows.length)
+      setHasMore(nextRows.length === PAGE_TAKE)
     } finally {
-      setLoading(false)
+      if (reset) setLoading(false)
+      else setLoadingMore(false)
     }
   }
 
   useEffect(() => {
-    load()
-  }, [])
+    const t = window.setTimeout(() => {
+      fetchCustomers({ reset: true }).catch((err) => console.error("[admin/customers] load failed:", err))
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [q])
 
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return rows
-    return rows.filter((r) =>
-      [
-        r.id,
-        r.email,
-        r.companyName,
-        r.tradeName,
-        r.city,
-        r.state,
-        r.gstin,
-        r.lsuName,
-        r.primaryPocName,
-        r.primaryPocEmail,
-      ]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(s)),
-    )
-  }, [rows, q])
+  useEffect(() => {
+    setCreditAdd("")
+  }, [selected?.id])
+
+  const filtered = rows
+
+  const loadMore = async () => {
+    if (loading || loadingMore || !hasMore) return
+    await fetchCustomers({ reset: false })
+  }
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -210,7 +219,7 @@ export default function AdminCustomersPage() {
       })
       const data = await res.json()
       if (data?.success && data.customer) {
-        await load()
+        await fetchCustomers({ reset: true })
         setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
         setCreateOpen(false)
         if (data.welcomeEmailSent) {
@@ -255,7 +264,22 @@ export default function AdminCustomersPage() {
         fgColor: { argb: "FFC6EFCE" },
       }
 
-      for (const r of filtered) {
+      const allCustomers: CustomerRow[] = []
+      let off = 0
+      while (true) {
+        const url = q
+          ? `/api/admin/customers?take=${PAGE_TAKE}&offset=${off}&q=${encodeURIComponent(q)}`
+          : `/api/admin/customers?take=${PAGE_TAKE}&offset=${off}`
+        const res = await fetch(url)
+        const data = await res.json()
+        const batch = data?.customers || []
+        if (!batch.length) break
+        allCustomers.push(...batch)
+        if (batch.length < PAGE_TAKE) break
+        off += batch.length
+      }
+
+      for (const r of allCustomers) {
         let pocSummary = ""
         try {
           const pocs = JSON.parse(r.collectionPocs || "[]") as { name?: string; email?: string }[]
@@ -312,7 +336,7 @@ export default function AdminCustomersPage() {
             variant="outline"
             className="rounded-full"
             onClick={exportExcel}
-            disabled={exporting || filtered.length === 0}
+            disabled={exporting || rows.length === 0}
           >
             {exporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -437,6 +461,14 @@ export default function AdminCustomersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {!loading && hasMore && (
+          <div className="flex justify-center py-4">
+            <Button onClick={loadMore} disabled={loadingMore} variant="outline" className="rounded-full">
+              {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {loadingMore ? "Loading..." : "Load more"}
+            </Button>
           </div>
         )}
       </div>
@@ -575,13 +607,77 @@ export default function AdminCustomersPage() {
                       const data = await res.json()
                       if (data?.success) {
                         setSelected((s) => (s ? { ...s, kraftrebornCredits } : s))
-                        await load()
+                        await fetchCustomers({ reset: true })
                       }
                     }}
                   />
                   <p className="text-[11px] text-[#7A7A7A]">
                     Save on blur. Customer can redeem this balance in the KraftReborn shop.
                   </p>
+
+                  <div className="pt-1 space-y-2">
+                    <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                      Add KR credits (₹) — extra credits
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={creditAdd}
+                        placeholder="e.g. 200"
+                        onChange={(e) => setCreditAdd(e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          const raw = creditAdd.trim()
+                          const delta = Math.max(0, Math.floor(Number(raw)))
+                          if (!raw || !Number.isFinite(delta) || delta <= 0 || !selected) return
+                          setCreditAdding(true)
+                          try {
+                            const res = await fetch("/api/admin/customers", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: selected.id, kraftrebornCreditsDelta: delta }),
+                            })
+                            const data = await res.json()
+                            if (data?.success && data.customer) {
+                              setSelected((s) =>
+                                s ? { ...s, kraftrebornCredits: data.customer.kraftrebornCredits } : s,
+                              )
+                              setRows((prev) =>
+                                prev.map((r) =>
+                                  r.id === selected.id
+                                    ? {
+                                        ...r,
+                                        kraftrebornCredits: data.customer.kraftrebornCredits,
+                                        updatedAt: data.customer.updatedAt,
+                                      }
+                                    : r,
+                                ),
+                              )
+                              setCreditAdd("")
+                            } else {
+                              alert(data?.error || "Failed to add KR credits")
+                            }
+                          } finally {
+                            setCreditAdding(false)
+                          }
+                        }}
+                        disabled={creditAdding}
+                        className="rounded-lg bg-[#1B7339] hover:bg-[#145a2c]"
+                      >
+                        {creditAdding ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        Add
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-[#7A7A7A]">
+                      Client will automatically receive an email when extra credits are added.
+                    </p>
+                  </div>
                 </div>
                 {selected.collectionPocs && (
                   <div className="rounded-xl border border-[#E2EBE4] p-3">

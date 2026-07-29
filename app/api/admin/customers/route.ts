@@ -86,15 +86,29 @@ export async function GET(request: NextRequest) {
   try {
     const nextIdOnly = request.nextUrl.searchParams.get("nextId") === "1"
     const fields = request.nextUrl.searchParams.get("fields") || ""
+    const take = Math.min(1000, Math.max(1, Number(request.nextUrl.searchParams.get("take") || "500")))
+    const offset = Math.max(0, Number(request.nextUrl.searchParams.get("offset") || "0"))
+    const q = String(request.nextUrl.searchParams.get("q") || "").trim()
 
     // Slim dropdown payload — skip DDL and heavy columns
     if (fields === "options") {
-      const rows = await sql`
-        SELECT id, email, "companyName", status
-        FROM "Customer"
-        ORDER BY "companyName" ASC NULLS LAST, id ASC
-        LIMIT 500
-      `
+      const pattern = q ? `%${q}%` : null
+      const rows = pattern
+        ? await sql`
+            SELECT id, email, "companyName", status
+            FROM "Customer"
+            WHERE id ILIKE ${pattern}
+               OR email ILIKE ${pattern}
+               OR "companyName" ILIKE ${pattern}
+            ORDER BY "companyName" ASC NULLS LAST, id ASC
+            LIMIT ${take}
+          `
+        : await sql`
+            SELECT id, email, "companyName", status
+            FROM "Customer"
+            ORDER BY "companyName" ASC NULLS LAST, id ASC
+            LIMIT ${take}
+          `
       return NextResponse.json({ success: true, customers: rows })
     }
 
@@ -105,22 +119,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, nextId: id })
     }
 
-    const rows = await sql`
-      SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
-             "lsuName", "lsuTechnicianName", "operationsIncharge",
-             "contactPerson", phone, address, status,
-             "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-             "collectionPocs", "collectionFrequency",
-             "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
-             "serviceStartDate",
-             "serviceStatus", "contractEndDate",
-             "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-             "kraftrebornCredits", "updatedAt", "createdAt",
-             "isGroup", "parentCustomerId"
-      FROM "Customer"
-      ORDER BY id ASC
-      LIMIT 500
-    `
+    const pattern = q ? `%${q}%` : null
+    const rows = pattern
+      ? await sql`
+          SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+                 "lsuName", "lsuTechnicianName", "operationsIncharge",
+                 "contactPerson", phone, address, status,
+                 "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+                 "collectionPocs", "collectionFrequency",
+                 "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
+                 "serviceStartDate",
+                 "serviceStatus", "contractEndDate",
+                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+                 "kraftrebornCredits", "updatedAt", "createdAt",
+                 "isGroup", "parentCustomerId"
+          FROM "Customer"
+          WHERE id ILIKE ${pattern}
+             OR email ILIKE ${pattern}
+             OR "companyName" ILIKE ${pattern}
+             OR "tradeName" ILIKE ${pattern}
+             OR gstin ILIKE ${pattern}
+             OR city ILIKE ${pattern}
+             OR state ILIKE ${pattern}
+          ORDER BY id ASC
+          LIMIT ${take} OFFSET ${offset}
+        `
+      : await sql`
+          SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+                 "lsuName", "lsuTechnicianName", "operationsIncharge",
+                 "contactPerson", phone, address, status,
+                 "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+                 "collectionPocs", "collectionFrequency",
+                 "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
+                 "serviceStartDate",
+                 "serviceStatus", "contractEndDate",
+                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+                 "kraftrebornCredits", "updatedAt", "createdAt",
+                 "isGroup", "parentCustomerId"
+          FROM "Customer"
+          ORDER BY id ASC
+          LIMIT ${take} OFFSET ${offset}
+        `
     return NextResponse.json({ success: true, customers: rows })
   } catch (error) {
     console.error("Error fetching customers:", error)
@@ -350,6 +389,16 @@ export async function PATCH(request: NextRequest) {
     const id = String(body?.id || "")
     if (!id) return NextResponse.json({ success: false, error: "Customer id required" }, { status: 400 })
 
+    const hasAbsCredits = body?.kraftrebornCredits !== undefined
+    const hasDeltaCredits = body?.kraftrebornCreditsDelta !== undefined
+    if (hasAbsCredits && hasDeltaCredits) {
+      return NextResponse.json(
+        { success: false, error: "Provide either kraftrebornCredits or kraftrebornCreditsDelta" },
+        { status: 400 },
+      )
+    }
+    let creditsDelta: number | null = null
+
     const updates: string[] = []
     const values: unknown[] = []
     let i = 1
@@ -364,10 +413,20 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"monthlyTarget" = $${i++}`)
       values.push(Number.isFinite(v) ? v : 0)
     }
-    if (body?.kraftrebornCredits !== undefined) {
+    if (hasAbsCredits) {
       const v = Number(body.kraftrebornCredits)
       updates.push(`"kraftrebornCredits" = $${i++}`)
       values.push(Number.isFinite(v) ? v : 0)
+    }
+    if (hasDeltaCredits) {
+      const v = Number(body.kraftrebornCreditsDelta)
+      if (!Number.isFinite(v)) {
+        return NextResponse.json({ success: false, error: "Invalid kraftrebornCreditsDelta" }, { status: 400 })
+      }
+      const delta = Math.floor(v)
+      creditsDelta = delta
+      updates.push(`"kraftrebornCredits" = COALESCE("kraftrebornCredits", 0) + $${i++}`)
+      values.push(delta)
     }
     if (body?.status !== undefined) {
       updates.push(`status = $${i++}`)
@@ -429,14 +488,13 @@ export async function PATCH(request: NextRequest) {
     `
     values.push(id)
 
-    const beforeRows =
-      body?.kraftrebornCredits !== undefined
-        ? await sql`SELECT "kraftrebornCredits", email, "primaryPocEmail", "companyName", "contactPerson" FROM "Customer" WHERE id = ${id} LIMIT 1`
-        : []
+    const beforeRows = hasAbsCredits || hasDeltaCredits
+      ? await sql`SELECT "kraftrebornCredits", email, "primaryPocEmail", "companyName", "contactPerson" FROM "Customer" WHERE id = ${id} LIMIT 1`
+      : []
 
     const rows = await sql.query(query, values)
 
-    if (body?.kraftrebornCredits !== undefined && beforeRows[0]) {
+    if ((hasAbsCredits || hasDeltaCredits) && beforeRows[0]) {
       const before = beforeRows[0] as {
         kraftrebornCredits?: number
         email?: string
@@ -445,7 +503,7 @@ export async function PATCH(request: NextRequest) {
         contactPerson?: string | null
       }
       const prev = Number(before.kraftrebornCredits) || 0
-      const next = Number(body.kraftrebornCredits)
+      const next = hasDeltaCredits ? prev + (creditsDelta ?? 0) : Number(body.kraftrebornCredits)
       const added = next - prev
       if (Number.isFinite(added) && added > 0) {
         const to = String(before.primaryPocEmail || before.email || "")

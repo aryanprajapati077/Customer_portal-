@@ -15,10 +15,12 @@ export interface ShopProduct {
   name: string
   description: string
   price: number
+  originalPrice?: number | null
   category: string
   tagline: string
   buttsRescued: number
   imageUrl?: string | null
+  imageUrls?: string[]
   imageGradient: string
   allowsLogo: boolean
   availableColors?: string[]

@@ -22,6 +22,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string>("")
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>("")
 
   useEffect(() => {
     ;(async () => {
@@ -29,6 +30,7 @@ export default function ProductDetailPage() {
       try {
         const showcase = SHOWCASE_PRODUCTS.find((p) => p.id === productId)
         if (showcase) {
+          const imageUrls = [showcase.image]
           setProduct({
             id: showcase.id,
             name: showcase.name,
@@ -38,10 +40,12 @@ export default function ProductDetailPage() {
             tagline: showcase.tagline,
             buttsRescued: Math.round(showcase.price / 2),
             imageUrl: showcase.image,
+            imageUrls,
             imageGradient: "from-stone-100 to-emerald-50",
             allowsLogo: false,
             availableColors: ["Blue", "Green", "Yellow", "Red", "White", "Mix"],
           })
+          setSelectedImageUrl(imageUrls[0])
           setSelectedColor("Mix")
           return
         }
@@ -50,6 +54,7 @@ export default function ProductDetailPage() {
         if (data?.success) {
           const found = (data.products as ShopProduct[]).find((p) => p.id === productId)
           setProduct(found || null)
+          setSelectedImageUrl(found?.imageUrls?.[0] || found?.imageUrl || "")
           if (found?.availableColors?.length) setSelectedColor(found.availableColors[0])
         }
       } finally {
@@ -86,21 +91,48 @@ export default function ProductDetailPage() {
     router.push("/dashboard/shop/cart")
   }
 
+  const productImages = product.imageUrls?.length
+    ? product.imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : []
+  const activeImage = selectedImageUrl || productImages[0] || product.imageUrl
+  const showOriginalPrice = Boolean(product.originalPrice && product.originalPrice > product.price)
+
   return (
     <ShopShell showBack backHref="/dashboard/shop/store" title={product.name}>
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-[#F4F3EE] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
-          {product.imageUrl ? (
-            <Image src={product.imageUrl} alt={product.name} fill className="object-cover" sizes="50vw" />
-          ) : (
-            <div className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}>
-              <div className="text-center px-8">
-                <Sparkles className="w-8 h-8 mx-auto mb-4 text-[#1B7339]/40" />
-                <p className="font-[family-name:var(--font-display)] text-3xl font-bold text-[#141414]/85">{product.name}</p>
-                <p className="text-sm text-[#5A5A5A] mt-2">{product.tagline}</p>
+        <div className="space-y-3">
+          <div className="relative aspect-square overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-[#F4F3EE] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            {activeImage ? (
+              <Image src={activeImage} alt={product.name} fill className="object-cover" sizes="50vw" />
+            ) : (
+              <div className={`absolute inset-0 bg-gradient-to-br ${product.imageGradient} flex items-center justify-center`}>
+                <div className="text-center px-8">
+                  <Sparkles className="w-8 h-8 mx-auto mb-4 text-[#1B7339]/40" />
+                  <p className="font-[family-name:var(--font-display)] text-3xl font-bold text-[#141414]/85">{product.name}</p>
+                  <p className="text-sm text-[#5A5A5A] mt-2">{product.tagline}</p>
+                </div>
               </div>
+            )}
+          </div>
+          {productImages.length > 1 ? (
+            <div className="grid grid-cols-5 gap-2">
+              {productImages.map((url, index) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => setSelectedImageUrl(url)}
+                  className={`relative aspect-square overflow-hidden rounded-xl border bg-[#F4F3EE] ${
+                    activeImage === url ? "border-[#1B7339] ring-2 ring-[#1B7339]/15" : "border-black/[0.08]"
+                  }`}
+                  aria-label={`View product photo ${index + 1}`}
+                >
+                  <Image src={url} alt={`${product.name} ${index + 1}`} fill className="object-cover" sizes="96px" />
+                </button>
+              ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-6">
@@ -110,7 +142,14 @@ export default function ProductDetailPage() {
               {product.allowsLogo && <Badge className="bg-[#1B7339]">Custom logo available</Badge>}
             </div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-bold tracking-tight text-[#141414]">{product.name}</h1>
-            <p className="text-3xl font-bold mt-3 text-[#141414]">{formatInr(product.price)}</p>
+            <div className="mt-3 flex flex-wrap items-baseline gap-2">
+              <p className="text-3xl font-bold text-[#141414]">{formatInr(product.price)}</p>
+              {showOriginalPrice ? (
+                <p className="text-lg font-medium text-[#A0A0A0] line-through">
+                  {formatInr(product.originalPrice!)}
+                </p>
+              ) : null}
+            </div>
             <p className="text-sm text-[#6B6B6B] mt-1">Rupee amount · 1 unit = ₹1</p>
           </div>
 

@@ -1,7 +1,7 @@
 import { existsSync } from "fs"
 import path from "path"
 
-/** Resolve customer logo from DB path (/uploads/...) for react-pdf */
+/** Resolve customer logo from a remote R2 URL, data URL, or local development path. */
 export function resolveLogoForPdf(logoUrl?: string | null): string | null {
   const raw = logoUrl?.trim()
   if (!raw) return null

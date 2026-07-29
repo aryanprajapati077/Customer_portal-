@@ -38,6 +38,11 @@ Add these for **Production**, **Preview**, and **Development**:
 |----------|-----------------|
 | `NEXT_PUBLIC_APP_URL` | `https://impact.buffindia.com` |
 | `DATABASE_URL` | Your Neon pooled PostgreSQL URL |
+| `R2_ACCOUNT_ID` | Cloudflare account ID for R2 uploads |
+| `R2_ACCESS_KEY_ID` | Cloudflare R2 API access key |
+| `R2_SECRET_ACCESS_KEY` | Cloudflare R2 API secret |
+| `R2_BUCKET_NAME` | R2 bucket used for product photos, logos, and attachments |
+| `R2_PUBLIC_URL` | Public bucket URL or custom domain for served uploads |
 | `AUTH_SECRET` | Long random string (`openssl rand -base64 32`) |
 | `ADMIN_PASSWORD` | Strong admin password |
 | `ADMIN_EMAIL` | Email for admin OTP reset |
@@ -116,17 +121,19 @@ vercel --prod
 
 ---
 
-## Important: file uploads on Vercel
+## Important: Cloudflare R2 uploads
 
-Product images and customer logo uploads are saved to `public/uploads/`. **Vercel serverless storage is ephemeral** — uploaded files may disappear after redeploys.
+Product photos, customer logos, order logos, and support attachments are uploaded to Cloudflare R2 through `lib/upload.ts`.
 
-For production uploads, use one of:
+Production requires:
 
-- **Vercel Blob** (recommended for this stack)
-- **AWS S3 / Cloudflare R2**
-- **Self-hosted VPS** (Node + PM2 + nginx) if you need persistent local disk
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_PUBLIC_URL`
 
-Until blob storage is added, re-upload product images after each deploy if needed.
+Use `R2_PUBLIC_URL` for a public bucket URL or custom domain, for example `https://assets.buffindia.com`. Local development falls back to `public/uploads/` only when R2 variables are not configured.
 
 ---
 

@@ -15,7 +15,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product, forceImage }: ProductCardProps) {
   const [liked, setLiked] = useState(false)
-  const img = forceImage || product.imageUrl
+  const img = forceImage || product.imageUrls?.[0] || product.imageUrl
+  const showOriginalPrice = Boolean(product.originalPrice && product.originalPrice > product.price)
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-black/[0.06] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
@@ -59,8 +60,13 @@ export function ProductCard({ product, forceImage }: ProductCardProps) {
         <p className="mt-1 min-h-[28px] line-clamp-2 text-[11px] leading-snug text-[#8A8A8A]">
           {product.tagline || product.description}
         </p>
-        <span className="mt-2 inline-flex self-start rounded-full bg-[#E8F5E9] px-2.5 py-[3px] text-[11px] font-semibold text-[#1B7339]">
-          {formatInr(product.price)}
+        <span className="mt-2 inline-flex self-start items-baseline gap-1.5 rounded-full bg-[#E8F5E9] px-2.5 py-[3px] text-[11px] font-semibold text-[#1B7339]">
+          <span>{formatInr(product.price)}</span>
+          {showOriginalPrice ? (
+            <span className="text-[10px] font-medium text-[#9A9A9A] line-through">
+              {formatInr(product.originalPrice!)}
+            </span>
+          ) : null}
         </span>
         <div className="mt-auto pt-2.5">
           <Link

@@ -19,17 +19,19 @@ import {
 } from "@/components/ui/dialog"
 import { PRODUCT_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
 import { PRODUCT_COLOR_OPTIONS } from "@/lib/product-colors"
-import { Loader2, Plus, Pencil, Trash2, ShoppingBag, Upload, Search } from "lucide-react"
+import { Loader2, Plus, Pencil, Trash2, ShoppingBag, Upload, Search, X } from "lucide-react"
 
 type ProductRow = {
   id: string
   name: string
   description: string
   price: number
+  originalPrice?: number | null
   category: string
   tagline: string | null
   buttsRescued: number
   imageUrl: string | null
+  imageUrls?: string[]
   imageGradient: string
   allowsLogo: boolean
   active: boolean
@@ -42,6 +44,7 @@ const EMPTY_FORM = {
   name: "",
   description: "",
   price: "",
+  originalPrice: "",
   category: "elegant-combos",
   tagline: "",
   buttsRescued: "40",
@@ -50,6 +53,7 @@ const EMPTY_FORM = {
   active: true,
   sortOrder: "0",
   availableColors: [...PRODUCT_COLOR_OPTIONS] as string[],
+  existingImageUrls: [] as string[],
 }
 
 export default function AdminProductsPage() {
@@ -58,7 +62,7 @@ export default function AdminProductsPage() {
   const [q, setQ] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -90,7 +94,7 @@ export default function AdminProductsPage() {
 
   const openCreate = () => {
     setForm(EMPTY_FORM)
-    setImageFile(null)
+    setImageFiles([])
     setDialogOpen(true)
   }
 
@@ -100,6 +104,7 @@ export default function AdminProductsPage() {
       name: p.name,
       description: p.description,
       price: String(p.price),
+      originalPrice: p.originalPrice ? String(p.originalPrice) : "",
       category: p.category,
       tagline: p.tagline || "",
       buttsRescued: String(p.buttsRescued),
@@ -110,8 +115,9 @@ export default function AdminProductsPage() {
       availableColors: p.availableColors?.length
         ? p.availableColors
         : [...PRODUCT_COLOR_OPTIONS],
+      existingImageUrls: p.imageUrls || (p.imageUrl ? [p.imageUrl] : []),
     })
-    setImageFile(null)
+    setImageFiles([])
     setDialogOpen(true)
   }
 
@@ -123,6 +129,7 @@ export default function AdminProductsPage() {
       fd.set("name", form.name)
       fd.set("description", form.description)
       fd.set("price", form.price)
+      fd.set("originalPrice", form.originalPrice)
       fd.set("category", form.category)
       fd.set("tagline", form.tagline)
       fd.set("buttsRescued", form.buttsRescued)
@@ -131,7 +138,8 @@ export default function AdminProductsPage() {
       fd.set("active", String(form.active))
       fd.set("sortOrder", form.sortOrder)
       fd.set("availableColors", JSON.stringify(form.availableColors))
-      if (imageFile) fd.set("image", imageFile)
+      fd.set("existingImageUrls", JSON.stringify(form.existingImageUrls))
+      for (const file of imageFiles) fd.append("images", file)
 
       const res = await fetch("/api/admin/products", {
         method: form.id ? "PUT" : "POST",
@@ -189,8 +197,8 @@ export default function AdminProductsPage() {
               {filtered.map((p) => (
                 <div key={p.id} className="rounded-2xl border border-border/50 overflow-hidden bg-muted/20">
                   <div className="aspect-video relative bg-muted">
-                    {p.imageUrl ? (
-                      <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="300px" />
+                    {(p.imageUrls?.[0] || p.imageUrl) ? (
+                      <Image src={p.imageUrls?.[0] || p.imageUrl!} alt={p.name} fill className="object-cover" sizes="300px" />
                     ) : (
                       <div className={`absolute inset-0 bg-gradient-to-br ${p.imageGradient} flex items-center justify-center p-4`}>
                         <p className="font-serif text-sm text-center font-medium">{p.name}</p>
@@ -199,11 +207,19 @@ export default function AdminProductsPage() {
                     {!p.active && (
                       <Badge className="absolute top-2 left-2 bg-red-500">Inactive</Badge>
                     )}
+                    {(p.imageUrls?.length ?? 0) > 1 && (
+                      <Badge className="absolute top-2 right-2 bg-black/60 text-white text-[10px]">{p.imageUrls!.length} photos</Badge>
+                    )}
                   </div>
                   <div className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-semibold text-sm line-clamp-1">{p.name}</h3>
-                      <span className="font-bold text-sm shrink-0">{formatInr(p.price)}</span>
+                      <div className="text-right shrink-0">
+                        <span className="font-bold text-sm">{formatInr(p.price)}</span>
+                        {p.originalPrice && p.originalPrice > p.price && (
+                          <span className="block text-[11px] text-muted-foreground line-through">{formatInr(p.originalPrice)}</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       <Badge variant="outline" className="text-[10px]">{p.category}</Badge>
@@ -243,13 +259,17 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Price (₹)</Label>
+                <Label>Sale price (₹)</Label>
                 <Input value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} inputMode="decimal" />
               </div>
               <div className="space-y-2">
-                <Label>Butts rescued</Label>
-                <Input value={form.buttsRescued} onChange={(e) => setForm((f) => ({ ...f, buttsRescued: e.target.value }))} />
+                <Label>Original price (₹) <span className="text-muted-foreground text-[11px]">— will show crossed out</span></Label>
+                <Input value={form.originalPrice} placeholder="e.g. 1000" onChange={(e) => setForm((f) => ({ ...f, originalPrice: e.target.value }))} inputMode="decimal" />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Butts rescued</Label>
+              <Input value={form.buttsRescued} onChange={(e) => setForm((f) => ({ ...f, buttsRescued: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
@@ -298,11 +318,61 @@ export default function AdminProductsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Product image</Label>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
-              <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+              <Label>Product images <span className="text-muted-foreground text-[11px]">— first image is the main one</span></Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || [])
+                  if (files.length) setImageFiles((prev) => [...prev, ...files])
+                  e.target.value = ""
+                }}
+              />
+              {/* Existing images (from server) */}
+              {form.existingImageUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {form.existingImageUrls.map((url, i) => (
+                    <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                      <Image src={url} alt={`photo ${i + 1}`} fill className="object-cover" sizes="80px" />
+                      {i === 0 && <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] bg-black/60 text-white py-0.5">Main</span>}
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, existingImageUrls: f.existingImageUrls.filter((u) => u !== url) }))}
+                        className="absolute top-0.5 right-0.5 bg-black/60 rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Newly added files (local preview) */}
+              {imageFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {imageFiles.map((file, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                      {form.existingImageUrls.length === 0 && i === 0 && (
+                        <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] bg-black/60 text-white py-0.5">Main</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 bg-black/60 rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                 <Upload className="w-4 h-4 mr-2" />
-                {imageFile ? imageFile.name : "Upload image"}
+                Add photos
               </Button>
             </div>
             <div className="flex flex-wrap gap-4">

@@ -135,6 +135,23 @@ Production requires:
 
 Use `R2_PUBLIC_URL` for a public bucket URL or custom domain, for example `https://assets.buffindia.com`. Local development falls back to `public/uploads/` only when R2 variables are not configured.
 
+### Recommended R2 setup
+
+1. In Cloudflare, create an R2 bucket, for example `buffindia-assets`.
+2. Create an R2 API token / access key with write access to that bucket.
+3. Expose the bucket publicly:
+   - easiest: use an R2 public bucket URL, or
+   - better: connect a custom domain like `assets.buffindia.com`
+4. Put the values into Vercel environment variables:
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+   - `R2_BUCKET_NAME`
+   - `R2_PUBLIC_URL`
+5. Redeploy the app.
+
+After that, new uploads will go to R2 automatically. Existing local `/public/uploads/...` paths in the database can stay as-is for now, but newly uploaded files will use the R2 public URL.
+
 ---
 
 ## Alternative: VPS (persistent uploads)

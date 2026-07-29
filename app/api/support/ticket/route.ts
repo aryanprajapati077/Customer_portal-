@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { Resend } from "resend"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { sql } from "@/lib/db"
-import { saveBase64Image } from "@/lib/upload"
+import { saveBase64File, saveBase64Image } from "@/lib/upload"
 
 function mapStatus(status: string) {
   const s = (status || "").toLowerCase()
@@ -97,12 +97,11 @@ export async function POST(request: Request) {
     if (attachmentBase64.startsWith("data:")) {
       try {
         if (attachmentBase64.startsWith("data:image/")) {
-          const saved = await saveBase64Image(attachmentBase64, "logos", `ticket-${Date.now()}`)
+          const saved = await saveBase64Image(attachmentBase64, "attachments", `ticket-${Date.now()}`)
           attachmentUrl = saved.url
         } else {
-          // PDF / other: keep data URL (capped) so admin can still download
-          attachmentUrl =
-            attachmentBase64.length > 900_000 ? attachmentBase64.slice(0, 900_000) : attachmentBase64
+          const saved = await saveBase64File(attachmentBase64, "attachments", `ticket-${Date.now()}`)
+          attachmentUrl = saved.url
         }
       } catch (err) {
         console.error("Ticket attachment save failed:", err)

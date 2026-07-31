@@ -5,17 +5,53 @@ import {
   getAdminTokenFromRequest,
   verifyAdminSessionToken,
 } from "@/lib/admin-auth"
+import { parsePermissions } from "@/lib/admin-permissions"
+import { sql } from "@/lib/db"
+
+let permissionsColReady: Promise<void> | null = null
+async function ensureAdminPermissionsColumn() {
+  if (!permissionsColReady) {
+    permissionsColReady = sql
+      .query(`ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "permissions" TEXT`)
+      .then(() => undefined)
+      .catch((err) => {
+        permissionsColReady = null
+        throw err
+      })
+  }
+  await permissionsColReady
+}
 
 export async function verifyAdminSession(token: string | undefined | null): Promise<AdminSession | null> {
   const parsed = await verifyAdminSessionToken(token)
   if (!parsed) return null
 
+  await ensureAdminPermissionsColumn()
   const user = await prisma.adminUser.findUnique({
     where: { id: parsed.id },
     select: { id: true, role: true, email: true, name: true, active: true },
   })
   if (!user || !user.active) return null
-  return { id: user.id, role: user.role, email: user.email, name: user.name }
+
+  let permissions: string[] | undefined
+  try {
+    const rows = await sql.query<{ permissions: string | null }>(
+      `SELECT "permissions" FROM "AdminUser" WHERE id = $1 LIMIT 1`,
+      [user.id],
+    )
+    const parsed = parsePermissions(rows[0]?.permissions)
+    permissions = parsed === null ? undefined : parsed
+  } catch {
+    permissions = undefined
+  }
+
+  return {
+    id: user.id,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+    permissions,
+  }
 }
 
 export async function ensureSuperAdmin() {

@@ -30,10 +30,22 @@ import {
   Newspaper,
   UsersRound,
   BarChart3,
+  CalendarClock,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  hasAdminPermission,
+  permissionKeyForPath,
+  type AdminPermissionKey,
+} from "@/lib/admin-permissions"
 
-type AdminMe = { id: string; email: string; name: string; role: string }
+type AdminMe = {
+  id: string
+  email: string
+  name: string
+  role: string
+  permissions?: string[]
+}
 
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -46,6 +58,8 @@ const nav = [
   { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
   { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
   { href: "/admin/collections", label: "Collections", icon: Package },
+  { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
+  { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
   { href: "/admin/shop/products", label: "Shop Products", icon: ShoppingBag },
   { href: "/admin/shop/orders", label: "Shop Orders", icon: ClipboardList },
   { href: "/admin/certificates", label: "Certificates", icon: Award },
@@ -120,13 +134,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <div className="min-h-screen bg-white">{children}</div>
   }
 
-  const fullNav = [
-    ...nav,
-    { href: "/admin/security", label: "Authenticator", icon: ShieldCheck },
-    ...(admin?.role === "super_admin"
-      ? [{ href: "/admin/users", label: "Admin Users", icon: UserCog }]
-      : []),
-  ]
+  const fullNav = useMemo(() => {
+    const items = [
+      ...nav,
+      { href: "/admin/security", label: "Authenticator", icon: ShieldCheck },
+      ...(admin?.role === "super_admin"
+        ? [{ href: "/admin/users", label: "Admin Users", icon: UserCog }]
+        : []),
+    ]
+    return items.filter((item) => {
+      if (item.href === "/admin/security") return true
+      const key = permissionKeyForPath(item.href)
+      if (!key) return true
+      return hasAdminPermission(admin?.role, admin?.permissions, key)
+    })
+  }, [admin])
+
+  useEffect(() => {
+    if (isAuthPage || !admin) return
+    const key = permissionKeyForPath(pathname)
+    if (!key || key === "users") {
+      if (key === "users" && admin.role !== "super_admin") {
+        router.replace("/admin")
+      }
+      return
+    }
+    if (!hasAdminPermission(admin.role, admin.permissions, key as AdminPermissionKey)) {
+      const first = fullNav.find((n) => n.href !== "/admin/security")
+      router.replace(first?.href || "/admin")
+    }
+  }, [admin, pathname, isAuthPage, fullNav, router])
 
   const crumb = pathname.replace("/admin", "") || "/overview"
 

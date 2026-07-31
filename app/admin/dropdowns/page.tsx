@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, ListTree, Plus, Trash2 } from "lucide-react"
+import { Loader2, ListTree, Plus, RefreshCw, Trash2 } from "lucide-react"
 
 type LsuTeam = {
   id: string
@@ -19,6 +19,7 @@ export default function AdminDropdownsPage() {
   const [teams, setTeams] = useState<LsuTeam[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState("")
   const [lsuName, setLsuName] = useState("")
   const [technicianName, setTechnicianName] = useState("")
@@ -38,6 +39,27 @@ export default function AdminDropdownsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const syncFromSheets = async () => {
+    setSyncing(true)
+    setError("")
+    try {
+      const res = await fetch("/api/admin/lsu-teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "syncFromSheets" }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Sync failed")
+      if (data.teams) setTeams(data.teams)
+      else await load()
+      alert(data.message || `Synced ${data.total || 0} LSU teams`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sync failed")
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,11 +113,29 @@ export default function AdminDropdownsPage() {
           <ListTree className="h-3.5 w-3.5" />
           Dropdowns
         </p>
-        <h1 className="admin-page-title">LS teams</h1>
-        <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
-          Add LSU Name with its Technician. On Create Customer, choosing an LSU fills the technician
-          automatically. Inactive rows stay hidden from the form.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="admin-page-title">LSU teams</h1>
+            <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
+              Synced from Client Master sheet (LSU Name + Technician). Choosing an LSU on Create
+              Customer fills the technician automatically.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9]"
+            onClick={syncFromSheets}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Sync from Client Master
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
@@ -162,9 +202,20 @@ export default function AdminDropdownsPage() {
             <Loader2 className="h-6 w-6 animate-spin text-[#1B7339]" />
           </div>
         ) : teams.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[#DCE8DC] bg-[#F7FBF7] px-4 py-10 text-center text-sm text-[#6B6B6B]">
-            No LSU teams yet. Add the first pair above.
-          </p>
+          <div className="rounded-xl border border-dashed border-[#DCE8DC] bg-[#F7FBF7] px-4 py-10 text-center">
+            <p className="text-sm text-[#6B6B6B]">
+              No LSU teams yet. Sync from Client Master or add a pair above.
+            </p>
+            <Button
+              type="button"
+              className="mt-4 rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+              onClick={syncFromSheets}
+              disabled={syncing}
+            >
+              {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Sync from Client Master
+            </Button>
+          </div>
         ) : (
           <ul className="divide-y divide-[#EAEAEA] rounded-xl border border-[#EAEAEA]">
             {teams.map((team) => (

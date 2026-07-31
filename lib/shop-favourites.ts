@@ -1,32 +1,58 @@
-const STORAGE_KEY = "kraftreborn_favourites"
+const LEGACY_STORAGE_KEY = "kraftreborn_favourites"
 const EVENT_NAME = "kraftreborn-favourites-changed"
 
-export function readFavouriteIds(): string[] {
+function storageKey(customerId?: string | null) {
+  return customerId ? `kraftreborn_favourites_${customerId}` : LEGACY_STORAGE_KEY
+}
+
+function resolveCustomerId(explicit?: string | null): string | null {
+  if (explicit) return explicit
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem("buffindia_customer")
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return typeof parsed?.id === "string" ? parsed.id : null
+  } catch {
+    return null
+  }
+}
+
+export function readFavouriteIds(customerId?: string | null): string[] {
   if (typeof window === "undefined") return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const id = resolveCustomerId(customerId)
+    if (!id) return []
+    const raw = localStorage.getItem(storageKey(id))
     const parsed = raw ? JSON.parse(raw) : []
-    return Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : []
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : []
   } catch {
     return []
   }
 }
 
-export function writeFavouriteIds(ids: string[]) {
+export function writeFavouriteIds(ids: string[], customerId?: string | null) {
   if (typeof window === "undefined") return
+  const id = resolveCustomerId(customerId)
+  if (!id) return
   const unique = [...new Set(ids)]
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(unique))
+  localStorage.setItem(storageKey(id), JSON.stringify(unique))
+  try {
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: unique }))
 }
 
-export function isFavourite(productId: string): boolean {
-  return readFavouriteIds().includes(productId)
+export function isFavourite(productId: string, customerId?: string | null): boolean {
+  return readFavouriteIds(customerId).includes(productId)
 }
 
-export function toggleFavourite(productId: string): boolean {
-  const ids = readFavouriteIds()
-  const next = ids.includes(productId) ? ids.filter((id) => id !== productId) : [...ids, productId]
-  writeFavouriteIds(next)
+export function toggleFavourite(productId: string, customerId?: string | null): boolean {
+  const ids = readFavouriteIds(customerId)
+  const next = ids.includes(productId) ? ids.filter((x) => x !== productId) : [...ids, productId]
+  writeFavouriteIds(next, customerId)
   return next.includes(productId)
 }
 

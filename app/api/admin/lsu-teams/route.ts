@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { randomBytes } from "crypto"
+import { LSU_TEAMS_FROM_SHEETS } from "@/lib/lsu-teams-from-sheets"
 
 function generateId() {
   const timestamp = Date.now().toString(36)
@@ -23,6 +24,81 @@ async function ensureTable() {
   await sql.query(`
     CREATE INDEX IF NOT EXISTS "LsuTeam_active_idx" ON "LsuTeam" (active)
   `)
+}
+
+/** Upsert Client Master LSU pairs (+ any extra pairs already on Customer rows). */
+async function syncFromSheets() {
+  const fromCustomers = (await sql`
+    SELECT DISTINCT TRIM("lsuName") AS "lsuName",
+           COALESCE(NULLIF(TRIM("lsuTechnicianName"), ''), 'Unassigned') AS "technicianName"
+    FROM "Customer"
+    WHERE "lsuName" IS NOT NULL AND TRIM("lsuName") <> ''
+  `) as { lsuName: string; technicianName: string }[]
+
+  const byKey = new Map<string, { lsuName: string; technicianName: string }>()
+  for (const row of LSU_TEAMS_FROM_SHEETS) {
+    byKey.set(row.lsuName.toLowerCase(), row)
+  }
+  for (const row of fromCustomers) {
+    const key = row.lsuName.toLowerCase()
+    if (key === "himachal pradesh") {
+      byKey.set("himachal pradesh", {
+        lsuName: "Himachal Pradesh",
+        technicianName: row.technicianName || "Abhishek Kumar HP",
+      })
+      continue
+    }
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        lsuName: row.lsuName,
+        technicianName: row.technicianName || "Unassigned",
+      })
+    }
+  }
+
+  const pairs = [...byKey.values()].sort((a, b) => a.lsuName.localeCompare(b.lsuName))
+  let inserted = 0
+  let updated = 0
+  const now = new Date().toISOString()
+
+  for (let i = 0; i < pairs.length; i++) {
+    const pair = pairs[i]
+    const tech = pair.technicianName.trim() || "Unassigned"
+    const existing = (await sql`
+      SELECT id, "technicianName" FROM "LsuTeam"
+      WHERE LOWER("lsuName") = ${pair.lsuName.toLowerCase()}
+      LIMIT 1
+    `) as { id: string; technicianName: string }[]
+
+    if (existing[0]) {
+      await sql`
+        UPDATE "LsuTeam"
+        SET "lsuName" = ${pair.lsuName},
+            "technicianName" = ${tech},
+            active = true,
+            "sortOrder" = ${i},
+            "updatedAt" = ${now}
+        WHERE id = ${existing[0].id}
+      `
+      updated++
+    } else {
+      const id = generateId()
+      await sql`
+        INSERT INTO "LsuTeam" (id, "lsuName", "technicianName", active, "sortOrder", "createdAt", "updatedAt")
+        VALUES (${id}, ${pair.lsuName}, ${tech}, true, ${i}, ${now}, ${now})
+      `
+      inserted++
+    }
+  }
+
+  // Drop casing duplicate "Himachal pradesh" if both exist
+  await sql`
+    DELETE FROM "LsuTeam"
+    WHERE "lsuName" = 'Himachal pradesh'
+      AND EXISTS (SELECT 1 FROM "LsuTeam" t2 WHERE t2."lsuName" = 'Himachal Pradesh')
+  `
+
+  return { inserted, updated, total: pairs.length }
 }
 
 export async function GET(request: NextRequest) {
@@ -54,6 +130,22 @@ export async function POST(request: NextRequest) {
   try {
     await ensureTable()
     const body = await request.json()
+
+    if (body?.action === "syncFromSheets") {
+      const result = await syncFromSheets()
+      const teams = await sql`
+        SELECT id, "lsuName", "technicianName", active, "sortOrder", "createdAt", "updatedAt"
+        FROM "LsuTeam"
+        ORDER BY "sortOrder" ASC, "lsuName" ASC
+      `
+      return NextResponse.json({
+        success: true,
+        ...result,
+        teams,
+        message: `Synced ${result.total} LSU teams from Client Master (${result.inserted} new, ${result.updated} updated).`,
+      })
+    }
+
     const lsuName = String(body?.lsuName || "").trim()
     const technicianName = String(body?.technicianName || "").trim()
     const active = body?.active === undefined ? true : Boolean(body.active)

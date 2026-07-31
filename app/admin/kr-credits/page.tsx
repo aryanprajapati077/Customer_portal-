@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Coins, Loader2, Plus, RefreshCw } from "lucide-react"
 import {
@@ -20,6 +19,7 @@ import {
   AdminSheetField,
   AdminSheetSection,
 } from "@/components/admin/admin-detail-sheet"
+import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 
 type CustomerRow = {
   id: string
@@ -42,7 +42,7 @@ export default function AdminKrCreditsPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/customers?fields=options")
+      const res = await fetch("/api/admin/customers?fields=options&take=1000")
       const data = await res.json()
       if (data?.success && data.customers?.length) {
         setCustomers(data.customers)
@@ -149,18 +149,11 @@ export default function AdminKrCreditsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Customer</Label>
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.companyName} ({c.id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CustomerSearchSelect
+                customers={customers}
+                value={customerId}
+                onChange={setCustomerId}
+              />
               {draftCustomer && (
                 <p className="pt-1 text-[11px] text-muted-foreground">
                   Current balance: ₹{Math.floor(Number(draftCustomer.kraftrebornCredits) || 0)}

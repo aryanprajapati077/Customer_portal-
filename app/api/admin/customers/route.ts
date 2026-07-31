@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
                  "serviceStatus", "contractEndDate",
                  "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
                  "kraftrebornCredits", "updatedAt", "createdAt",
-                 "isGroup", "parentCustomerId"
+                 "isGroup", "parentCustomerId", "welcomeEmailSentAt"
           FROM "Customer"
           WHERE id ILIKE ${pattern}
              OR email ILIKE ${pattern}
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
                  "serviceStatus", "contractEndDate",
                  "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
                  "kraftrebornCredits", "updatedAt", "createdAt",
-                 "isGroup", "parentCustomerId"
+                 "isGroup", "parentCustomerId", "welcomeEmailSentAt"
           FROM "Customer"
           ORDER BY id ASC
           LIMIT ${take} OFFSET ${offset}
@@ -456,6 +456,61 @@ export async function PATCH(request: NextRequest) {
       if (body?.syncLoginEmail) {
         updates.push(`email = $${i++}`)
         values.push(email)
+      }
+    }
+
+    const setText = (col: string, raw: unknown) => {
+      updates.push(`"${col}" = $${i++}`)
+      values.push(raw == null || raw === "" ? null : String(raw).trim())
+    }
+    if (body?.companyName !== undefined || body?.brandName !== undefined) {
+      const name = String(body.companyName ?? body.brandName ?? "").trim()
+      if (!name) return NextResponse.json({ success: false, error: "Brand name required" }, { status: 400 })
+      updates.push(`"companyName" = $${i++}`)
+      values.push(name)
+    }
+    if (body?.tradeName !== undefined) setText("tradeName", body.tradeName)
+    if (body?.gstin !== undefined) {
+      updates.push(`gstin = $${i++}`)
+      values.push(String(body.gstin || "").trim().toUpperCase() || null)
+    }
+    if (body?.city !== undefined) setText("city", body.city)
+    if (body?.state !== undefined) setText("state", body.state)
+    if (body?.lsuName !== undefined) setText("lsuName", body.lsuName)
+    if (body?.lsuTechnicianName !== undefined) setText("lsuTechnicianName", body.lsuTechnicianName)
+    if (body?.operationsIncharge !== undefined) setText("operationsIncharge", body.operationsIncharge)
+    if (body?.primaryPocName !== undefined) {
+      setText("primaryPocName", body.primaryPocName)
+      updates.push(`"contactPerson" = $${i++}`)
+      values.push(String(body.primaryPocName || "").trim() || null)
+    }
+    if (body?.primaryPocNumber !== undefined) {
+      setText("primaryPocNumber", body.primaryPocNumber)
+      updates.push(`phone = $${i++}`)
+      values.push(String(body.primaryPocNumber || "").trim() || null)
+    }
+    if (body?.primaryPocDesignation !== undefined) setText("primaryPocDesignation", body.primaryPocDesignation)
+    if (body?.collectionFrequency !== undefined) setText("collectionFrequency", body.collectionFrequency)
+    if (body?.serviceStartDate !== undefined) {
+      updates.push(`"serviceStartDate" = $${i++}`)
+      values.push(body.serviceStartDate ? new Date(String(body.serviceStartDate)).toISOString() : null)
+    }
+    if (body?.noOfKiosk !== undefined) {
+      const v = Math.max(0, Math.floor(Number(body.noOfKiosk) || 0))
+      updates.push(`"noOfKiosk" = $${i++}`)
+      values.push(v)
+      updates.push(`"disposalUnitInstalled" = $${i++}`)
+      values.push(v)
+    }
+    for (const col of [
+      "noOfBasicKiosk",
+      "noOfAdvanceKiosk",
+      "noOfPanVendorKiosk",
+      "noOfWallMountKiosk",
+    ] as const) {
+      if (body?.[col] !== undefined) {
+        updates.push(`"${col}" = $${i++}`)
+        values.push(Math.max(0, Math.floor(Number(body[col]) || 0)))
       }
     }
 

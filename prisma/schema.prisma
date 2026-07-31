@@ -276,6 +276,7 @@ model AdminUser {
   totpSecret   String?
   totpEnabled  Boolean   @default(false)
   active       Boolean   @default(true)
+  permissions  String?
   createdById  String?
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())

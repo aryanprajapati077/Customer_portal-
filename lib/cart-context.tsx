@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import { useAuth } from "@/lib/auth-context"
 
 export interface ShopProduct {
   id: string
@@ -38,7 +39,11 @@ export interface CartLine extends CartItem {
   lineTotal: number
 }
 
-const STORAGE_KEY = "kraftreborn_cart"
+const LEGACY_STORAGE_KEY = "kraftreborn_cart"
+
+function storageKey(customerId: string) {
+  return `kraftreborn_cart_${customerId}`
+}
 
 interface CartContextType {
   items: CartItem[]
@@ -53,10 +58,10 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-function loadCart(): CartItem[] {
+function loadCart(customerId: string): CartItem[] {
   if (typeof window === "undefined") return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey(customerId))
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed.filter((i) => i.product) : []
@@ -65,22 +70,38 @@ function loadCart(): CartItem[] {
   }
 }
 
-function saveCart(items: CartItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+function saveCart(customerId: string, items: CartItem[]) {
+  localStorage.setItem(storageKey(customerId), JSON.stringify(items))
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { customer } = useAuth()
+  const customerId = customer?.id || null
   const [items, setItems] = useState<CartItem[]>([])
   const [hydrated, setHydrated] = useState(false)
 
+  // Reload cart whenever the logged-in customer changes (per-customer carts)
   useEffect(() => {
-    setItems(loadCart())
+    setHydrated(false)
+    if (!customerId) {
+      setItems([])
+      setHydrated(true)
+      return
+    }
+    // Drop legacy shared cart so one browser session cannot leak items across clients
+    try {
+      localStorage.removeItem(LEGACY_STORAGE_KEY)
+    } catch {
+      /* ignore */
+    }
+    setItems(loadCart(customerId))
     setHydrated(true)
-  }, [])
+  }, [customerId])
 
   useEffect(() => {
-    if (hydrated) saveCart(items)
-  }, [items, hydrated])
+    if (!hydrated || !customerId) return
+    saveCart(customerId, items)
+  }, [items, hydrated, customerId])
 
   const lines = useMemo((): CartLine[] => {
     return items.map((item) => ({

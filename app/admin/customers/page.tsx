@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useState, useTransition, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +33,7 @@ import {
   useNextCustomerId,
   type CreateCustomerFormState,
 } from "@/components/admin/create-customer-form"
+import { COLLECTION_FREQUENCY_OPTIONS } from "@/lib/india-locations"
 import ExcelJS from "exceljs"
 
 type CustomerRow = {
@@ -69,6 +70,7 @@ type CustomerRow = {
   disposalUnitInstalled: number
   monthlyTarget?: number
   kraftrebornCredits?: number
+  welcomeEmailSentAt?: string | null
   updatedAt: string
 }
 
@@ -109,6 +111,392 @@ function cellValue(row: CustomerRow, key: (typeof SHEET_COLUMNS)[number]["key"])
   return String(v)
 }
 
+function toDateInput(raw?: string | null) {
+  if (!raw) return ""
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toISOString().slice(0, 10)
+}
+
+function EditableCustomerSheet({
+  customer,
+  onSaved,
+}: {
+  customer: CustomerRow
+  onSaved: (next: CustomerRow) => void
+}) {
+  const [draft, setDraft] = useState({
+    companyName: customer.companyName || "",
+    tradeName: customer.tradeName || "",
+    gstin: customer.gstin || "",
+    state: customer.state || "",
+    city: customer.city || "",
+    lsuName: customer.lsuName || "",
+    lsuTechnicianName: customer.lsuTechnicianName || "",
+    operationsIncharge: customer.operationsIncharge || "",
+    primaryPocName: customer.primaryPocName || "",
+    primaryPocEmail: customer.primaryPocEmail || "",
+    primaryPocNumber: customer.primaryPocNumber || "",
+    primaryPocDesignation: customer.primaryPocDesignation || "",
+    collectionFrequency: customer.collectionFrequency || "Monthly",
+    serviceStartDate: toDateInput(customer.serviceStartDate),
+    noOfKiosk: String(customer.noOfKiosk ?? 0),
+    noOfBasicKiosk: String(customer.noOfBasicKiosk ?? 0),
+    noOfAdvanceKiosk: String(customer.noOfAdvanceKiosk ?? 0),
+    noOfPanVendorKiosk: String(customer.noOfPanVendorKiosk ?? 0),
+    noOfWallMountKiosk: String(customer.noOfWallMountKiosk ?? 0),
+    email: customer.email || "",
+    status: customer.status || "Active",
+    serviceStatus: customer.serviceStatus || "ACTIVE",
+    contractEndDate: toDateInput(customer.contractEndDate),
+    kraftrebornCredits: String(
+      customer.kraftrebornCredits != null ? Math.floor(customer.kraftrebornCredits) : 0,
+    ),
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState(false)
+
+  useEffect(() => {
+    setDraft({
+      companyName: customer.companyName || "",
+      tradeName: customer.tradeName || "",
+      gstin: customer.gstin || "",
+      state: customer.state || "",
+      city: customer.city || "",
+      lsuName: customer.lsuName || "",
+      lsuTechnicianName: customer.lsuTechnicianName || "",
+      operationsIncharge: customer.operationsIncharge || "",
+      primaryPocName: customer.primaryPocName || "",
+      primaryPocEmail: customer.primaryPocEmail || "",
+      primaryPocNumber: customer.primaryPocNumber || "",
+      primaryPocDesignation: customer.primaryPocDesignation || "",
+      collectionFrequency: customer.collectionFrequency || "Monthly",
+      serviceStartDate: toDateInput(customer.serviceStartDate),
+      noOfKiosk: String(customer.noOfKiosk ?? 0),
+      noOfBasicKiosk: String(customer.noOfBasicKiosk ?? 0),
+      noOfAdvanceKiosk: String(customer.noOfAdvanceKiosk ?? 0),
+      noOfPanVendorKiosk: String(customer.noOfPanVendorKiosk ?? 0),
+      noOfWallMountKiosk: String(customer.noOfWallMountKiosk ?? 0),
+      email: customer.email || "",
+      status: customer.status || "Active",
+      serviceStatus: customer.serviceStatus || "ACTIVE",
+      contractEndDate: toDateInput(customer.contractEndDate),
+      kraftrebornCredits: String(
+        customer.kraftrebornCredits != null ? Math.floor(customer.kraftrebornCredits) : 0,
+      ),
+    })
+    setError(null)
+    setOk(false)
+  }, [customer.id])
+
+  const set = (key: keyof typeof draft, value: string) =>
+    setDraft((d) => ({ ...d, [key]: value }))
+
+  const save = async () => {
+    setSaving(true)
+    setError(null)
+    setOk(false)
+    try {
+      const payload = {
+        id: customer.id,
+        companyName: draft.companyName.trim(),
+        tradeName: draft.tradeName.trim(),
+        gstin: draft.gstin.trim(),
+        state: draft.state.trim(),
+        city: draft.city.trim(),
+        lsuName: draft.lsuName.trim(),
+        lsuTechnicianName: draft.lsuTechnicianName.trim(),
+        operationsIncharge: draft.operationsIncharge.trim(),
+        primaryPocName: draft.primaryPocName.trim(),
+        primaryPocEmail: draft.primaryPocEmail.trim().toLowerCase(),
+        primaryPocNumber: draft.primaryPocNumber.trim(),
+        primaryPocDesignation: draft.primaryPocDesignation.trim(),
+        collectionFrequency: draft.collectionFrequency,
+        serviceStartDate: draft.serviceStartDate || null,
+        noOfKiosk: Number(draft.noOfKiosk) || 0,
+        noOfBasicKiosk: Number(draft.noOfBasicKiosk) || 0,
+        noOfAdvanceKiosk: Number(draft.noOfAdvanceKiosk) || 0,
+        noOfPanVendorKiosk: Number(draft.noOfPanVendorKiosk) || 0,
+        noOfWallMountKiosk: Number(draft.noOfWallMountKiosk) || 0,
+        email: draft.email.trim().toLowerCase(),
+        status: draft.status,
+        serviceStatus: draft.serviceStatus,
+        contractEndDate: draft.contractEndDate || null,
+        kraftrebornCredits: Math.max(0, Math.floor(Number(draft.kraftrebornCredits) || 0)),
+      }
+      const res = await fetch("/api/admin/customers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!data?.success) {
+        setError(data?.error || "Save failed")
+        return
+      }
+      onSaved({
+        ...customer,
+        ...payload,
+        kraftrebornCredits: payload.kraftrebornCredits,
+        serviceStartDate: payload.serviceStartDate,
+        contractEndDate: payload.contractEndDate,
+      })
+      setOk(true)
+    } catch {
+      setError("Network error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const row = (label: string, control: ReactNode) => (
+    <tr className="border-b border-[#EAEAEA]">
+      <td className="w-[38%] bg-[#F7FBF7] px-3 py-2 align-middle text-[12px] font-semibold text-[#1B7339]">
+        {label}
+      </td>
+      <td className="px-2 py-1.5">{control}</td>
+    </tr>
+  )
+
+  const inputClass =
+    "h-9 w-full rounded-md border border-[#D8D8D8] bg-white px-2.5 text-[13px] text-[#141414] outline-none focus:border-[#1B7339]"
+
+  return (
+    <div className="space-y-3">
+      <table className="w-full border-collapse text-[13px]">
+        <tbody>
+          {row("Customer ID", <span className="px-1 font-semibold text-[#1B7339]">{customer.id}</span>)}
+          {row(
+            "Brand Name",
+            <Input className={inputClass} value={draft.companyName} onChange={(e) => set("companyName", e.target.value)} />,
+          )}
+          {row(
+            "Trade Name",
+            <Input className={inputClass} value={draft.tradeName} onChange={(e) => set("tradeName", e.target.value)} />,
+          )}
+          {row(
+            "GSTIN",
+            <Input className={inputClass} value={draft.gstin} onChange={(e) => set("gstin", e.target.value)} />,
+          )}
+          {row(
+            "State",
+            <Input className={inputClass} value={draft.state} onChange={(e) => set("state", e.target.value)} />,
+          )}
+          {row(
+            "City",
+            <Input className={inputClass} value={draft.city} onChange={(e) => set("city", e.target.value)} />,
+          )}
+          {row(
+            "LSU Name",
+            <Input className={inputClass} value={draft.lsuName} onChange={(e) => set("lsuName", e.target.value)} />,
+          )}
+          {row(
+            "LSU Technician",
+            <Input
+              className={inputClass}
+              value={draft.lsuTechnicianName}
+              onChange={(e) => set("lsuTechnicianName", e.target.value)}
+            />,
+          )}
+          {row(
+            "Operations Incharge",
+            <Input
+              className={inputClass}
+              value={draft.operationsIncharge}
+              onChange={(e) => set("operationsIncharge", e.target.value)}
+            />,
+          )}
+          {row(
+            "Primary POC",
+            <Input
+              className={inputClass}
+              value={draft.primaryPocName}
+              onChange={(e) => set("primaryPocName", e.target.value)}
+            />,
+          )}
+          {row(
+            "POC Email",
+            <Input
+              className={inputClass}
+              value={draft.primaryPocEmail}
+              onChange={(e) => set("primaryPocEmail", e.target.value)}
+            />,
+          )}
+          {row(
+            "POC Number",
+            <Input
+              className={inputClass}
+              value={draft.primaryPocNumber}
+              onChange={(e) => set("primaryPocNumber", e.target.value)}
+            />,
+          )}
+          {row(
+            "POC Designation",
+            <Input
+              className={inputClass}
+              value={draft.primaryPocDesignation}
+              onChange={(e) => set("primaryPocDesignation", e.target.value)}
+            />,
+          )}
+          {row(
+            "Collection Frequency",
+            <Select value={draft.collectionFrequency} onValueChange={(v) => set("collectionFrequency", v)}>
+              <SelectTrigger className="h-9 rounded-md border-[#D8D8D8] bg-white text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLLECTION_FREQUENCY_OPTIONS.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>,
+          )}
+          {row(
+            "Service Start",
+            <Input
+              type="date"
+              className={inputClass}
+              value={draft.serviceStartDate}
+              onChange={(e) => set("serviceStartDate", e.target.value)}
+            />,
+          )}
+          {row(
+            "No. of Kiosk",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.noOfKiosk}
+              onChange={(e) => set("noOfKiosk", e.target.value)}
+            />,
+          )}
+          {row(
+            "Basic Kiosks",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.noOfBasicKiosk}
+              onChange={(e) => set("noOfBasicKiosk", e.target.value)}
+            />,
+          )}
+          {row(
+            "Advance Kiosks",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.noOfAdvanceKiosk}
+              onChange={(e) => set("noOfAdvanceKiosk", e.target.value)}
+            />,
+          )}
+          {row(
+            "Pan Vendor Kiosks",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.noOfPanVendorKiosk}
+              onChange={(e) => set("noOfPanVendorKiosk", e.target.value)}
+            />,
+          )}
+          {row(
+            "Wall Mount Kiosks",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.noOfWallMountKiosk}
+              onChange={(e) => set("noOfWallMountKiosk", e.target.value)}
+            />,
+          )}
+          {row(
+            "Login Email",
+            <Input className={inputClass} value={draft.email} onChange={(e) => set("email", e.target.value)} />,
+          )}
+          {row(
+            "Client Status",
+            <Select value={draft.status} onValueChange={(v) => set("status", v)}>
+              <SelectTrigger className="h-9 rounded-md border-[#D8D8D8] bg-white text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>,
+          )}
+          {row(
+            "Service Status",
+            <Select value={draft.serviceStatus} onValueChange={(v) => set("serviceStatus", v)}>
+              <SelectTrigger className="h-9 rounded-md border-[#D8D8D8] bg-white text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="RENEWAL_DUE">Renewal Due Soon</SelectItem>
+                <SelectItem value="PAUSED_RENEWAL">Paused – Renewal Pending</SelectItem>
+                <SelectItem value="PAUSED_PAYMENT">Paused – Payment Pending</SelectItem>
+                <SelectItem value="INACTIVE">Inactive / Service Ended</SelectItem>
+              </SelectContent>
+            </Select>,
+          )}
+          {row(
+            "Contract End",
+            <Input
+              type="date"
+              className={inputClass}
+              value={draft.contractEndDate}
+              onChange={(e) => set("contractEndDate", e.target.value)}
+            />,
+          )}
+          {row(
+            "KR Credits",
+            <Input
+              type="number"
+              min={0}
+              className={inputClass}
+              value={draft.kraftrebornCredits}
+              onChange={(e) => set("kraftrebornCredits", e.target.value)}
+            />,
+          )}
+          {row(
+            "Total Waste (kg)",
+            <span className="px-1 text-[#555]">{Number(customer.totalWasteCollected || 0).toFixed(2)}</span>,
+          )}
+        </tbody>
+      </table>
+
+      {customer.collectionPocs && (
+        <div className="rounded-xl border border-[#E2EBE4] p-3">
+          <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+            Collection POCs
+          </p>
+          <pre className="whitespace-pre-wrap text-[12px] text-[#555]">
+            {(() => {
+              try {
+                return JSON.stringify(JSON.parse(customer.collectionPocs), null, 2)
+              } catch {
+                return customer.collectionPocs
+              }
+            })()}
+          </pre>
+        </div>
+      )}
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {ok && <p className="text-sm text-[#1B7339]">Saved.</p>}
+      <Button onClick={save} disabled={saving} className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
+        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        {saving ? "Saving…" : "Save changes"}
+      </Button>
+    </div>
+  )
+}
+
 export default function AdminCustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,8 +513,18 @@ export default function AdminCustomersPage() {
   const [exporting, setExporting] = useState(false)
   const [welcomeSending, setWelcomeSending] = useState(false)
   const [welcomePending, setWelcomePending] = useState<number | null>(null)
+  const [welcomeOneSending, setWelcomeOneSending] = useState(false)
   const [isPending, startTransition] = useTransition()
   const nextCustomerId = useNextCustomerId(createOpen)
+
+  const refreshWelcomeStats = () => {
+    fetch("/api/admin/customers/welcome-emails")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success) setWelcomePending(d.pending ?? 0)
+      })
+      .catch(() => {})
+  }
 
   const fetchCustomers = async ({ reset }: { reset: boolean }) => {
     const currentOffset = reset ? 0 : offset
@@ -157,15 +555,56 @@ export default function AdminCustomersPage() {
   }, [q])
 
   useEffect(() => {
-    fetch("/api/admin/customers/welcome-emails")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.success) setWelcomePending(d.pending ?? 0)
-      })
-      .catch(() => {})
+    refreshWelcomeStats()
   }, [rows.length, createOpen])
 
   const filtered = rows
+
+  const sendWelcomeToCustomer = async (customer: CustomerRow, forceResend = false) => {
+    const alreadySent = Boolean(customer.welcomeEmailSentAt)
+    const action = forceResend || alreadySent ? "Resend" : "Send"
+    if (
+      !confirm(
+        `${action} welcome email to ${customer.companyName} (${customer.email})?\n\nA new temporary password will be emailed and set on their account.`,
+      )
+    ) {
+      return
+    }
+    setWelcomeOneSending(true)
+    try {
+      const res = await fetch("/api/admin/customers/welcome-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: customer.id,
+          forceResend: forceResend || alreadySent,
+          onlyPending: !(forceResend || alreadySent),
+        }),
+      })
+      const data = await res.json()
+      if (data?.success) {
+        const sentAt = new Date().toISOString()
+        setSelected((prev) =>
+          prev?.id === customer.id ? { ...prev, welcomeEmailSentAt: sentAt } : prev,
+        )
+        setRows((prev) =>
+          prev.map((r) => (r.id === customer.id ? { ...r, welcomeEmailSentAt: sentAt } : r)),
+        )
+        refreshWelcomeStats()
+        alert(data.message || "Welcome email queued.")
+      } else if (data?.alreadySent) {
+        if (confirm("Welcome already sent. Resend with a new password?")) {
+          await sendWelcomeToCustomer(customer, true)
+        }
+      } else {
+        alert(data?.error || "Failed to send welcome email")
+      }
+    } catch {
+      alert("Network error while sending welcome email")
+    } finally {
+      setWelcomeOneSending(false)
+    }
+  }
 
   const sendWelcomeToAll = async () => {
     const pendingLabel =
@@ -525,7 +964,7 @@ export default function AdminCustomersPage() {
                 <SheetTitle className="font-[family-name:var(--font-display)] text-2xl">
                   {selected.id} · {selected.companyName}
                 </SheetTitle>
-                <SheetDescription>Full customer sheet (Excel-style fields)</SheetDescription>
+                <SheetDescription>Edit customer sheet — save to update database</SheetDescription>
               </SheetHeader>
               <div className="mt-4 space-y-3 pb-8">
                 {selected.logoUrl && (
@@ -536,150 +975,37 @@ export default function AdminCustomersPage() {
                     className="h-16 w-auto max-w-[200px] rounded-lg border border-[#E5E5E5] bg-white object-contain p-2"
                   />
                 )}
-                <table className="w-full border-collapse text-[13px]">
-                  <tbody>
-                    {[
-                      ["Customer ID", selected.id],
-                      ["Brand Name", selected.companyName],
-                      ["Trade Name", selected.tradeName],
-                      ["GSTIN", selected.gstin],
-                      ["State", selected.state],
-                      ["City", selected.city],
-                      ["LSU Name", selected.lsuName],
-                      ["LSU Technician", selected.lsuTechnicianName],
-                      ["Operations Incharge", selected.operationsIncharge],
-                      ["Primary POC", selected.primaryPocName],
-                      ["POC Email", selected.primaryPocEmail],
-                      ["POC Number", selected.primaryPocNumber],
-                      ["POC Designation", selected.primaryPocDesignation],
-                      ["Collection Frequency", selected.collectionFrequency],
-                      ["Service Start", selected.serviceStartDate ? new Date(selected.serviceStartDate).toLocaleDateString("en-IN") : ""],
-                      ["No. of Kiosk", selected.noOfKiosk],
-                      ["Basic / Advance / Pan / Wall", `${selected.noOfBasicKiosk ?? 0} / ${selected.noOfAdvanceKiosk ?? 0} / ${selected.noOfPanVendorKiosk ?? 0} / ${selected.noOfWallMountKiosk ?? 0}`],
-                      ["Login Email", selected.email],
-                      ["Status", selected.status],
-                      ["Service Status", selected.serviceStatus || "ACTIVE"],
-                      [
-                        "Contract End",
-                        selected.contractEndDate
-                          ? new Date(selected.contractEndDate).toLocaleDateString("en-IN")
-                          : "",
-                      ],
-                      ["KR Credits", selected.kraftrebornCredits],
-                      ["Total Waste (kg)", selected.totalWasteCollected],
-                    ].map(([label, value]) => (
-                      <tr key={String(label)} className="border-b border-[#EAEAEA]">
-                        <td className="w-[42%] bg-[#F7FBF7] px-3 py-2 font-semibold text-[#1B7339]">
-                          {label}
-                        </td>
-                        <td className="px-3 py-2 text-[#141414]">{value == null || value === "" ? "—" : String(value)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="rounded-xl border border-[#E2EBE4] p-3 space-y-2">
-                  <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
-                    Update service lifecycle
-                  </p>
-                  <Select
-                    value={selected.serviceStatus || "ACTIVE"}
-                    onValueChange={async (serviceStatus) => {
-                      const res = await fetch("/api/admin/customers", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: selected.id, serviceStatus }),
-                      })
-                      const data = await res.json()
-                      if (data?.success) {
-                        setSelected((s) => (s ? { ...s, serviceStatus } : s))
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full h-10 rounded-lg border-[#D8D8D8] bg-white text-[13px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="RENEWAL_DUE">Renewal Due Soon</SelectItem>
-                      <SelectItem value="PAUSED_RENEWAL">Paused – Renewal Pending</SelectItem>
-                      <SelectItem value="PAUSED_PAYMENT">Paused – Payment Pending</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive / Service Ended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="date"
-                    defaultValue={
-                      selected.contractEndDate
-                        ? new Date(selected.contractEndDate).toISOString().slice(0, 10)
-                        : ""
-                    }
-                    onBlur={async (e) => {
-                      const contractEndDate = e.target.value || null
-                      await fetch("/api/admin/customers", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: selected.id, contractEndDate }),
-                      })
-                      setSelected((s) => (s ? { ...s, contractEndDate } : s))
-                    }}
-                  />
-                  <p className="text-[11px] text-[#7A7A7A]">Contract / renewal end date</p>
-                </div>
-                <div className="rounded-xl border border-[#E2EBE4] p-3 space-y-2">
-                  <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
-                    KR Amount (₹) — redeemable balance
-                  </p>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={1}
-                    key={`kr-${selected.id}-${selected.kraftrebornCredits ?? 0}`}
-                    defaultValue={
-                      selected.kraftrebornCredits != null ? String(Math.floor(selected.kraftrebornCredits)) : ""
-                    }
-                    placeholder="Required for shop redemption"
-                    onBlur={async (e) => {
-                      const raw = e.target.value.trim()
-                      if (raw === "") return
-                      const kraftrebornCredits = Math.max(0, Math.floor(Number(raw)))
-                      if (!Number.isFinite(kraftrebornCredits)) return
-                      const res = await fetch("/api/admin/customers", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: selected.id, kraftrebornCredits }),
-                      })
-                      const data = await res.json()
-                      if (data?.success) {
-                        setSelected((s) => (s ? { ...s, kraftrebornCredits } : s))
-                        await fetchCustomers({ reset: true })
-                      }
-                    }}
-                  />
-                  <p className="text-[11px] text-[#7A7A7A]">
-                    Save on blur. Customer can redeem this balance in the KraftReborn shop. To add
-                    extra credits, use{" "}
-                    <a href="/admin/kr-credits" className="font-semibold text-[#1B7339] hover:underline">
-                      Admin → KR Credits
-                    </a>
-                    .
-                  </p>
-                </div>
-                {selected.collectionPocs && (
-                  <div className="rounded-xl border border-[#E2EBE4] p-3">
-                    <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
-                      Collection POCs
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-semibold text-[#1B7339]">Portal welcome email</p>
+                    <p className="text-[11px] text-[#6B6B6B]">
+                      {selected.welcomeEmailSentAt
+                        ? `Sent ${new Date(selected.welcomeEmailSentAt).toLocaleString("en-IN")}`
+                        : "Not sent yet"}
                     </p>
-                    <pre className="whitespace-pre-wrap text-[12px] text-[#555]">
-                      {(() => {
-                        try {
-                          return JSON.stringify(JSON.parse(selected.collectionPocs), null, 2)
-                        } catch {
-                          return selected.collectionPocs
-                        }
-                      })()}
-                    </pre>
                   </div>
-                )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                    disabled={welcomeOneSending || !selected.email}
+                    onClick={() => sendWelcomeToCustomer(selected)}
+                  >
+                    {welcomeOneSending ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {selected.welcomeEmailSentAt ? "Resend welcome" : "Send welcome"}
+                  </Button>
+                </div>
+                <EditableCustomerSheet
+                  customer={selected}
+                  onSaved={(next) => {
+                    setSelected(next)
+                    setRows((prev) => prev.map((r) => (r.id === next.id ? { ...r, ...next } : r)))
+                  }}
+                />
               </div>
             </>
           )}

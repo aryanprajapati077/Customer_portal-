@@ -202,16 +202,20 @@ export default function AdminAnalyticsPage() {
               </div>
             ) : (
               <div className="flex h-44 items-end gap-1.5">
-                {(data?.dailyLogins || []).map((d) => (
-                  <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full rounded-t-md bg-[#1B7339]/85 transition-all"
-                      style={{ height: `${Math.max(6, (d.count / maxDaily) * 100)}%` }}
-                      title={`${d.count} logins · ${d.uniqueCustomers} unique`}
-                    />
-                    <span className="text-[9px] text-muted-foreground">{shortDate(d.date)}</span>
-                  </div>
-                ))}
+                {(data?.dailyLogins || []).map((d) => {
+                  const barPx = d.count <= 0 ? 0 : Math.max(8, Math.round((d.count / maxDaily) * 140))
+                  return (
+                    <div key={d.date} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+                      <span className="text-[9px] font-medium text-[#1B7339]">{d.count || ""}</span>
+                      <div
+                        className="w-full rounded-t-md bg-[#1B7339]/85 transition-all"
+                        style={{ height: `${barPx}px` }}
+                        title={`${d.count} logins · ${d.uniqueCustomers} unique`}
+                      />
+                      <span className="text-[9px] text-muted-foreground">{shortDate(d.date)}</span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </CardContent>

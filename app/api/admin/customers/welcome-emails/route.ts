@@ -11,6 +11,15 @@ async function ensureWelcomeColumn() {
   `)
 }
 
+type WelcomeCustomer = {
+  id: string
+  email: string
+  companyName: string
+  primaryPocName: string | null
+  contactPerson: string | null
+  welcomeEmailSentAt?: string | Date | null
+}
+
 export async function GET() {
   try {
     await ensureWelcomeColumn()
@@ -36,46 +45,93 @@ export async function GET() {
 }
 
 /**
- * Bulk-send welcome emails.
- * Default: only customers who have not received welcome yet.
- * Body: { onlyPending?: boolean } — default true
+ * Send welcome emails.
+ * Body:
+ *  - customerId?: string — single customer
+ *  - customerIds?: string[] — subset
+ *  - onlyPending?: boolean — default true (skip already-sent unless false / forceResend)
+ *  - forceResend?: boolean — allow re-send (new temp password)
  */
 export async function POST(request: NextRequest) {
   try {
     await ensureWelcomeColumn()
     const body = await request.json().catch(() => ({}))
-    const onlyPending = body?.onlyPending !== false
+    const forceResend = Boolean(body?.forceResend)
+    const onlyPending = forceResend ? false : body?.onlyPending !== false
+    const singleId = body?.customerId ? String(body.customerId).trim() : ""
+    const idList = Array.isArray(body?.customerIds)
+      ? body.customerIds.map((x: unknown) => String(x).trim()).filter(Boolean)
+      : singleId
+        ? [singleId]
+        : []
 
-    const customers = onlyPending
-      ? ((await sql`
-          SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
-          FROM "Customer"
-          WHERE COALESCE("isGroup", false) = false
-            AND "welcomeEmailSentAt" IS NULL
-            AND email IS NOT NULL
-            AND email LIKE '%@%'
-          ORDER BY "companyName" ASC
-        `) as {
-          id: string
-          email: string
-          companyName: string
-          primaryPocName: string | null
-          contactPerson: string | null
-        }[])
-      : ((await sql`
-          SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
-          FROM "Customer"
-          WHERE COALESCE("isGroup", false) = false
-            AND email IS NOT NULL
-            AND email LIKE '%@%'
-          ORDER BY "companyName" ASC
-        `) as {
-          id: string
-          email: string
-          companyName: string
-          primaryPocName: string | null
-          contactPerson: string | null
-        }[])
+    let customers: WelcomeCustomer[]
+
+    if (idList.length > 0) {
+      customers = await sql.query<WelcomeCustomer>(
+        `SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+         FROM "Customer"
+         WHERE id = ANY($1::text[])
+           AND COALESCE("isGroup", false) = false
+           AND email IS NOT NULL
+           AND email LIKE '%@%'
+         ORDER BY "companyName" ASC`,
+        [idList],
+      )
+
+      if (onlyPending) {
+        customers = customers.filter((c) => !c.welcomeEmailSentAt)
+      }
+
+      if (idList.length === 1 && customers.length === 0) {
+        const [row] = (await sql`
+          SELECT id, email, "welcomeEmailSentAt", COALESCE("isGroup", false) AS "isGroup"
+          FROM "Customer" WHERE id = ${idList[0]} LIMIT 1
+        `) as { id: string; email: string | null; welcomeEmailSentAt: string | null; isGroup: boolean }[]
+
+        if (!row) {
+          return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 })
+        }
+        if (row.isGroup) {
+          return NextResponse.json(
+            { success: false, error: "Group accounts use the Group Clients welcome flow" },
+            { status: 400 },
+          )
+        }
+        if (!row.email || !String(row.email).includes("@")) {
+          return NextResponse.json(
+            { success: false, error: "Customer has no valid login email" },
+            { status: 400 },
+          )
+        }
+        if (onlyPending && row.welcomeEmailSentAt) {
+          return NextResponse.json({
+            success: false,
+            error: "Welcome email already sent. Use Resend to send again with a new password.",
+            alreadySent: true,
+          }, { status: 409 })
+        }
+      }
+    } else {
+      customers = onlyPending
+        ? ((await sql`
+            SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+            FROM "Customer"
+            WHERE COALESCE("isGroup", false) = false
+              AND "welcomeEmailSentAt" IS NULL
+              AND email IS NOT NULL
+              AND email LIKE '%@%'
+            ORDER BY "companyName" ASC
+          `) as WelcomeCustomer[])
+        : ((await sql`
+            SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+            FROM "Customer"
+            WHERE COALESCE("isGroup", false) = false
+              AND email IS NOT NULL
+              AND email LIKE '%@%'
+            ORDER BY "companyName" ASC
+          `) as WelcomeCustomer[])
+    }
 
     if (customers.length === 0) {
       return NextResponse.json({
@@ -83,7 +139,7 @@ export async function POST(request: NextRequest) {
         queued: 0,
         total: 0,
         message: onlyPending
-          ? "No pending clients — all welcome emails already sent (or no customers yet)."
+          ? "No pending clients — welcome email already sent (or no matching customers)."
           : "No customers found.",
       })
     }
@@ -108,7 +164,7 @@ export async function POST(request: NextRequest) {
       const contactName =
         customer.primaryPocName || customer.contactPerson || customer.companyName || "Partner"
 
-      queueEmail(`welcome-${customer.id}`, () =>
+      queueEmail(`welcome-${customer.id}-${Date.now()}`, () =>
         sendWelcomeEmail({
           to,
           brandName: customer.companyName,
@@ -125,7 +181,10 @@ export async function POST(request: NextRequest) {
       success: true,
       queued,
       total: customers.length,
-      message: `Welcome emails queued for ${queued} client(s). New temporary passwords were set.`,
+      message:
+        idList.length === 1
+          ? `Welcome email queued for ${customers[0]?.companyName || idList[0]}. A new temporary password was set.`
+          : `Welcome emails queued for ${queued} client(s). New temporary passwords were set.`,
     })
   } catch (error) {
     console.error("Bulk welcome email error:", error)

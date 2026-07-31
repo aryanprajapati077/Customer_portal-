@@ -7,22 +7,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Package, Plus, Search, Filter } from "lucide-react"
-import { AdminListRow } from "@/components/admin/admin-list-card"
+import { Loader2, Package, Plus, Search, Filter, Table2, Sparkles } from "lucide-react"
 import {
   AdminDetailSheet,
-  AdminSheetField,
   AdminSheetSection,
 } from "@/components/admin/admin-detail-sheet"
+import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 
 type Row = {
   id: string
   customerId: string
   companyName: string
+  lsuName?: string | null
   date: string
   weight: number
   location: string | null
   status: string
+  notes?: string | null
 }
 
 type CustomerOption = {
@@ -42,6 +43,12 @@ function monthOptions(count = 18) {
   return opts
 }
 
+function toDateInput(raw: string) {
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toISOString().slice(0, 10)
+}
+
 export default function AdminCollectionsPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [customers, setCustomers] = useState<CustomerOption[]>([])
@@ -49,9 +56,19 @@ export default function AdminCollectionsPage() {
   const [q, setQ] = useState("")
   const [filterClient, setFilterClient] = useState<string>("all")
   const [filterMonth, setFilterMonth] = useState<string>("all")
+  const [filterLsu, setFilterLsu] = useState<string>("all")
   const [isAdding, setIsAdding] = useState(false)
   const [monthCollectionMode, setMonthCollectionMode] = useState(false)
   const [selectedRow, setSelectedRow] = useState<Row | null>(null)
+  const [editDraft, setEditDraft] = useState({
+    date: "",
+    weight: "",
+    location: "",
+    status: "Completed",
+    notes: "",
+  })
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [savingCell, setSavingCell] = useState<string | null>(null)
   const months = useMemo(() => monthOptions(), [])
 
   const [draft, setDraft] = useState({
@@ -63,9 +80,17 @@ export default function AdminCollectionsPage() {
     collectionMonth: new Date().toISOString().slice(0, 7),
   })
 
+  const lsuOptions = useMemo(() => {
+    const set = new Set<string>()
+    for (const r of rows) {
+      if (r.lsuName?.trim()) set.add(r.lsuName.trim())
+    }
+    return [...set].sort()
+  }, [rows])
+
   const loadCustomers = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/customers?fields=options")
+      const res = await fetch("/api/admin/customers?fields=options&take=1000")
       const data = await res.json()
       if (data?.success && data.customers?.length) {
         setCustomers(
@@ -85,16 +110,17 @@ export default function AdminCollectionsPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.set("take", "1000")
       if (filterClient !== "all") params.set("customerId", filterClient)
       if (filterMonth !== "all") params.set("month", filterMonth)
-      const qs = params.toString()
-      const res = await fetch(`/api/admin/collections${qs ? `?${qs}` : ""}`)
+      if (filterLsu !== "all") params.set("lsu", filterLsu)
+      const res = await fetch(`/api/admin/collections?${params}`)
       const data = await res.json()
       if (data?.success) setRows(data.collections || [])
     } finally {
       setLoading(false)
     }
-  }, [filterClient, filterMonth])
+  }, [filterClient, filterMonth, filterLsu])
 
   useEffect(() => {
     loadCustomers()
@@ -103,6 +129,17 @@ export default function AdminCollectionsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (!selectedRow) return
+    setEditDraft({
+      date: toDateInput(selectedRow.date),
+      weight: String(selectedRow.weight ?? ""),
+      location: selectedRow.location || "",
+      status: selectedRow.status || "Completed",
+      notes: selectedRow.notes || "",
+    })
+  }, [selectedRow?.id])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -113,6 +150,7 @@ export default function AdminCollectionsPage() {
         r.customerId.toLowerCase().includes(s) ||
         r.companyName.toLowerCase().includes(s) ||
         (r.location || "").toLowerCase().includes(s) ||
+        (r.lsuName || "").toLowerCase().includes(s) ||
         r.status.toLowerCase().includes(s)
       )
     })
@@ -123,6 +161,26 @@ export default function AdminCollectionsPage() {
     const [y, m] = draft.collectionMonth.split("-").map(Number)
     const lastDay = new Date(y, m, 0).getDate()
     return `${draft.collectionMonth}-${String(lastDay).padStart(2, "0")}`
+  }
+
+  const patchRow = async (id: string, patch: Record<string, unknown>) => {
+    setSavingCell(id)
+    try {
+      const res = await fetch("/api/admin/collections", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...patch }),
+      })
+      const data = await res.json()
+      if (data?.success && data.collection) {
+        setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...data.collection } : r)))
+        setSelectedRow((s) => (s?.id === id ? { ...s, ...data.collection } : s))
+        return true
+      }
+      return false
+    } finally {
+      setSavingCell(null)
+    }
   }
 
   const add = async () => {
@@ -150,6 +208,25 @@ export default function AdminCollectionsPage() {
     }
   }
 
+  const saveSelected = async () => {
+    if (!selectedRow) return
+    setSavingEdit(true)
+    try {
+      await patchRow(selectedRow.id, {
+        date: editDraft.date,
+        weight: Number(editDraft.weight),
+        location: editDraft.location,
+        status: editDraft.status,
+        notes: editDraft.notes,
+      })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const cellInput =
+    "h-8 w-full min-w-[88px] rounded border border-transparent bg-transparent px-1.5 text-[12.5px] outline-none hover:border-[#D0D0D0] focus:border-[#1B7339] focus:bg-white"
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -159,7 +236,7 @@ export default function AdminCollectionsPage() {
             Collections
           </h1>
           <p className="text-sm text-muted-foreground">
-            Search by customer name, filter by client or month, and add monthly collections
+            Sheet view — edit cells inline, or open a row for full edit
           </p>
         </div>
         <div className="w-full sm:w-[320px] relative">
@@ -179,9 +256,9 @@ export default function AdminCollectionsPage() {
             <Filter className="w-4 h-4" />
             Filters
           </CardTitle>
-          <CardDescription>Filter the list by client or collection month</CardDescription>
+          <CardDescription>Filter by client, LSU, or collection month</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
+        <CardContent className="grid gap-3 sm:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Client</Label>
             <Select value={filterClient} onValueChange={setFilterClient}>
@@ -193,6 +270,22 @@ export default function AdminCollectionsPage() {
                 {customers.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.companyName} ({c.id})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">LSU</Label>
+            <Select value={filterLsu} onValueChange={setFilterLsu}>
+              <SelectTrigger>
+                <SelectValue placeholder="All LSU" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All LSU</SelectItem>
+                {lsuOptions.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -222,112 +315,138 @@ export default function AdminCollectionsPage() {
         </CardContent>
       </Card>
 
-      <Card className="glass border-border/50">
+      <Card className="overflow-hidden border-[#C8E6D4] bg-gradient-to-br from-[#F7FBF7] via-white to-[#FFF8E8] shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Add Collection</CardTitle>
-          <CardDescription>
-            {monthCollectionMode
-              ? "Monthly collection — date is set to the last day of the selected month"
-              : "Add a collection with a specific date, or switch to monthly mode"}
-          </CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base text-[#1B7339]">
+                <Sparkles className="h-4 w-4" />
+                Add collection
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Search a client, enter weight for the month or a specific date, then save
+              </CardDescription>
+            </div>
+            <div className="inline-flex rounded-full border border-[#D5E5D9] bg-white p-0.5 text-[12px]">
+              <button
+                type="button"
+                onClick={() => setMonthCollectionMode(false)}
+                className={`rounded-full px-3 py-1.5 font-medium transition ${
+                  !monthCollectionMode ? "bg-[#1B7339] text-white" : "text-[#5A5A5A] hover:bg-[#F3F9F4]"
+                }`}
+              >
+                Specific date
+              </button>
+              <button
+                type="button"
+                onClick={() => setMonthCollectionMode(true)}
+                className={`rounded-full px-3 py-1.5 font-medium transition ${
+                  monthCollectionMode ? "bg-[#1B7339] text-white" : "text-[#5A5A5A] hover:bg-[#F3F9F4]"
+                }`}
+              >
+                Month collection
+              </button>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
-          <div className="space-y-1 md:col-span-2">
-            <Label className="text-xs text-muted-foreground">Customer</Label>
-            <Select
-              value={draft.customerId}
-              onValueChange={(v) => setDraft((d) => ({ ...d, customerId: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.companyName} ({c.id})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Weight (kg)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={draft.weight}
-              onChange={(e) => {
-                const raw = e.target.value
-                setDraft((d) => ({
-                  ...d,
-                  weight: raw === "" ? 0 : Number.parseFloat(raw),
-                }))
-              }}
-              inputMode="decimal"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Location</Label>
-            <Input
-              value={draft.location}
-              onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Status</Label>
-            <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Scheduled">Scheduled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Entry type</Label>
-            <Select
-              value={monthCollectionMode ? "month" : "date"}
-              onValueChange={(v) => setMonthCollectionMode(v === "month")}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Specific date</SelectItem>
-                <SelectItem value="month">Month collection</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {monthCollectionMode ? (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Collection month</Label>
-              <Input
-                type="month"
-                value={draft.collectionMonth}
-                onChange={(e) => setDraft((d) => ({ ...d, collectionMonth: e.target.value }))}
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                Customer
+              </Label>
+              <CustomerSearchSelect
+                customers={customers}
+                value={draft.customerId}
+                onChange={(id) => setDraft((d) => ({ ...d, customerId: id }))}
               />
             </div>
-          ) : (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Collection date</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                Weight (kg)
+              </Label>
               <Input
-                type="date"
-                value={draft.date}
-                onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
+                type="number"
+                step="0.01"
+                min="0"
+                value={draft.weight}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  setDraft((d) => ({
+                    ...d,
+                    weight: raw === "" ? 0 : Number.parseFloat(raw),
+                  }))
+                }}
+                inputMode="decimal"
+                className="h-11 rounded-xl border-[#D5E5D9] bg-white"
               />
             </div>
-          )}
-          <div className="md:col-span-4 flex items-center gap-3 flex-wrap">
-            <Button onClick={add} disabled={isAdding || !draft.customerId}>
-              {isAdding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                Location
+              </Label>
+              <Input
+                value={draft.location}
+                onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
+                placeholder="Site / city (optional)"
+                className="h-11 rounded-xl border-[#D5E5D9] bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                Status
+              </Label>
+              <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
+                <SelectTrigger className="h-11 rounded-xl border-[#D5E5D9] bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Scheduled">Scheduled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {monthCollectionMode ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                  Collection month
+                </Label>
+                <Input
+                  type="month"
+                  value={draft.collectionMonth}
+                  onChange={(e) => setDraft((d) => ({ ...d, collectionMonth: e.target.value }))}
+                  className="h-11 rounded-xl border-[#D5E5D9] bg-white"
+                />
+                <p className="text-[11px] text-[#7A7A7A]">
+                  Saved as the last day of {draft.collectionMonth || "the month"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
+                  Collection date
+                </Label>
+                <Input
+                  type="date"
+                  value={draft.date}
+                  onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
+                  className="h-11 rounded-xl border-[#D5E5D9] bg-white"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#E2EBE4] pt-4">
+            <Button
+              onClick={add}
+              disabled={isAdding || !draft.customerId}
+              className="h-11 rounded-full bg-[#1B7339] px-6 hover:bg-[#145a2c]"
+            >
+              {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Add collection
             </Button>
-            <Button variant="outline" onClick={load} disabled={loading}>
-              Refresh
+            <Button variant="outline" onClick={load} disabled={loading} className="h-11 rounded-full">
+              Refresh list
             </Button>
           </div>
         </CardContent>
@@ -335,15 +454,16 @@ export default function AdminCollectionsPage() {
 
       <Card className="glass border-border/50 overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Recent Collections</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Table2 className="h-4 w-4" />
+            Collections sheet
+          </CardTitle>
           <CardDescription>
-            {filtered.length} rows
-            {filterClient !== "all" || filterMonth !== "all" ? " (filtered)" : ""}
-            {" · "}
-            click any row to open sheet
+            {filtered.length} rows · edit weight / location / status inline · click ID to open full edit
+            {savingCell ? " · saving…" : ""}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="py-12 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -351,33 +471,110 @@ export default function AdminCollectionsPage() {
           ) : filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No collections match your filters.</p>
           ) : (
-            <div className="space-y-3">
-              {filtered.map((r) => (
-                <AdminListRow key={r.id} onClick={() => setSelectedRow(r)}>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-foreground">{r.companyName}</p>
-                        <Badge variant="outline" className="bg-muted/30">
+            <div className="overflow-auto max-h-[70vh]">
+              <table className="w-full min-w-[980px] border-collapse text-[12.5px]">
+                <thead className="sticky top-0 z-10 bg-[#E8F5E9]">
+                  <tr>
+                    {[
+                      "Customer ID",
+                      "Brand",
+                      "LSU",
+                      "Date",
+                      "Weight (kg)",
+                      "Location",
+                      "Status",
+                      "Microplastics",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="border-b border-[#C8E6D4] px-2.5 py-2 text-left font-semibold text-[#1B7339]"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r) => (
+                    <tr key={r.id} className="border-b border-[#F0F0F0] hover:bg-[#F7FBF7]">
+                      <td className="px-2.5 py-1.5">
+                        <button
+                          type="button"
+                          className="font-semibold text-[#1B7339] hover:underline"
+                          onClick={() => setSelectedRow(r)}
+                        >
                           {r.customerId}
-                        </Badge>
-                        <Badge variant="outline" className="border-secondary/30 bg-secondary/10 text-secondary">
-                          {r.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(r.date).toLocaleString("en-IN")} • {r.location || "N/A"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-foreground">{Number(r.weight || 0).toFixed(1)} kg</p>
-                      <p className="text-xs text-muted-foreground">
-                        Microplastics: {(Number(r.weight || 0) * 0.8).toFixed(1)} kg
-                      </p>
-                    </div>
-                  </div>
-                </AdminListRow>
-              ))}
+                        </button>
+                      </td>
+                      <td className="max-w-[200px] truncate px-2.5 py-1.5" title={r.companyName}>
+                        {r.companyName}
+                      </td>
+                      <td className="px-2.5 py-1.5">{r.lsuName || "—"}</td>
+                      <td className="px-1.5 py-1">
+                        <Input
+                          type="date"
+                          className={cellInput}
+                          defaultValue={toDateInput(r.date)}
+                          key={`${r.id}-date-${r.date}`}
+                          onBlur={(e) => {
+                            if (e.target.value && e.target.value !== toDateInput(r.date)) {
+                              void patchRow(r.id, { date: e.target.value })
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={cellInput}
+                          defaultValue={String(r.weight ?? "")}
+                          key={`${r.id}-w-${r.weight}`}
+                          onBlur={(e) => {
+                            const w = Number(e.target.value)
+                            if (Number.isFinite(w) && w !== Number(r.weight)) {
+                              void patchRow(r.id, { weight: w })
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1">
+                        <Input
+                          className={cellInput}
+                          defaultValue={r.location || ""}
+                          key={`${r.id}-loc-${r.location || ""}`}
+                          onBlur={(e) => {
+                            if (e.target.value !== (r.location || "")) {
+                              void patchRow(r.id, { location: e.target.value })
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1">
+                        <Select
+                          value={r.status}
+                          onValueChange={(v) => {
+                            if (v !== r.status) void patchRow(r.id, { status: v })
+                          }}
+                        >
+                          <SelectTrigger className="h-8 border-transparent bg-transparent text-[12.5px] shadow-none hover:border-[#D0D0D0]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Scheduled">Scheduled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="px-2.5 py-1.5 text-[#666]">
+                        {(Number(r.weight || 0) * 0.8).toFixed(2)} kg
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
@@ -387,26 +584,69 @@ export default function AdminCollectionsPage() {
         open={!!selectedRow}
         onOpenChange={(open) => !open && setSelectedRow(null)}
         title={selectedRow ? selectedRow.companyName : ""}
-        description={selectedRow ? `Collection sheet · ${selectedRow.id}` : undefined}
+        description={selectedRow ? `Edit collection · ${selectedRow.id}` : undefined}
+        className="sm:max-w-xl"
       >
         {selectedRow && (
-          <AdminSheetSection title="Collection">
-            <AdminSheetField label="Customer" value={selectedRow.companyName} />
-            <AdminSheetField label="Customer ID" value={selectedRow.customerId} />
-            <AdminSheetField
-              label="Date"
-              value={new Date(selectedRow.date).toLocaleString("en-IN")}
-            />
-            <AdminSheetField label="Location" value={selectedRow.location || "N/A"} />
-            <AdminSheetField label="Status" value={selectedRow.status} />
-            <AdminSheetField
-              label="Weight"
-              value={`${Number(selectedRow.weight || 0).toFixed(1)} kg`}
-            />
-            <AdminSheetField
-              label="Microplastics"
-              value={`${(Number(selectedRow.weight || 0) * 0.8).toFixed(1)} kg`}
-            />
+          <AdminSheetSection title="Edit collection">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{selectedRow.customerId}</Badge>
+                {selectedRow.lsuName ? <Badge variant="outline">LSU: {selectedRow.lsuName}</Badge> : null}
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Date</Label>
+                <Input
+                  type="date"
+                  value={editDraft.date}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Weight (kg)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editDraft.weight}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, weight: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Location</Label>
+                <Input
+                  value={editDraft.location}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, location: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Status</Label>
+                <Select
+                  value={editDraft.status}
+                  onValueChange={(v) => setEditDraft((d) => ({ ...d, status: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Scheduled">Scheduled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Notes</Label>
+                <Input
+                  value={editDraft.notes}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, notes: e.target.value }))}
+                />
+              </div>
+              <Button onClick={saveSelected} disabled={savingEdit} className="w-full">
+                {savingEdit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save changes
+              </Button>
+            </div>
           </AdminSheetSection>
         )}
       </AdminDetailSheet>

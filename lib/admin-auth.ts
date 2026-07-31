@@ -26,7 +26,13 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   return out === 0
 }
 
-export type AdminSession = { id: string; role: string; email: string; name: string }
+export type AdminSession = {
+  id: string
+  role: string
+  email: string
+  name: string
+  permissions?: string[]
+}
 
 export async function signAdminSession(adminId: string, role: string): Promise<string> {
   const sig = await hmacSha256Hex(getSecret(), `admin:${adminId}:${role}`)

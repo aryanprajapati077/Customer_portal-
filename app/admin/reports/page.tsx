@@ -28,6 +28,7 @@ import {
   Search,
   UserRound,
 } from "lucide-react"
+import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 import {
   buildEsgReportEmailHtml,
   buildEsgReportEmailText,
@@ -439,18 +440,11 @@ export default function AdminReportsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Customer ID *</Label>
-              <Select value={genCustomerId || undefined} onValueChange={setGenCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {customerOptions.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.id} — {c.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CustomerSearchSelect
+                customers={customerOptions}
+                value={genCustomerId}
+                onChange={setGenCustomerId}
+              />
             </div>
             <div className="space-y-2">
               <Label>Month *</Label>
@@ -499,19 +493,13 @@ export default function AdminReportsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Customer</Label>
-              <Select value={sendCustomerId} onValueChange={setSendCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer or all" />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  <SelectItem value="__all__">All active clients</SelectItem>
-                  {customerOptions.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.id} — {c.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CustomerSearchSelect
+                customers={customerOptions}
+                value={sendCustomerId}
+                onChange={setSendCustomerId}
+                allValue="__all__"
+                allLabel="All active clients"
+              />
             </div>
             <div className="space-y-2">
               <Label>Report month *</Label>

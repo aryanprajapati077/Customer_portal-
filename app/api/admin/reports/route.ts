@@ -136,13 +136,13 @@ export async function POST(request: NextRequest) {
 
       const customers = customerId
         ? await sql`
-            SELECT id, email, "companyName", "contactPerson", status, "joinDate",
+            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE id = ${customerId}
           `
         : await sql`
-            SELECT id, email, "companyName", "contactPerson", status, "joinDate",
+            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE status = 'Active'
@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
         email: string
         companyName: string
         contactPerson: string | null
+        primaryPocName?: string | null
         status: string
         joinDate?: string | Date | null
         primaryPocEmail?: string | null
@@ -223,7 +224,7 @@ export async function POST(request: NextRequest) {
               html: buildEsgReportEmailHtml(
                 {
                   companyName: row.companyName,
-                  contactName: row.contactPerson,
+                  contactName: row.primaryPocName || row.contactPerson,
                   period: periodLabel,
                   customerId: reportData.customerId,
                 },
@@ -232,7 +233,7 @@ export async function POST(request: NextRequest) {
               text: buildEsgReportEmailText(
                 {
                   companyName: row.companyName,
-                  contactName: row.contactPerson,
+                  contactName: row.primaryPocName || row.contactPerson,
                   period: periodLabel,
                   customerId: reportData.customerId,
                 },
@@ -343,7 +344,7 @@ export async function POST(request: NextRequest) {
                 html: buildEsgReportEmailHtml(
                   {
                     companyName: row.companyName,
-                    contactName: row.contactPerson,
+                    contactName: row.primaryPocName || row.contactPerson,
                     period: periodLabel,
                     customerId: reportData.customerId,
                   },
@@ -352,7 +353,7 @@ export async function POST(request: NextRequest) {
                 text: buildEsgReportEmailText(
                   {
                     companyName: row.companyName,
-                    contactName: row.contactPerson,
+                    contactName: row.primaryPocName || row.contactPerson,
                     period: periodLabel,
                     customerId: reportData.customerId,
                   },

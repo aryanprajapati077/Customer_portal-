@@ -267,8 +267,8 @@ export default function AdminReportsPage() {
     const targetPeriod = opts?.period ?? period
     const personal = targetCustomer !== "__all__"
     const confirmMsg = personal
-      ? `Send ${targetPeriod} ESG report (PDF + Excel) to customer ${targetCustomer}?`
-      : `Send ${targetPeriod} ESG report emails with PDF + Excel to all active clients?`
+      ? `Send ${targetPeriod} ESG report to ${targetCustomer}?\n\nTo: Primary POC\nCC: all Collection POCs\nAttachments: PDF + Excel`
+      : `Send ${targetPeriod} ESG report emails to all active clients?\n\nTo: each client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
     if (!confirm(confirmMsg)) return
 
     setSending(true)
@@ -501,7 +501,7 @@ export default function AdminReportsPage() {
               Email Reports
             </CardTitle>
             <CardDescription>
-              Send personally to one customer, or to all active clients. Attachments: PDF + Excel.
+              To = Primary POC · CC = all Collection POCs. Attachments: PDF + Excel.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

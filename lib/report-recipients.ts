@@ -31,13 +31,23 @@ export function collectionPocEmails(raw?: string | null, excludeEmail?: string |
   return [...emails]
 }
 
+/**
+ * ESG report recipients:
+ * - To  = Primary POC email (falls back to login email only if primary is missing)
+ * - CC  = every Collection POC email (excluding the To address if duplicated)
+ */
 export function resolveReportRecipients(row: {
   email?: string | null
   primaryPocEmail?: string | null
   collectionPocs?: string | null
 }) {
-  const main =
-    String(row.primaryPocEmail || "").trim() || String(row.email || "").trim()
-  const cc = collectionPocEmails(row.collectionPocs, main)
-  return { to: main, cc }
+  const primary = String(row.primaryPocEmail || "")
+    .toLowerCase()
+    .trim()
+  const login = String(row.email || "")
+    .toLowerCase()
+    .trim()
+  const to = (primary.includes("@") ? primary : "") || (login.includes("@") ? login : "")
+  const cc = collectionPocEmails(row.collectionPocs, to)
+  return { to, cc }
 }

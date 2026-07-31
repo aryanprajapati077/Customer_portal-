@@ -90,8 +90,9 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
   }, [customer.id])
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.readAt).length, [notifications])
-  const initial = (firstName(customer.contactPerson) || customer.companyName || "U").charAt(0).toUpperCase()
-  const displayName = firstName(customer.contactPerson)
+  const personName = customer.contactPerson || customer.primaryPocName
+  const displayName = firstName(personName)
+  const initial = (displayName || customer.companyName || "U").charAt(0).toUpperCase()
 
   return (
     <div className="flex items-center justify-end gap-3">
@@ -148,9 +149,13 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
                   onClick={() => router.push("/dashboard/notifications")}
                 >
                   <span className={cn("text-sm", !n.readAt && "font-semibold text-[#1B7339]")}>
-                    {n.title}
+                    {String(n.title || "")}
                   </span>
-                  {n.body && <span className="text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
+                  {n.body && (
+                    <span className="text-xs text-muted-foreground line-clamp-2">
+                      {String(n.body)}
+                    </span>
+                  )}
                 </DropdownMenuItem>
               ))}
             </div>
@@ -171,7 +176,7 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
         type="button"
         onClick={() => {
           logout()
-          router.push("/")
+          window.location.assign("/")
         }}
         className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#E8D0D0] bg-white text-[12.5px] font-semibold text-[#C62828] hover:bg-[#FFF5F5] transition-colors"
       >
@@ -206,7 +211,7 @@ export function PortalTopbar({ customer, showCart = false }: PortalTopbarProps) 
             className="text-red-600"
             onClick={() => {
               logout()
-              router.push("/")
+              window.location.assign("/")
             }}
           >
             <LogOut className="w-4 h-4 mr-2" />

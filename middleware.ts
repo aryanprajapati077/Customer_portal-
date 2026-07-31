@@ -16,6 +16,7 @@ const ADMIN_API_PUBLIC = [
   "/api/admin/forgot-password",
   "/api/admin/verify-otp",
   "/api/admin/reset-password",
+  "/api/admin/logout",
 ]
 
 function withSecurityHeaders(response: NextResponse) {

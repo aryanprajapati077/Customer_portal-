@@ -118,22 +118,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMobileOpen(false)
   }, [pathname])
 
-  const logout = async () => {
-    setIsLoggingOut(true)
-    try {
-      sessionStorage.removeItem("buff_admin_me")
-      await fetch("/api/admin/logout", { method: "POST" })
-    } finally {
-      router.push("/admin/login")
-      router.refresh()
-      setIsLoggingOut(false)
-    }
-  }
-
-  if (isAuthPage) {
-    return <div className="min-h-screen bg-white">{children}</div>
-  }
-
   const fullNav = useMemo(() => {
     const items = [
       ...nav,
@@ -164,6 +148,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace(first?.href || "/admin")
     }
   }, [admin, pathname, isAuthPage, fullNav, router])
+
+  const logout = async () => {
+    setIsLoggingOut(true)
+    try {
+      sessionStorage.removeItem("buff_admin_me")
+      await fetch("/api/admin/logout", { method: "POST", credentials: "include" })
+    } finally {
+      // Hard navigation avoids stale layout/cookie state after logout
+      window.location.assign("/admin/login")
+    }
+  }
+
+  if (isAuthPage) {
+    return <div className="min-h-screen bg-white">{children}</div>
+  }
 
   const crumb = pathname.replace("/admin", "") || "/overview"
 

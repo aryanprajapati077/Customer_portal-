@@ -59,7 +59,31 @@ export function formatWaterL(value: number): string {
 
 export function firstName(contactPerson?: string | null): string {
   if (!contactPerson?.trim()) return "Partner"
-  return contactPerson.trim().split(/\s+/)[0]
+  const titles = new Set([
+    "mr",
+    "mr.",
+    "mrs",
+    "mrs.",
+    "ms",
+    "ms.",
+    "miss",
+    "dr",
+    "dr.",
+    "prof",
+    "prof.",
+    "shri",
+    "smt",
+    "smt.",
+    "sir",
+    "madam",
+  ])
+  const parts = contactPerson
+    .trim()
+    .split(/\s+/)
+    .map((p) => p.replace(/,$/, ""))
+    .filter(Boolean)
+  const withoutTitle = parts.filter((p) => !titles.has(p.toLowerCase()))
+  return withoutTitle[0] || parts[0] || "Partner"
 }
 
 export function formatPortalDate(date?: string | Date | null): string {

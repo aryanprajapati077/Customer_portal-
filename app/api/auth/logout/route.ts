@@ -17,7 +17,14 @@ export async function POST() {
   }
 
   const response = NextResponse.json({ success: true })
-  response.cookies.set(CUSTOMER_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 })
-  response.cookies.set(PORTAL_SESSION_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 })
+  const cleared = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 0,
+  }
+  response.cookies.set(CUSTOMER_COOKIE, "", cleared)
+  response.cookies.set(PORTAL_SESSION_COOKIE, "", cleared)
   return response
 }

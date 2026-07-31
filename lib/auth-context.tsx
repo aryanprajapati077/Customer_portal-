@@ -7,6 +7,7 @@ export interface Customer {
   email: string
   companyName: string
   contactPerson: string
+  primaryPocName?: string | null
   phone: string
   address: string
   totalWasteCollected: number
@@ -88,34 +89,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    fetch("/api/auth/logout", { method: "POST" }).catch(() => {})
+    void fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {})
     setCustomer(null)
     localStorage.removeItem("buffindia_customer")
     localStorage.removeItem("buffindia_customer_auth")
   }
 
   const refreshCustomerData = useCallback(async () => {
-    if (!customer?.email) return
+    if (!customer?.id) return
 
     try {
-      // Re-fetch customer data to get latest from Google Sheets
-      const savedPassword = localStorage.getItem("buffindia_customer_auth")
-      if (savedPassword) {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: customer.email, password: savedPassword }),
-        })
-        const data = await response.json()
-        if (data.success && data.customer) {
-          setCustomer(data.customer)
-          localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
-        }
+      const response = await fetch(`/api/customer/profile?customerId=${encodeURIComponent(customer.id)}`, {
+        credentials: "include",
+      })
+      const data = await response.json()
+      if (data.success && data.customer) {
+        setCustomer((prev) => ({ ...(prev || {}), ...data.customer }))
+        localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
       }
     } catch (error) {
       console.error("Error refreshing customer data:", error)
     }
-  }, [customer?.email])
+  }, [customer?.id])
 
   return (
     <AuthContext.Provider value={{ customer, isLoading, login, logout, refreshCustomerData }}>

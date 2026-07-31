@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Home,
@@ -37,7 +37,6 @@ function isActive(pathname: string, href: string, match: "exact" | "prefix") {
 
 export function PortalSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
-  const router = useRouter()
   const { logout } = useAuth()
 
   return (
@@ -114,7 +113,7 @@ export function PortalSidebar({ onNavigate }: { onNavigate?: () => void }) {
           onClick={() => {
             logout()
             onNavigate?.()
-            router.push("/")
+            window.location.assign("/")
           }}
           className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#F0D0D0] bg-[#FFF8F8] px-3 py-2.5 text-[13px] font-semibold text-[#C62828] hover:bg-[#FFEBEE] transition-colors"
         >

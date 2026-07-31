@@ -42,7 +42,9 @@ export default function DashboardPage() {
   } = usePortalData()
 
   const latestReport = reports[0]
-  const name = firstName(customer?.contactPerson)
+  const name = firstName(
+    customer?.contactPerson || (customer as { primaryPocName?: string } | null)?.primaryPocName,
+  )
   const waterLakh = Math.max(1, Math.round(metrics.waterProtectedL / 100000))
   const period = reportPeriodFromDate(latestReport?.date || latestReport?.period || null)
   const reportTitle =

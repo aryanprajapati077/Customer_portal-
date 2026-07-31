@@ -71,13 +71,13 @@ export async function verifyAdminPending(token: string | undefined | null): Prom
   return id
 }
 
-export function adminSessionCookieOptions() {
+export function adminSessionCookieOptions(overrides?: { maxAge?: number }) {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: overrides?.maxAge ?? 60 * 60 * 8,
   }
 }
 
@@ -86,8 +86,9 @@ export function setAdminSessionCookie(response: { cookies: { set: (n: string, v:
 }
 
 export function clearAdminCookies(response: { cookies: { set: (n: string, v: string, o: object) => void } }) {
-  response.cookies.set(ADMIN_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 })
-  response.cookies.set(ADMIN_PENDING_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 })
+  const cleared = adminSessionCookieOptions({ maxAge: 0 })
+  response.cookies.set(ADMIN_COOKIE, "", cleared)
+  response.cookies.set(ADMIN_PENDING_COOKIE, "", cleared)
 }
 
 export function requireSuperAdmin(session: AdminSession | null): boolean {

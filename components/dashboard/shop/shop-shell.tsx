@@ -22,12 +22,20 @@ export function ShopShell({
   showBack = false,
   backHref = "/dashboard/shop",
 }: ShopShellProps) {
-  const { customer, isLoading } = useAuth()
+  const { customer, isLoading, refreshCustomerData } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!isLoading && !customer) router.push("/login")
   }, [customer, isLoading, router])
+
+  useEffect(() => {
+    if (!customer?.id) return
+    void refreshCustomerData()
+    const onFocus = () => void refreshCustomerData()
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [customer?.id, refreshCustomerData])
 
   return (
     <PortalShell customer={customer} loading={isLoading || !customer} showCart>

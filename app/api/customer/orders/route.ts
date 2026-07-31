@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sql } from "@/lib/db"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { formatOrderNumber } from "@/lib/shop-constants"
 import { saveBase64Image } from "@/lib/upload"
@@ -120,6 +121,14 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         )
       }
+      // Deduct immediately on place so portal balance updates without waiting for admin complete
+      await sql`
+        UPDATE "Customer"
+        SET "kraftrebornCredits" = GREATEST(0, "kraftrebornCredits" - ${subtotal}),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ${customerId}
+          AND "kraftrebornCredits" >= ${subtotal}
+      `
     }
 
     let logoUrl: string | null = null
@@ -136,7 +145,7 @@ export async function POST(request: NextRequest) {
         status: "pending",
         subtotal,
         useKrCredits,
-        creditsDeducted: false,
+        creditsDeducted: useKrCredits,
         logoRequested,
         logoUrl,
         shippingName: customer.contactPerson || customer.companyName,
@@ -157,7 +166,9 @@ export async function POST(request: NextRequest) {
         id: notifId,
         customerId,
         title: "Order placed — pending review",
-        body: `Order ${orderNumber} for ₹${subtotal} received. KR credits will be deducted when your order is completed.`,
+        body: useKrCredits
+          ? `Order ${orderNumber} for ₹${subtotal} placed. ₹${subtotal} KR credits deducted. We'll process your order shortly.`
+          : `Order ${orderNumber} for ₹${subtotal} received. We'll process your order shortly.`,
       },
     })
 

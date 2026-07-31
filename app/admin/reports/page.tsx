@@ -35,6 +35,7 @@ import {
   DEFAULT_ESG_EMAIL_COPY,
   type EsgEmailCopy,
 } from "@/lib/email-templates"
+import { parsePeriodToMonthKey } from "@/lib/monthly-reports"
 
 type ReportRow = {
   id: string
@@ -243,7 +244,7 @@ export default function AdminReportsPage() {
       const res = await fetch("/api/admin/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate-monthly", months: 12 }),
+        body: JSON.stringify({ action: "generate-monthly", months: 120 }),
       })
       const data = await res.json()
       if (data?.success) {
@@ -259,14 +260,19 @@ export default function AdminReportsPage() {
     }
   }
 
-  const sendReports = async () => {
-    const personal = sendCustomerId !== "__all__"
+  const [sendingId, setSendingId] = useState<string | null>(null)
+
+  const sendReports = async (opts?: { customerId?: string; period?: string }) => {
+    const targetCustomer = opts?.customerId ?? sendCustomerId
+    const targetPeriod = opts?.period ?? period
+    const personal = targetCustomer !== "__all__"
     const confirmMsg = personal
-      ? `Send ${period} ESG report (PDF + Excel) to customer ${sendCustomerId}?`
-      : `Send ${period} ESG report emails with PDF + Excel to all active clients?`
+      ? `Send ${targetPeriod} ESG report (PDF + Excel) to customer ${targetCustomer}?`
+      : `Send ${targetPeriod} ESG report emails with PDF + Excel to all active clients?`
     if (!confirm(confirmMsg)) return
 
     setSending(true)
+    setSendingId(personal ? targetCustomer : "__all__")
     setLastResult(null)
     try {
       const res = await fetch("/api/admin/reports", {
@@ -274,19 +280,26 @@ export default function AdminReportsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "send-reports",
-          period,
-          ...(personal ? { customerId: sendCustomerId } : {}),
+          period: targetPeriod,
+          ...(personal ? { customerId: targetCustomer } : {}),
         }),
       })
       const data = await res.json()
       if (data?.success) {
+        const queued = Number(data.queued || 0)
+        const sent = Number(data.sent || 0) + queued
         setLastResult({
-          sent: data.sent,
+          sent,
           failed: data.failed,
           skipped: data.skipped,
           periodLabel: data.periodLabel,
           results: data.results || [],
         })
+        if (personal) {
+          alert(data.message || `Report email queued for ${targetCustomer}.`)
+        }
+        setSendCustomerId(targetCustomer)
+        setPeriod(targetPeriod)
         await load()
         await loadDeliveries()
       } else {
@@ -294,6 +307,7 @@ export default function AdminReportsPage() {
       }
     } finally {
       setSending(false)
+      setSendingId(null)
     }
   }
 
@@ -506,7 +520,7 @@ export default function AdminReportsPage() {
               <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
             </div>
             <Button
-              onClick={sendReports}
+              onClick={() => sendReports()}
               disabled={sending}
               className="bg-[#1B7339] hover:bg-[#145a2c]"
             >
@@ -918,16 +932,18 @@ export default function AdminReportsPage() {
                       size="sm"
                       variant="outline"
                       className="rounded-full"
+                      disabled={sending}
                       onClick={() => {
-                        setSendCustomerId(r.customerId)
-                        const match = r.period?.match(/(\w{3})\s+(\d{2})/)
-                        if (match) {
-                          // keep current month picker; user can adjust
-                        }
-                        setPeriod(period)
+                        const key =
+                          parsePeriodToMonthKey(r.period, r.date) || currentMonthInput()
+                        void sendReports({ customerId: r.customerId, period: key })
                       }}
                     >
-                      <Mail className="mr-1.5 h-3.5 w-3.5" />
+                      {sending && sendingId === r.customerId ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Mail className="mr-1.5 h-3.5 w-3.5" />
+                      )}
                       Email this client
                     </Button>
                     <Badge

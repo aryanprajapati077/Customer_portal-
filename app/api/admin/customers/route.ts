@@ -490,6 +490,11 @@ export async function PATCH(request: NextRequest) {
       values.push(String(body.primaryPocNumber || "").trim() || null)
     }
     if (body?.primaryPocDesignation !== undefined) setText("primaryPocDesignation", body.primaryPocDesignation)
+    if (body?.collectionPocs !== undefined) {
+      const pocs = normalizeCollectionPocs(body.collectionPocs)
+      updates.push(`"collectionPocs" = $${i++}`)
+      values.push(pocs.length ? JSON.stringify(pocs) : null)
+    }
     if (body?.collectionFrequency !== undefined) setText("collectionFrequency", body.collectionFrequency)
     if (body?.serviceStartDate !== undefined) {
       updates.push(`"serviceStartDate" = $${i++}`)

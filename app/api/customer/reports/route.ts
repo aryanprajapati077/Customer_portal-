@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
     for (const cid of auth.customerIds) {
       const customer = await prisma.customer.findUnique({
         where: { id: cid },
-        select: { id: true, joinDate: true },
+        select: { id: true, joinDate: true, serviceStartDate: true },
       })
       if (customer) {
         await syncMonthlyReportsForCustomer(cid, {
-          months: 12,
+          startDate: customer.serviceStartDate || customer.joinDate,
           joinDate: customer.joinDate,
         })
       }

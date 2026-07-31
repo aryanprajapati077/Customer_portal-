@@ -29,27 +29,72 @@ export function getRecentMonthKeys(count = 12, fromDate = new Date()): string[] 
   return keys
 }
 
+/** All YYYY-MM keys from start month through as-of month (inclusive). Newest first. */
+export function getMonthKeysFrom(startDate: Date, asOf = new Date()): string[] {
+  if (Number.isNaN(startDate.getTime())) return getRecentMonthKeys(12, asOf)
+  const keys: string[] = []
+  const cursor = new Date(asOf.getFullYear(), asOf.getMonth(), 1)
+  const start = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+  let guard = 0
+  while (cursor >= start && guard++ < 240) {
+    keys.push(monthKey(cursor))
+    cursor.setMonth(cursor.getMonth() - 1)
+  }
+  return keys
+}
+
+/** Parse report period labels like "Aug 26" or "2026-08" into YYYY-MM. */
+export function parsePeriodToMonthKey(period?: string | null, fallbackDate?: string | Date | null): string | null {
+  if (period && /^\d{4}-\d{2}$/.test(period.trim())) return period.trim()
+  if (period) {
+    const m = period.trim().match(/^([A-Za-z]{3})\s+(\d{2}|\d{4})$/)
+    if (m) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+      const mi = months.findIndex((x) => x.toLowerCase() === m[1]!.toLowerCase())
+      if (mi >= 0) {
+        const yRaw = m[2]!
+        const year = yRaw.length === 2 ? 2000 + Number(yRaw) : Number(yRaw)
+        return `${year}-${String(mi + 1).padStart(2, "0")}`
+      }
+    }
+  }
+  if (fallbackDate) {
+    const d = new Date(fallbackDate)
+    if (!Number.isNaN(d.getTime())) return monthKey(d)
+  }
+  return null
+}
+
 export async function syncMonthlyReportsForCustomer(
   customerId: string,
-  options?: { months?: number; joinDate?: Date | string | null },
+  options?: {
+    months?: number
+    /** Prefer service start; falls back to joinDate */
+    startDate?: Date | string | null
+    joinDate?: Date | string | null
+  },
 ) {
-  const join =
-    options?.joinDate != null ? new Date(options.joinDate) : null
-  const joinKey = join && !Number.isNaN(join.getTime()) ? monthKey(join) : null
+  const startRaw = options?.startDate ?? options?.joinDate
+  const start = startRaw != null ? new Date(startRaw) : null
+  const startOk = start && !Number.isNaN(start.getTime()) ? start : null
 
-  const monthKeys = getRecentMonthKeys(options?.months ?? 12).filter((key) => {
-    if (!joinKey) return true
-    return key >= joinKey
-  })
+  const monthKeys = startOk
+    ? getMonthKeysFrom(startOk)
+    : getRecentMonthKeys(options?.months ?? 12)
 
-  const created: string[] = []
+  if (monthKeys.length === 0) return { created: 0, monthKeys }
 
+  // Fast path: only create missing months (batch check)
+  const existing = (await sql.query<{ id: string }>(
+    `SELECT id FROM "Report" WHERE id = ANY($1::text[])`,
+    [monthKeys.map((k) => reportId(customerId, k))],
+  )) as { id: string }[]
+  const have = new Set(existing.map((r) => r.id))
+
+  let created = 0
   for (const key of monthKeys) {
     const id = reportId(customerId, key)
-    const existing = await sql`
-      SELECT id FROM "Report" WHERE id = ${id} LIMIT 1
-    `
-    if (existing.length > 0) continue
+    if (have.has(id)) continue
 
     const period = formatReportingPeriod(monthEndDate(key))
     const end = monthEndDate(key)
@@ -68,25 +113,31 @@ export async function syncMonthlyReportsForCustomer(
         ${"Buffindia System"},
         ${"~10 KB"}
       )
+      ON CONFLICT (id) DO NOTHING
     `
-    created.push(id)
+    created++
   }
 
-  return { created: created.length, monthKeys }
+  return { created, monthKeys }
 }
 
 export async function syncMonthlyReportsForAllActiveCustomers(months = 12) {
   const customers = await sql`
-    SELECT id, "joinDate"
+    SELECT id, "joinDate", "serviceStartDate"
     FROM "Customer"
     WHERE status = 'Active'
     ORDER BY "companyName" ASC
   `
 
   let totalCreated = 0
-  for (const customer of customers as { id: string; joinDate?: string | Date | null }[]) {
+  for (const customer of customers as {
+    id: string
+    joinDate?: string | Date | null
+    serviceStartDate?: string | Date | null
+  }[]) {
     const result = await syncMonthlyReportsForCustomer(customer.id, {
       months,
+      startDate: customer.serviceStartDate || customer.joinDate,
       joinDate: customer.joinDate,
     })
     totalCreated += result.created
@@ -133,6 +184,7 @@ export async function ensureMonthlyReportForPeriod(
       ${"Buffindia System"},
       ${"~10 KB"}
     )
+    ON CONFLICT (id) DO NOTHING
   `
 
   return { id, created: true }

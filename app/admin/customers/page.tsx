@@ -26,15 +26,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Plus, Search, Users, Download, Table2, Mail } from "lucide-react"
+import { Loader2, Plus, Search, Users, Download, Table2, Mail, Trash2 } from "lucide-react"
 import {
   CreateCustomerForm,
   EMPTY_CREATE_CUSTOMER_FORM,
   useNextCustomerId,
+  type CollectionPocForm,
   type CreateCustomerFormState,
 } from "@/components/admin/create-customer-form"
+import { Label } from "@/components/ui/label"
 import { COLLECTION_FREQUENCY_OPTIONS } from "@/lib/india-locations"
 import ExcelJS from "exceljs"
+
+function parseCollectionPocs(raw?: string | null): CollectionPocForm[] {
+  if (!raw?.trim()) return [{ name: "", email: "", number: "", designation: "" }]
+  try {
+    const parsed = JSON.parse(raw) as CollectionPocForm[]
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return [{ name: "", email: "", number: "", designation: "" }]
+    }
+    return parsed.map((p) => ({
+      name: String(p?.name || ""),
+      email: String(p?.email || ""),
+      number: String(p?.number || ""),
+      designation: String(p?.designation || ""),
+    }))
+  } catch {
+    return [{ name: "", email: "", number: "", designation: "" }]
+  }
+}
 
 type CustomerRow = {
   id: string
@@ -153,6 +173,10 @@ function EditableCustomerSheet({
       customer.kraftrebornCredits != null ? Math.floor(customer.kraftrebornCredits) : 0,
     ),
   })
+  const [collectionPocs, setCollectionPocs] = useState<CollectionPocForm[]>(() =>
+    parseCollectionPocs(customer.collectionPocs),
+  )
+  const [sheetTab, setSheetTab] = useState<"details" | "pocs">("details")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState(false)
@@ -186,6 +210,7 @@ function EditableCustomerSheet({
         customer.kraftrebornCredits != null ? Math.floor(customer.kraftrebornCredits) : 0,
       ),
     })
+    setCollectionPocs(parseCollectionPocs(customer.collectionPocs))
     setError(null)
     setOk(false)
   }, [customer.id])
@@ -193,11 +218,24 @@ function EditableCustomerSheet({
   const set = (key: keyof typeof draft, value: string) =>
     setDraft((d) => ({ ...d, [key]: value }))
 
+  const updatePoc = (index: number, patch: Partial<CollectionPocForm>) => {
+    setCollectionPocs((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
+  }
+
   const save = async () => {
     setSaving(true)
     setError(null)
     setOk(false)
     try {
+      const cleanedPocs = collectionPocs
+        .map((p) => ({
+          name: p.name.trim(),
+          email: p.email.trim().toLowerCase(),
+          number: p.number.trim(),
+          designation: p.designation.trim(),
+        }))
+        .filter((p) => p.name || p.email || p.number)
+
       const payload = {
         id: customer.id,
         companyName: draft.companyName.trim(),
@@ -213,6 +251,7 @@ function EditableCustomerSheet({
         primaryPocNumber: draft.primaryPocNumber.trim(),
         primaryPocDesignation: draft.primaryPocDesignation.trim(),
         collectionFrequency: draft.collectionFrequency,
+        collectionPocs: cleanedPocs,
         serviceStartDate: draft.serviceStartDate || null,
         noOfKiosk: Number(draft.noOfKiosk) || 0,
         noOfBasicKiosk: Number(draft.noOfBasicKiosk) || 0,
@@ -232,12 +271,13 @@ function EditableCustomerSheet({
       })
       const data = await res.json()
       if (!data?.success) {
-        setError(data?.error || "Save failed")
+        setError(String(data?.error || "Save failed"))
         return
       }
       onSaved({
         ...customer,
         ...payload,
+        collectionPocs: cleanedPocs.length ? JSON.stringify(cleanedPocs) : null,
         kraftrebornCredits: payload.kraftrebornCredits,
         serviceStartDate: payload.serviceStartDate,
         contractEndDate: payload.contractEndDate,
@@ -264,6 +304,28 @@ function EditableCustomerSheet({
 
   return (
     <div className="space-y-3">
+      <div className="flex gap-1 rounded-full border border-[#E2EBE4] bg-[#F7FBF7] p-1">
+        <button
+          type="button"
+          onClick={() => setSheetTab("details")}
+          className={`flex-1 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
+            sheetTab === "details" ? "bg-white text-[#1B7339] shadow-sm" : "text-[#6B6B6B]"
+          }`}
+        >
+          Details
+        </button>
+        <button
+          type="button"
+          onClick={() => setSheetTab("pocs")}
+          className={`flex-1 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
+            sheetTab === "pocs" ? "bg-white text-[#1B7339] shadow-sm" : "text-[#6B6B6B]"
+          }`}
+        >
+          Update POCs
+        </button>
+      </div>
+
+      {sheetTab === "details" ? (
       <table className="w-full border-collapse text-[13px]">
         <tbody>
           {row("Customer ID", <span className="px-1 font-semibold text-[#1B7339]">{customer.id}</span>)}
@@ -305,38 +367,6 @@ function EditableCustomerSheet({
               className={inputClass}
               value={draft.operationsIncharge}
               onChange={(e) => set("operationsIncharge", e.target.value)}
-            />,
-          )}
-          {row(
-            "Primary POC",
-            <Input
-              className={inputClass}
-              value={draft.primaryPocName}
-              onChange={(e) => set("primaryPocName", e.target.value)}
-            />,
-          )}
-          {row(
-            "POC Email",
-            <Input
-              className={inputClass}
-              value={draft.primaryPocEmail}
-              onChange={(e) => set("primaryPocEmail", e.target.value)}
-            />,
-          )}
-          {row(
-            "POC Number",
-            <Input
-              className={inputClass}
-              value={draft.primaryPocNumber}
-              onChange={(e) => set("primaryPocNumber", e.target.value)}
-            />,
-          )}
-          {row(
-            "POC Designation",
-            <Input
-              className={inputClass}
-              value={draft.primaryPocDesignation}
-              onChange={(e) => set("primaryPocDesignation", e.target.value)}
             />,
           )}
           {row(
@@ -469,21 +499,87 @@ function EditableCustomerSheet({
           )}
         </tbody>
       </table>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] p-3">
+            <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+              Primary POC (portal login)
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#6B6B6B]">Name</Label>
+                <Input className={inputClass} value={draft.primaryPocName} onChange={(e) => set("primaryPocName", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#6B6B6B]">Email</Label>
+                <Input className={inputClass} type="email" value={draft.primaryPocEmail} onChange={(e) => set("primaryPocEmail", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#6B6B6B]">Phone</Label>
+                <Input className={inputClass} value={draft.primaryPocNumber} onChange={(e) => set("primaryPocNumber", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#6B6B6B]">Designation</Label>
+                <Input className={inputClass} value={draft.primaryPocDesignation} onChange={(e) => set("primaryPocDesignation", e.target.value)} />
+              </div>
+            </div>
+          </div>
 
-      {customer.collectionPocs && (
-        <div className="rounded-xl border border-[#E2EBE4] p-3">
-          <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
-            Collection POCs
-          </p>
-          <pre className="whitespace-pre-wrap text-[12px] text-[#555]">
-            {(() => {
-              try {
-                return JSON.stringify(JSON.parse(customer.collectionPocs), null, 2)
-              } catch {
-                return customer.collectionPocs
-              }
-            })()}
-          </pre>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-[#1B7339]">
+                Collection POCs
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                onClick={() =>
+                  setCollectionPocs((p) => [...p, { name: "", email: "", number: "", designation: "" }])
+                }
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Add POC
+              </Button>
+            </div>
+            {collectionPocs.map((poc, index) => (
+              <div key={index} className="space-y-3 rounded-xl border border-[#EAEAEA] bg-white p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-semibold text-[#141414]">Collection POC {index + 1}</p>
+                  {collectionPocs.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-red-600"
+                      onClick={() => setCollectionPocs((prev) => prev.filter((_, i) => i !== index))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#6B6B6B]">Name</Label>
+                    <Input className={inputClass} value={poc.name} onChange={(e) => updatePoc(index, { name: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#6B6B6B]">Email</Label>
+                    <Input className={inputClass} type="email" value={poc.email} onChange={(e) => updatePoc(index, { email: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#6B6B6B]">Number</Label>
+                    <Input className={inputClass} value={poc.number} onChange={(e) => updatePoc(index, { number: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#6B6B6B]">Designation</Label>
+                    <Input className={inputClass} value={poc.designation} onChange={(e) => updatePoc(index, { designation: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -491,17 +587,18 @@ function EditableCustomerSheet({
       {ok && <p className="text-sm text-[#1B7339]">Saved.</p>}
       <Button onClick={save} disabled={saving} className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {saving ? "Saving…" : "Save changes"}
+        {saving ? "Saving…" : sheetTab === "pocs" ? "Save POC updates" : "Save changes"}
       </Button>
     </div>
   )
+
 }
 
 export default function AdminCustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
-  const PAGE_TAKE = 100
+  const PAGE_TAKE = 50
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)

@@ -16,7 +16,7 @@ import { Loader2, Sparkles, ShieldCheck, Upload, Wallet, CheckCircle2, AlertCirc
 import { cn } from "@/lib/utils"
 
 export default function CheckoutPage() {
-  const { customer } = useAuth()
+  const { customer, refreshCustomerData } = useAuth()
   const { lines, subtotal, itemCount, clearCart } = useCart()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -126,6 +126,7 @@ export default function CheckoutPage() {
 
       orderPlacedRef.current = true
       clearCart()
+      await refreshCustomerData()
       router.replace(`/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`)
     } catch {
       setError("Network error. Please try again.")

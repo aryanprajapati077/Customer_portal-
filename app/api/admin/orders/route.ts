@@ -100,7 +100,9 @@ async function completeOrder(orderId: string) {
       id: `notif_order_done_${order.customerId}_${Date.now()}`,
       customerId: order.customerId,
       title: "Order completed",
-      body: `Order ${order.orderNumber} is complete. ₹${order.subtotal} KR credits deducted. Your impact certificate is ready in Certificates.`,
+      body: `Order ${order.orderNumber} is complete.${
+        order.useKrCredits ? ` ₹${order.subtotal} KR credits were applied.` : ""
+      } Your impact certificate is ready in Certificates.`,
     },
   })
 
@@ -114,6 +116,42 @@ async function completeOrder(orderId: string) {
   })
 
   return { completed: true, impact }
+}
+
+async function refundCreditsIfNeeded(orderId: string) {
+  const order = await prisma.shopOrder.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      customerId: true,
+      subtotal: true,
+      useKrCredits: true,
+      creditsDeducted: true,
+      status: true,
+      orderNumber: true,
+    },
+  })
+  if (!order || !order.useKrCredits || !order.creditsDeducted) return
+  if (order.status === "cancelled") return
+
+  await sql`
+    UPDATE "Customer"
+    SET "kraftrebornCredits" = "kraftrebornCredits" + ${order.subtotal},
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE id = ${order.customerId}
+  `
+  await prisma.shopOrder.update({
+    where: { id: orderId },
+    data: { creditsDeducted: false },
+  })
+  await prisma.notification.create({
+    data: {
+      id: `notif_order_refund_${order.customerId}_${Date.now()}`,
+      customerId: order.customerId,
+      title: "Order cancelled — credits restored",
+      body: `Order ${order.orderNumber} was cancelled. ₹${order.subtotal} KR credits were returned to your balance.`,
+    },
+  })
 }
 
 export async function PATCH(request: NextRequest) {
@@ -158,8 +196,12 @@ export async function PATCH(request: NextRequest) {
 
     const prev = await prisma.shopOrder.findUnique({
       where: { id },
-      select: { status: true },
+      select: { status: true, useKrCredits: true, creditsDeducted: true },
     })
+
+    if (status === "cancelled" && prev && String(prev.status).toLowerCase() !== "cancelled") {
+      await refundCreditsIfNeeded(id)
+    }
 
     const order = await prisma.shopOrder.update({
       where: { id },

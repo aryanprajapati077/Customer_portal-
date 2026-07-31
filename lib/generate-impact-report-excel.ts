@@ -116,7 +116,7 @@ export async function generateImpactReportExcel(
 
   const [customerRows, collectionRows] = await Promise.all([
     sql`
-      SELECT id, "companyName", address, "joinDate", "disposalUnitInstalled",
+      SELECT id, "companyName", address, "joinDate", "serviceStartDate", "disposalUnitInstalled",
              "totalWasteCollected", "kraftrebornCredits", "contactPerson", email
       FROM "Customer"
       WHERE id = ${customerId}
@@ -185,9 +185,10 @@ export async function generateImpactReportExcel(
     byMonth.set(key, cur)
   }
 
-  // Ensure continuous months from first collection / join to as-of
+  // Ensure continuous months from service start / join / first collection to as-of
   const end = asOfDate ?? new Date()
-  let start = customer.joinDate ? new Date(customer.joinDate as string | Date) : end
+  const serviceStart = (customer.serviceStartDate || customer.joinDate) as string | Date | null
+  let start = serviceStart ? new Date(serviceStart) : end
   if (collections.length > 0) {
     const first = new Date(collections[0].date as string | Date)
     if (!Number.isNaN(first.getTime()) && first < start) start = first
@@ -199,8 +200,8 @@ export async function generateImpactReportExcel(
     monthKeys.push(monthKey(cursor))
     cursor.setMonth(cursor.getMonth() + 1)
   }
-  // Cap to last 24 months for readability if very long
-  const limitedKeys = monthKeys.length > 24 ? monthKeys.slice(-24) : monthKeys
+  // Cap to last 120 months (installation → now) for long tenures
+  const limitedKeys = monthKeys.length > 120 ? monthKeys.slice(-120) : monthKeys
 
   const workbook = new ExcelJS.Workbook()
   workbook.creator = "BuffIndia"
@@ -231,7 +232,7 @@ export async function generateImpactReportExcel(
     ["Customer Name", reportData.companyName],
     ["Customer ID", reportData.customerId],
     ["Location", parseLocation(customer.address as string | null)],
-    ["Service Start Date", formatInstallDate(customer.joinDate as string | Date | null)],
+    ["Service Start Date", formatInstallDate((customer.serviceStartDate || customer.joinDate) as string | Date | null)],
     ["Number of Kiosks / Disposal Units", reportData.disposalUnitsInstalled],
     ["Reporting Period", reportData.reportingPeriodRange],
     ["Report Generated On", formatDateCell(new Date())],

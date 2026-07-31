@@ -35,7 +35,7 @@ import {
   DEFAULT_ESG_EMAIL_COPY,
   type EsgEmailCopy,
 } from "@/lib/email-templates"
-import { parsePeriodToMonthKey } from "@/lib/monthly-reports"
+import { parsePeriodToMonthKey } from "@/lib/report-periods"
 
 type ReportRow = {
   id: string

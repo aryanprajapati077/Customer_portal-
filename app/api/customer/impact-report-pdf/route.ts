@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
       endDate?: string
     }
 
-    if (!body.customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID required" }, { status: 400 })
-    }
+    const auth = await resolveCustomerId(body.customerId || null)
+    if (!auth.ok) return auth.response
+    const customerId = auth.customerId
 
-    const { pdfBuffer, filename } = await generateImpactReportPdf(body.customerId, {
+    const { pdfBuffer, filename } = await generateImpactReportPdf(customerId, {
       period: body.period,
       range: body.range,
       startDate: body.startDate,

@@ -98,9 +98,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       /* ignore */
     }
     fetch("/api/admin/me")
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || !d.admin) return
+      .then(async (r) => {
+        if (cancelled) return
+        if (r.status === 401) {
+          setAdmin(null)
+          try {
+            sessionStorage.removeItem("buff_admin_me")
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+        const d = await r.json()
+        if (!d.admin) return
         setAdmin(d.admin)
         try {
           sessionStorage.setItem("buff_admin_me", JSON.stringify(d.admin))

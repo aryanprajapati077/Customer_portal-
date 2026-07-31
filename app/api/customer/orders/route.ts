@@ -121,74 +121,104 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         )
       }
-      // Deduct immediately on place so portal balance updates without waiting for admin complete
-      await sql`
-        UPDATE "Customer"
-        SET "kraftrebornCredits" = GREATEST(0, "kraftrebornCredits" - ${subtotal}),
-            "updatedAt" = CURRENT_TIMESTAMP
-        WHERE id = ${customerId}
-          AND "kraftrebornCredits" >= ${subtotal}
-      `
+      const deducted = await sql.query<{ id: string }>(
+        `UPDATE "Customer"
+         SET "kraftrebornCredits" = "kraftrebornCredits" - $1,
+             "updatedAt" = CURRENT_TIMESTAMP
+         WHERE id = $2 AND "kraftrebornCredits" >= $1
+         RETURNING id`,
+        [subtotal, customerId],
+      )
+      if (!deducted.length) {
+        return NextResponse.json(
+          { success: false, error: "Insufficient KR credits (concurrent update). Please refresh and try again." },
+          { status: 409 },
+        )
+      }
     }
 
     let logoUrl: string | null = null
-    if (logoRequested && logoBase64) {
-      const saved = await saveBase64Image(logoBase64, "logos", "order-logo")
-      logoUrl = saved.url
-    }
+    let order
+    let orderCreated = false
+    try {
+      if (logoRequested && logoBase64) {
+        const saved = await saveBase64Image(logoBase64, "logos", "order-logo")
+        logoUrl = saved.url
+      }
 
-    const orderNumber = formatOrderNumber(customerId)
-    const order = await prisma.shopOrder.create({
-      data: {
-        orderNumber,
-        customerId,
-        status: "pending",
-        subtotal,
-        useKrCredits,
-        creditsDeducted: useKrCredits,
-        logoRequested,
-        logoUrl,
-        shippingName: customer.contactPerson || customer.companyName,
-        shippingEmail: customer.email,
-        shippingPhone: customer.phone,
-        shippingAddress: customer.address,
-        notes,
-        items: {
-          create: resolvedItems,
+      const orderNumber = formatOrderNumber(customerId)
+      order = await prisma.shopOrder.create({
+        data: {
+          orderNumber,
+          customerId,
+          status: "pending",
+          subtotal,
+          useKrCredits,
+          creditsDeducted: useKrCredits,
+          logoRequested,
+          logoUrl,
+          shippingName: customer.contactPerson || customer.companyName,
+          shippingEmail: customer.email,
+          shippingPhone: customer.phone,
+          shippingAddress: customer.address,
+          notes,
+          items: {
+            create: resolvedItems,
+          },
         },
-      },
-      include: { items: true },
-    })
+        include: { items: true },
+      })
+      orderCreated = true
 
-    const notifId = `notif_order_${customerId}_${Date.now()}`
-    await prisma.notification.create({
-      data: {
-        id: notifId,
-        customerId,
-        title: "Order placed — pending review",
-        body: useKrCredits
-          ? `Order ${orderNumber} for ₹${subtotal} placed. ₹${subtotal} KR credits deducted. We'll process your order shortly.`
-          : `Order ${orderNumber} for ₹${subtotal} received. We'll process your order shortly.`,
-      },
-    })
+      try {
+        const notifId = `notif_order_${customerId}_${Date.now()}`
+        await prisma.notification.create({
+          data: {
+            id: notifId,
+            customerId,
+            title: "Order placed — pending review",
+            body: useKrCredits
+              ? `Order ${orderNumber} for ₹${subtotal} placed. ₹${subtotal} KR credits deducted. We'll process your order shortly.`
+              : `Order ${orderNumber} for ₹${subtotal} received. We'll process your order shortly.`,
+          },
+        })
+      } catch (notifErr) {
+        console.error("Order notification failed:", notifErr)
+      }
 
-    const { sendKrOrderConfirmationEmail } = await import("@/lib/kr-order-email")
-    const { queueEmail } = await import("@/lib/email-queue")
-    queueEmail("kr-order", () =>
-      sendKrOrderConfirmationEmail({
-        to: customer.email,
-        contactName: customer.contactPerson,
-        companyName: customer.companyName,
-        orderNumber,
-        subtotal,
-        items: resolvedItems.map((i) => ({
-          productName: i.productName,
-          quantity: i.quantity,
-          price: i.price,
-        })),
-        useKrCredits,
-      }),
-    )
+      try {
+        const { sendKrOrderConfirmationEmail } = await import("@/lib/kr-order-email")
+        const { queueEmail } = await import("@/lib/email-queue")
+        queueEmail("kr-order", () =>
+          sendKrOrderConfirmationEmail({
+            to: customer.email,
+            contactName: customer.contactPerson,
+            companyName: customer.companyName,
+            orderNumber,
+            subtotal,
+            items: resolvedItems.map((i) => ({
+              productName: i.productName,
+              quantity: i.quantity,
+              price: i.price,
+            })),
+            useKrCredits,
+          }),
+        )
+      } catch (emailErr) {
+        console.error("Order confirmation email queue failed:", emailErr)
+      }
+    } catch (err) {
+      // Only refund if credits were taken and the order row never landed
+      if (useKrCredits && !orderCreated) {
+        await sql`
+          UPDATE "Customer"
+          SET "kraftrebornCredits" = "kraftrebornCredits" + ${subtotal},
+              "updatedAt" = CURRENT_TIMESTAMP
+          WHERE id = ${customerId}
+        `.catch(() => {})
+      }
+      throw err
+    }
 
     return NextResponse.json({
       success: true,

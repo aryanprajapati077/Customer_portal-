@@ -11,7 +11,12 @@ function getPool(): Pool {
     if (!url) {
       throw new Error("DATABASE_URL is not set. Add it to your .env file.")
     }
-    globalThis.pgPool = new Pool({ connectionString: url })
+    globalThis.pgPool = new Pool({
+      connectionString: url,
+      max: 10,
+      idleTimeoutMillis: 20_000,
+      connectionTimeoutMillis: 10_000,
+    })
   }
   return globalThis.pgPool
 }

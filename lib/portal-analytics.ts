@@ -56,6 +56,11 @@ export function hashIp(ip: string | null | undefined): string | null {
   return createHash("sha256").update(ip.trim()).digest("hex").slice(0, 24)
 }
 
+/** Sync id for setting the cookie before awaiting DB (keeps login fast). */
+export function createPortalSessionId(): string {
+  return newId("ps")
+}
+
 export async function startPortalSession(input: {
   customerId: string
   email?: string | null
@@ -63,9 +68,10 @@ export async function startPortalSession(input: {
   userAgent?: string | null
   ip?: string | null
   path?: string | null
+  sessionId?: string
 }): Promise<string> {
   await ensurePortalAnalyticsTables()
-  const id = newId("ps")
+  const id = input.sessionId || newId("ps")
 
   // Close any stale open sessions for this customer (single active session tracking)
   await sql`

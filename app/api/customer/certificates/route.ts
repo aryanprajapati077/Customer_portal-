@@ -36,8 +36,16 @@ export async function GET(request: NextRequest) {
     )
     if (!auth.ok) return auth.response
 
-    for (const cid of auth.customerIds) {
-      await syncServiceCertificate(cid)
+    // Sync only when a customer has no certificate yet (avoid blocking every list load)
+    const existing = await prisma.certificate.groupBy({
+      by: ["customerId"],
+      where: { customerId: { in: auth.customerIds } },
+      _count: { _all: true },
+    })
+    const have = new Set(existing.map((e) => e.customerId))
+    const missing = auth.customerIds.filter((cid) => !have.has(cid))
+    if (missing.length > 0) {
+      await Promise.all(missing.map((cid) => syncServiceCertificate(cid)))
     }
 
     const certificates = await prisma.certificate.findMany({

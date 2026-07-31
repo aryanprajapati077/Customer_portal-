@@ -2,8 +2,13 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sql } from "@/lib/db"
 import { hashPassword, verifyPassword, isPasswordHashed } from "@/lib/password"
-import { CUSTOMER_COOKIE, signCustomerSession } from "@/lib/auth-session"
-import { PORTAL_SESSION_COOKIE, startPortalSession } from "@/lib/portal-analytics"
+import { CUSTOMER_COOKIE, customerSessionCookieOptions, signCustomerSession } from "@/lib/auth-session"
+import {
+  PORTAL_SESSION_COOKIE,
+  createPortalSessionId,
+  startPortalSession,
+} from "@/lib/portal-analytics"
+import { clientIpFromRequest, consumeRateLimit } from "@/lib/rate-limit"
 
 async function findPortalUser(email: string) {
   try {
@@ -36,30 +41,29 @@ function clientIp(request: NextRequest) {
   )
 }
 
-async function attachPortalSession(
+/** Set analytics cookie immediately; persist session in background so login stays fast. */
+function attachPortalSession(
   response: NextResponse,
   request: NextRequest,
   customer: { id: string; email: string; companyName: string },
 ) {
-  try {
-    const sessionId = await startPortalSession({
-      customerId: customer.id,
-      email: customer.email,
-      companyName: customer.companyName,
-      userAgent: request.headers.get("user-agent"),
-      ip: clientIp(request),
-      path: "/dashboard",
-    })
-    response.cookies.set(PORTAL_SESSION_COOKIE, sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    })
-  } catch (err) {
-    console.error("Portal session start failed:", err)
-  }
+  const sessionId = createPortalSessionId()
+  response.cookies.set(PORTAL_SESSION_COOKIE, sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  })
+  void startPortalSession({
+    sessionId,
+    customerId: customer.id,
+    email: customer.email,
+    companyName: customer.companyName,
+    userAgent: request.headers.get("user-agent"),
+    ip: clientIp(request),
+    path: "/dashboard",
+  }).catch((err) => console.error("Portal session start failed:", err))
 }
 
 export async function POST(request: NextRequest) {
@@ -71,9 +75,45 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim()
+    const ip = clientIpFromRequest(request)
+    const limited = consumeRateLimit(`login:${ip}:${normalizedEmail}`, 8, 60_000)
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, error: "Too many login attempts. Please wait and try again." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+      )
+    }
 
     const customer = await prisma.customer.findUnique({
       where: { email: normalizedEmail },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        companyName: true,
+        contactPerson: true,
+        phone: true,
+        address: true,
+        status: true,
+        disposalUnitInstalled: true,
+        totalWasteCollected: true,
+        cigaretteButtsCollected: true,
+        microplasticsUpcycled: true,
+        waterResourcesProtected: true,
+        pendingCollection: true,
+        certificatesEarned: true,
+        co2Saved: true,
+        kraftrebornCredits: true,
+        treesEquivalent: true,
+        isGroup: true,
+        parentCustomerId: true,
+        serviceStartDate: true,
+        primaryPocName: true,
+        joinDate: true,
+        monthlyTarget: true,
+        industry: true,
+        employeeCount: true,
+      },
     })
 
     if (customer) {
@@ -83,10 +123,12 @@ export async function POST(request: NextRequest) {
       }
 
       if (!isPasswordHashed(customer.password)) {
-        await prisma.customer.update({
-          where: { id: customer.id },
-          data: { password: await hashPassword(password) },
-        })
+        await prisma.customer
+          .update({
+            where: { id: customer.id },
+            data: { password: await hashPassword(password) },
+          })
+          .catch((err) => console.error("Password upgrade failed:", err))
       }
 
       const { password: _, ...customerData } = customer
@@ -109,20 +151,17 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      response.cookies.set(CUSTOMER_COOKIE, await signCustomerSession(customer.id), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      })
-      await attachPortalSession(response, request, {
+      response.cookies.set(CUSTOMER_COOKIE, await signCustomerSession(customer.id), customerSessionCookieOptions())
+      attachPortalSession(response, request, {
         id: customer.id,
         email: customer.email,
         companyName: customer.companyName,
       })
       return response
     }
+
+    // Keep timing similar when email unknown
+    await verifyPassword(password, "")
 
     const portalUser = await findPortalUser(normalizedEmail)
     if (!portalUser) {
@@ -161,14 +200,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    response.cookies.set(CUSTOMER_COOKIE, await signCustomerSession(org.id), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    })
-    await attachPortalSession(response, request, {
+    response.cookies.set(CUSTOMER_COOKIE, await signCustomerSession(org.id), customerSessionCookieOptions())
+    attachPortalSession(response, request, {
       id: org.id,
       email: portalUser.email,
       companyName: org.companyName,

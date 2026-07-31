@@ -18,6 +18,8 @@ import { getEsgEmailCopy } from "@/lib/email-template-store"
 import { formatReportingPeriod } from "@/lib/esg-metrics"
 import { resolveReportRecipients } from "@/lib/report-recipients"
 import { logEmailDelivery } from "@/lib/email-delivery-log"
+import { requireAdminSession } from "@/lib/admin-auth-server"
+import { hasAdminPermission } from "@/lib/admin-permissions"
 
 function parsePeriodMonth(period?: string | null): Date | undefined {
   if (!period?.trim()) return undefined
@@ -28,8 +30,22 @@ function parsePeriodMonth(period?: string | null): Date | undefined {
   return new Date(year, month + 1, 0, 23, 59, 59, 999)
 }
 
-export async function GET() {
+async function requireReportsAdmin(request: NextRequest) {
+  const session = await requireAdminSession(request)
+  if (!session) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }) }
+  }
+  if (!hasAdminPermission(session.role, session.permissions, "reports")) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }) }
+  }
+  return { ok: true as const, session }
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireReportsAdmin(request)
+    if (!auth.ok) return auth.response
+
     const [reports, stats] = await Promise.all([
       sql`
         SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
@@ -62,6 +78,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireReportsAdmin(request)
+    if (!auth.ok) return auth.response
+
     const body = await request.json()
     const action = String(body?.action || "")
 

@@ -8,12 +8,23 @@ export type GroupLocation = {
   tradeName: string | null
 }
 
+let groupColsReady: Promise<void> | null = null
+
 export async function ensureGroupColumns() {
-  await sql.query(`
+  if (!groupColsReady) {
+    groupColsReady = sql
+      .query(`
     ALTER TABLE "Customer"
       ADD COLUMN IF NOT EXISTS "isGroup" BOOLEAN DEFAULT false,
       ADD COLUMN IF NOT EXISTS "parentCustomerId" TEXT
   `)
+      .then(() => undefined)
+      .catch((err) => {
+        groupColsReady = null
+        throw err
+      })
+  }
+  await groupColsReady
 }
 
 export async function getGroupLocations(groupId: string): Promise<GroupLocation[]> {

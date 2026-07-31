@@ -49,21 +49,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function clearLocalCustomer() {
+  localStorage.removeItem("buffindia_customer")
+  localStorage.removeItem("buffindia_customer_auth")
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing session
+    let cancelled = false
     const savedCustomer = localStorage.getItem("buffindia_customer")
-    if (savedCustomer) {
-      try {
-        setCustomer(JSON.parse(savedCustomer))
-      } catch {
-        localStorage.removeItem("buffindia_customer")
-      }
+    if (!savedCustomer) {
+      setIsLoading(false)
+      return
     }
-    setIsLoading(false)
+
+    let parsed: Customer | null = null
+    try {
+      parsed = JSON.parse(savedCustomer) as Customer
+      if (parsed?.id) setCustomer(parsed)
+      else {
+        clearLocalCustomer()
+        setIsLoading(false)
+        return
+      }
+    } catch {
+      clearLocalCustomer()
+      setIsLoading(false)
+      return
+    }
+
+    // Revalidate cookie session against server (clears stale localStorage after logout/expiry)
+    void fetch(`/api/customer/profile?customerId=${encodeURIComponent(parsed.id)}`, {
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (cancelled) return
+        if (response.status === 401) {
+          setCustomer(null)
+          clearLocalCustomer()
+          return
+        }
+        const data = await response.json()
+        if (data.success && data.customer) {
+          setCustomer(data.customer)
+          localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -91,8 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     void fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {})
     setCustomer(null)
-    localStorage.removeItem("buffindia_customer")
-    localStorage.removeItem("buffindia_customer_auth")
+    clearLocalCustomer()
   }
 
   const refreshCustomerData = useCallback(async () => {
@@ -102,6 +143,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`/api/customer/profile?customerId=${encodeURIComponent(customer.id)}`, {
         credentials: "include",
       })
+      if (response.status === 401) {
+        setCustomer(null)
+        clearLocalCustomer()
+        return
+      }
       const data = await response.json()
       if (data.success && data.customer) {
         setCustomer((prev) => ({ ...(prev || {}), ...data.customer }))

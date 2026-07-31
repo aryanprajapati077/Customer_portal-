@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sql } from "@/lib/db"
-import { creditsToRupees, computeKraftRebornImpact } from "@/lib/kraftreborn"
+import { computeKraftRebornImpact } from "@/lib/kraftreborn"
 import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-certificate-pdf"
 import { syncKraftRebornCertificate } from "@/lib/sync-certificates"
 
@@ -62,17 +62,45 @@ async function completeOrder(orderId: string) {
   if (order.status === "cancelled") throw new Error("Cannot complete cancelled order")
 
   if (order.useKrCredits && !order.creditsDeducted) {
-    const credits = creditsToRupees(Number(order.customer.kraftrebornCredits) || 0)
-    if (order.subtotal > credits) {
-      throw new Error(`Customer has insufficient credits (₹${credits} available, ₹${order.subtotal} required)`)
+    // Atomic claim before deducting — never deduct after cancel has won
+    const debitClaim = await prisma.shopOrder.updateMany({
+      where: {
+        id: orderId,
+        useKrCredits: true,
+        creditsDeducted: false,
+        status: { notIn: ["cancelled", "completed"] },
+      },
+      data: { creditsDeducted: true },
+    })
+    if (debitClaim.count > 0) {
+      let debited = false
+      try {
+        const deducted = await sql.query<{ id: string }>(
+          `UPDATE "Customer"
+           SET "kraftrebornCredits" = "kraftrebornCredits" - $1,
+               "updatedAt" = CURRENT_TIMESTAMP
+           WHERE id = $2 AND "kraftrebornCredits" >= $1
+           RETURNING id`,
+          [order.subtotal, order.customerId],
+        )
+        debited = deducted.length > 0
+      } catch (err) {
+        await prisma.shopOrder
+          .updateMany({
+            where: { id: orderId, creditsDeducted: true },
+            data: { creditsDeducted: false },
+          })
+          .catch(() => {})
+        throw err
+      }
+      if (!debited) {
+        await prisma.shopOrder.updateMany({
+          where: { id: orderId, creditsDeducted: true },
+          data: { creditsDeducted: false },
+        })
+        throw new Error(`Customer has insufficient credits (need ₹${order.subtotal})`)
+      }
     }
-
-    await sql`
-      UPDATE "Customer"
-      SET "kraftrebornCredits" = GREATEST(0, "kraftrebornCredits" - ${order.subtotal}),
-          "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${order.customerId}
-    `
   }
 
   const productCount = order.items.reduce((s, i) => s + i.quantity, 0)
@@ -104,46 +132,68 @@ async function completeOrder(orderId: string) {
         order.useKrCredits ? ` ₹${order.subtotal} KR credits were applied.` : ""
       } Your impact certificate is ready in Certificates.`,
     },
-  })
+  }).catch(() => {})
 
-  await prisma.shopOrder.update({
-    where: { id: orderId },
+  const finished = await prisma.shopOrder.updateMany({
+    where: {
+      id: orderId,
+      status: { notIn: ["cancelled", "completed"] },
+    },
     data: {
       status: "completed",
       creditsDeducted: order.useKrCredits ? true : order.creditsDeducted,
       completedAt: new Date(),
     },
   })
+  if (finished.count === 0) {
+    throw new Error("Cannot complete cancelled order")
+  }
 
   return { completed: true, impact }
 }
 
-async function refundCreditsIfNeeded(orderId: string) {
+async function refundCreditsAfterCancel(orderId: string) {
+  // Claim refund atomically — only one concurrent cancel can clear creditsDeducted
+  const claimed = await prisma.shopOrder.updateMany({
+    where: {
+      id: orderId,
+      useKrCredits: true,
+      creditsDeducted: true,
+      status: "cancelled",
+    },
+    data: { creditsDeducted: false },
+  })
+  if (claimed.count === 0) return
+
   const order = await prisma.shopOrder.findUnique({
     where: { id: orderId },
     select: {
       id: true,
       customerId: true,
       subtotal: true,
-      useKrCredits: true,
-      creditsDeducted: true,
-      status: true,
       orderNumber: true,
     },
   })
-  if (!order || !order.useKrCredits || !order.creditsDeducted) return
-  if (order.status === "cancelled") return
+  if (!order) return
 
-  await sql`
-    UPDATE "Customer"
-    SET "kraftrebornCredits" = "kraftrebornCredits" + ${order.subtotal},
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE id = ${order.customerId}
-  `
-  await prisma.shopOrder.update({
-    where: { id: orderId },
-    data: { creditsDeducted: false },
-  })
+  try {
+    await sql`
+      UPDATE "Customer"
+      SET "kraftrebornCredits" = "kraftrebornCredits" + ${order.subtotal},
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE id = ${order.customerId}
+    `
+  } catch (err) {
+    // Restore flag so a retry can refund later
+    await prisma.shopOrder
+      .updateMany({
+        where: { id: orderId, creditsDeducted: false, useKrCredits: true },
+        data: { creditsDeducted: true },
+      })
+      .catch(() => {})
+    throw err
+  }
+
   await prisma.notification.create({
     data: {
       id: `notif_order_refund_${order.customerId}_${Date.now()}`,
@@ -151,7 +201,7 @@ async function refundCreditsIfNeeded(orderId: string) {
       title: "Order cancelled — credits restored",
       body: `Order ${order.orderNumber} was cancelled. ₹${order.subtotal} KR credits were returned to your balance.`,
     },
-  })
+  }).catch(() => {})
 }
 
 export async function PATCH(request: NextRequest) {
@@ -199,8 +249,40 @@ export async function PATCH(request: NextRequest) {
       select: { status: true, useKrCredits: true, creditsDeducted: true },
     })
 
-    if (status === "cancelled" && prev && String(prev.status).toLowerCase() !== "cancelled") {
-      await refundCreditsIfNeeded(id)
+    if (status === "cancelled") {
+      const prevStatus = String(prev?.status || "").toLowerCase()
+      if (prevStatus === "completed") {
+        return NextResponse.json(
+          { success: false, error: "Cannot cancel a completed order" },
+          { status: 400 },
+        )
+      }
+      if (prevStatus !== "cancelled") {
+        const cancelled = await prisma.shopOrder.updateMany({
+          where: {
+            id,
+            status: { notIn: ["cancelled", "completed"] },
+          },
+          data: { status: "cancelled" },
+        })
+        if (cancelled.count > 0) {
+          await refundCreditsAfterCancel(id)
+        }
+      }
+
+      const order = await prisma.shopOrder.update({
+        where: { id },
+        data: {
+          notes: body.notes !== undefined ? String(body.notes) : undefined,
+        },
+        include: {
+          items: true,
+          customer: {
+            select: { id: true, companyName: true, email: true, contactPerson: true },
+          },
+        },
+      })
+      return NextResponse.json({ success: true, order })
     }
 
     const order = await prisma.shopOrder.update({

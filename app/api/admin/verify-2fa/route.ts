@@ -7,6 +7,7 @@ import {
   verifyAdminPending,
 } from "@/lib/admin-auth"
 import { prisma } from "@/lib/prisma"
+import { clientIpFromRequest, consumeRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,15 @@ export async function POST(request: NextRequest) {
     const adminId = await verifyAdminPending(pending)
     if (!adminId) {
       return NextResponse.json({ success: false, error: "Session expired. Sign in again." }, { status: 401 })
+    }
+
+    const ip = clientIpFromRequest(request)
+    const limited = consumeRateLimit(`admin-2fa:${ip}:${adminId}`, 10, 60_000)
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, error: "Too many attempts. Please wait and try again." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+      )
     }
 
     const admin = await prisma.adminUser.findUnique({

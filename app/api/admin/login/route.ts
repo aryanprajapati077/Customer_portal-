@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin-auth"
 import { findAdminByEmail } from "@/lib/admin-auth-server"
 import { prisma } from "@/lib/prisma"
+import { clientIpFromRequest, consumeRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +23,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
     }
 
+    const ip = clientIpFromRequest(request)
+    const limited = consumeRateLimit(`admin-login:${ip}:${normalizedEmail}`, 8, 60_000)
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, error: "Too many login attempts. Please wait and try again." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+      )
+    }
+
     const admin = await findAdminByEmail(normalizedEmail)
     if (!admin || !admin.active) {
+      await verifyPassword(pass, "")
       return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 

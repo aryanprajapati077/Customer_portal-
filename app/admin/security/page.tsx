@@ -14,6 +14,7 @@ export default function AdminSecurityPage() {
   const [loading, setLoading] = useState(true)
   const [setupUri, setSetupUri] = useState<string | null>(null)
   const [setupSecret, setSetupSecret] = useState<string | null>(null)
+  const [setupSecretFormatted, setSetupSecretFormatted] = useState<string | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
@@ -40,7 +41,8 @@ export default function AdminSecurityPage() {
   const copySecret = async () => {
     if (!setupSecret) return
     try {
-      await navigator.clipboard.writeText(setupSecret)
+      // Authenticator apps expect the raw base32 key without spaces
+      await navigator.clipboard.writeText(setupSecret.replace(/\s/g, "").toUpperCase())
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -68,9 +70,10 @@ export default function AdminSecurityPage() {
       }
       setSetupUri(data.uri)
       setSetupSecret(data.secret)
+      setSetupSecretFormatted(data.secretFormatted || null)
       setQrDataUrl(data.qrDataUrl)
       setMessage(
-        "Open Google Authenticator (or Authy), tap +, scan the QR code. If scan fails, use “Enter a setup key” and paste the manual key.",
+        "In Google Authenticator: tap + → Scan QR code. If scan fails, choose “Enter a setup key”, set account to BuffIndia, type Time-based, and paste the key below (no spaces).",
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : "Setup failed")
@@ -96,6 +99,7 @@ export default function AdminSecurityPage() {
       setTotpEnabled(true)
       setSetupUri(null)
       setSetupSecret(null)
+      setSetupSecretFormatted(null)
       setQrDataUrl(null)
       setCode("")
       setMessage("Authenticator is now enabled. You will need a code each time you sign in.")
@@ -216,7 +220,7 @@ export default function AdminSecurityPage() {
                 <div className="flex gap-2">
                   <Input
                     readOnly
-                    value={setupSecret}
+                    value={setupSecretFormatted || setupSecret}
                     className="min-w-0 flex-1 font-mono text-[11px] sm:text-xs"
                   />
                   <Button
@@ -230,7 +234,10 @@ export default function AdminSecurityPage() {
                     {copied ? <Check className="h-4 w-4 text-[#1B7339]" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-[11px] text-[#8A8A8A]">Account name: BuffIndia · Type: Time-based</p>
+                <p className="text-[11px] text-[#8A8A8A]">
+                  Manual setup: Account <strong>BuffIndia</strong> · Key (paste without spaces):{" "}
+                  <span className="font-mono">{setupSecret}</span>
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Verification code from your app</Label>

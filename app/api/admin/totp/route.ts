@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAdminSession } from "@/lib/admin-auth-server"
-import { generateTotpSecret, getTotpUri, totpQrDataUrl, verifyTotp } from "@/lib/admin-totp"
+import { generateTotpSecret, getTotpUri, totpQrDataUrl, verifyTotp, formatTotpSecretForDisplay } from "@/lib/admin-totp"
 
 export async function GET(request: NextRequest) {
   const session = await requireAdminSession(request)
@@ -40,14 +40,18 @@ export async function POST(request: NextRequest) {
     if (action === "setup") {
       const secret = generateTotpSecret()
       const uri = getTotpUri(secret, session.email)
-      const [qrDataUrl] = await Promise.all([
-        totpQrDataUrl(uri),
-        prisma.adminUser.update({
-          where: { id: session.id },
-          data: { totpSecret: secret, totpEnabled: false },
-        }),
-      ])
-      return NextResponse.json({ success: true, secret, uri, qrDataUrl })
+      const qrDataUrl = await totpQrDataUrl(uri)
+      await prisma.adminUser.update({
+        where: { id: session.id },
+        data: { totpSecret: secret, totpEnabled: false },
+      })
+      return NextResponse.json({
+        success: true,
+        secret,
+        secretFormatted: formatTotpSecretForDisplay(secret),
+        uri,
+        qrDataUrl,
+      })
     }
 
     if (action === "enable") {

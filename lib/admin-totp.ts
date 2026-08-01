@@ -2,6 +2,24 @@ import QRCode from "qrcode"
 
 const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 
+function base32Encode(bytes: Uint8Array): string {
+  let bits = 0
+  let value = 0
+  let output = ""
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i]!
+    bits += 8
+    while (bits >= 5) {
+      output += BASE32[(value >>> (bits - 5)) & 31]
+      bits -= 5
+    }
+  }
+  if (bits > 0) {
+    output += BASE32[(value << (5 - bits)) & 31]
+  }
+  return output
+}
+
 function base32Decode(input: string): Uint8Array {
   const cleaned = input.replace(/=+$/, "").replace(/\s/g, "").toUpperCase()
   let bits = 0
@@ -20,45 +38,40 @@ function base32Decode(input: string): Uint8Array {
   return new Uint8Array(out)
 }
 
-/** 160-bit secret — compatible with Google Authenticator, Authy, 1Password */
-export function generateTotpSecret(): string {
-  const bytes = new Uint8Array(20)
-  crypto.getRandomValues(bytes)
-  let bits = 0
-  let value = 0
-  let out = ""
-  for (const byte of bytes) {
-    value = (value << 8) | byte
-    bits += 8
-    while (bits >= 5) {
-      out += BASE32[(value >>> (bits - 5)) & 31]
-      bits -= 5
-    }
-  }
-  if (bits > 0) out += BASE32[(value << (5 - bits)) & 31]
-  return out.slice(0, 32)
+function normalizeSecret(secret: string): string {
+  return secret.replace(/\s/g, "").toUpperCase()
 }
 
-/** RFC 6238 otpauth URI — issuer in label + query (no URLSearchParams + signs) */
+/** 80-bit secret (16 base32 chars) — widely supported by Google Authenticator / Authy */
+export function generateTotpSecret(): string {
+  const bytes = new Uint8Array(10)
+  crypto.getRandomValues(bytes)
+  return base32Encode(bytes)
+}
+
+/** Format for manual entry: ABCD EFGH IJKL MNOP */
+export function formatTotpSecretForDisplay(secret: string): string {
+  const s = normalizeSecret(secret)
+  return s.match(/.{1,4}/g)?.join(" ") ?? s
+}
+
+/**
+ * Minimal otpauth URI — Google Authenticator compatible.
+ * Keep @ unencoded in the label; omit algorithm/digits/period (defaults work).
+ */
 export function getTotpUri(secret: string, email: string, issuer = "BuffIndia"): string {
-  const account = encodeURIComponent(email)
-  const iss = encodeURIComponent(issuer)
-  const params = [
-    `secret=${encodeURIComponent(secret)}`,
-    `issuer=${iss}`,
-    "algorithm=SHA1",
-    "digits=6",
-    "period=30",
-  ].join("&")
-  return `otpauth://totp/${iss}:${account}?${params}`
+  const key = normalizeSecret(secret)
+  const account = email.trim().toLowerCase()
+  const label = `${issuer}:${account}`
+  return `otpauth://totp/${label}?secret=${key}&issuer=${encodeURIComponent(issuer)}`
 }
 
 export async function totpQrDataUrl(uri: string): Promise<string> {
   return QRCode.toDataURL(uri, {
-    width: 220,
+    width: 256,
     margin: 2,
-    errorCorrectionLevel: "M",
-    color: { dark: "#141414", light: "#FFFFFF" },
+    errorCorrectionLevel: "H",
+    color: { dark: "#000000", light: "#FFFFFF" },
   })
 }
 
@@ -76,19 +89,22 @@ async function hotpWithKey(key: CryptoKey, counter: bigint): Promise<string> {
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
 }
 
 export async function verifyTotp(secret: string, token: string, window = 2): Promise<boolean> {
   const code = token.replace(/\s/g, "")
   if (!/^\d{6}$/.test(code)) return false
+
   let keyBytes: Uint8Array
   try {
-    keyBytes = base32Decode(secret)
+    keyBytes = base32Decode(normalizeSecret(secret))
   } catch {
     return false
   }
-  if (keyBytes.length < 8) return false
+  if (keyBytes.length < 5) return false
 
   const cryptoKey = await crypto.subtle.importKey(
     "raw",

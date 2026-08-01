@@ -49,7 +49,13 @@ export async function GET(request: NextRequest) {
     const [reports, stats] = await Promise.all([
       sql`
         SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
-               c."companyName", c.email, c.status
+               c."companyName", c.email, c.status,
+               COALESCE((
+                 SELECT SUM(col.weight)::float
+                 FROM "Collection" col
+                 WHERE col."customerId" = r."customerId"
+                   AND date_trunc('month', col.date) = date_trunc('month', r.date)
+               ), 0) AS "collectionKg"
         FROM "Report" r
         JOIN "Customer" c ON c.id = r."customerId"
         ORDER BY r.date DESC
@@ -476,6 +482,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Unknown action" }, { status: 400 })
   } catch (error) {
     console.error("Error in admin reports POST:", error)
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await requireReportsAdmin(request)
+    if (!auth.ok) return auth.response
+
+    const body = await request.json().catch(() => ({}))
+    const id = String(body?.id || "").trim()
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Report id required" }, { status: 400 })
+    }
+
+    const deleted = await sql.query<{ id: string }>(
+      `DELETE FROM "Report" WHERE id = $1 RETURNING id`,
+      [id],
+    )
+    if (!deleted.length) {
+      return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, id })
+  } catch (error) {
+    console.error("Error deleting admin report:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }

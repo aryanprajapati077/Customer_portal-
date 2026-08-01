@@ -48,3 +48,22 @@
   background-color: var(--admin-green-soft) !important;
   color: var(--admin-green);
 }
+
+/* Mobile-friendly tables and OTP inputs */
+.admin-root .admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.admin-root .admin-otp-group {
+  gap: 0.25rem;
+}
+
+@media (max-width: 380px) {
+  .admin-root .admin-otp-slot {
+    height: 2.5rem !important;
+    width: 2.25rem !important;
+    font-size: 0.875rem !important;
+  }
+}

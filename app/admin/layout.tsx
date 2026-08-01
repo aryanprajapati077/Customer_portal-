@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } catch {
       /* ignore */
     }
-    fetch("/api/admin/me")
+    fetch("/api/admin/me", { credentials: "include" })
       .then(async (r) => {
         if (cancelled) return
         if (r.status === 401) {

@@ -35,6 +35,7 @@ function AdminLoginForm() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       })
       const data = await res.json()
@@ -63,6 +64,7 @@ function AdminLoginForm() {
       const res = await fetch("/api/admin/verify-2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ totpCode: code }),
       })
       const data = await res.json()
@@ -154,11 +156,11 @@ function AdminLoginForm() {
             <div className="rounded-2xl border border-[#E2EBE4] bg-[#F7FBF7] px-4 py-3 text-center text-[13px] text-[#4A4A4A]">
               Code for <strong className="text-[#1B7339]">{email}</strong>
             </div>
-            <div className="flex justify-center py-2">
-              <InputOTP maxLength={6} value={totpCode} onChange={onTotpChange} autoFocus>
-                <InputOTPGroup>
+            <div className="flex justify-center overflow-x-auto py-2">
+              <InputOTP maxLength={6} value={totpCode} onChange={onTotpChange} autoFocus inputMode="numeric">
+                <InputOTPGroup className="gap-1 sm:gap-2">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-base" />
+                    <InputOTPSlot key={i} index={i} className="h-11 w-9 text-base sm:h-12 sm:w-10" />
                   ))}
                 </InputOTPGroup>
               </InputOTP>

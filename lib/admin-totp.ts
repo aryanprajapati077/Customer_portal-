@@ -9,7 +9,7 @@ function base32Decode(input: string): Uint8Array {
   const out: number[] = []
   for (const char of cleaned) {
     const idx = BASE32.indexOf(char)
-    if (idx === -1) continue
+    if (idx === -1) throw new Error("Invalid base32 character in TOTP secret")
     value = (value << 5) | idx
     bits += 5
     if (bits >= 8) {
@@ -20,10 +20,46 @@ function base32Decode(input: string): Uint8Array {
   return new Uint8Array(out)
 }
 
-function randomBase32(length = 32): string {
-  const arr = new Uint8Array(length)
-  crypto.getRandomValues(arr)
-  return [...arr].map((b) => BASE32[b % 32]).join("")
+/** 160-bit secret — compatible with Google Authenticator, Authy, 1Password */
+export function generateTotpSecret(): string {
+  const bytes = new Uint8Array(20)
+  crypto.getRandomValues(bytes)
+  let bits = 0
+  let value = 0
+  let out = ""
+  for (const byte of bytes) {
+    value = (value << 8) | byte
+    bits += 8
+    while (bits >= 5) {
+      out += BASE32[(value >>> (bits - 5)) & 31]
+      bits -= 5
+    }
+  }
+  if (bits > 0) out += BASE32[(value << (5 - bits)) & 31]
+  return out.slice(0, 32)
+}
+
+/** RFC 6238 otpauth URI — issuer in label + query (no URLSearchParams + signs) */
+export function getTotpUri(secret: string, email: string, issuer = "BuffIndia"): string {
+  const account = encodeURIComponent(email)
+  const iss = encodeURIComponent(issuer)
+  const params = [
+    `secret=${encodeURIComponent(secret)}`,
+    `issuer=${iss}`,
+    "algorithm=SHA1",
+    "digits=6",
+    "period=30",
+  ].join("&")
+  return `otpauth://totp/${iss}:${account}?${params}`
+}
+
+export async function totpQrDataUrl(uri: string): Promise<string> {
+  return QRCode.toDataURL(uri, {
+    width: 220,
+    margin: 2,
+    errorCorrectionLevel: "M",
+    color: { dark: "#141414", light: "#FFFFFF" },
+  })
 }
 
 async function hotpWithKey(key: CryptoKey, counter: bigint): Promise<string> {
@@ -39,38 +75,24 @@ async function hotpWithKey(key: CryptoKey, counter: bigint): Promise<string> {
   return String(code % 1_000_000).padStart(6, "0")
 }
 
-export function generateTotpSecret(): string {
-  return randomBase32(20)
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
 }
 
-export function getTotpUri(secret: string, email: string, issuer = "Buffindia Admin"): string {
-  const label = encodeURIComponent(`${issuer}:${email}`)
-  const params = new URLSearchParams({
-    secret,
-    issuer,
-    algorithm: "SHA1",
-    digits: "6",
-    period: "30",
-  })
-  return `otpauth://totp/${label}?${params.toString()}`
-}
-
-export async function totpQrDataUrl(uri: string): Promise<string> {
-  return QRCode.toDataURL(uri, {
-    width: 180,
-    margin: 1,
-    errorCorrectionLevel: "M",
-    color: { dark: "#141414", light: "#FFFFFF" },
-  })
-}
-
-export async function verifyTotp(secret: string, token: string, window = 1): Promise<boolean> {
+export async function verifyTotp(secret: string, token: string, window = 2): Promise<boolean> {
   const code = token.replace(/\s/g, "")
   if (!/^\d{6}$/.test(code)) return false
-  const keyBytes = base32Decode(secret)
+  let keyBytes: Uint8Array
+  try {
+    keyBytes = base32Decode(secret)
+  } catch {
+    return false
+  }
+  if (keyBytes.length < 8) return false
+
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    keyBytes,
+    toArrayBuffer(keyBytes),
     { name: "HMAC", hash: "SHA-1" },
     false,
     ["sign"],

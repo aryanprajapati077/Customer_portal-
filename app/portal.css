@@ -22,6 +22,14 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: var(--p-text);
   background: var(--p-bg);
+  -webkit-text-size-adjust: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.portal-root .portal-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 /* Hide Next.js floating "N" badge so it doesn't sit on the sidebar card */

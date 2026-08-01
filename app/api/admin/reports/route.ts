@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
                ), 0) AS "collectionKg"
         FROM "Report" r
         JOIN "Customer" c ON c.id = r."customerId"
-        ORDER BY r.date DESC
+        ORDER BY r.date DESC, r.id DESC
         LIMIT 100
       `,
       sql`

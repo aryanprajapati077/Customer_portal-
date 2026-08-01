@@ -186,13 +186,17 @@ export default function AdminReportsPage() {
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
-    if (!s) return reports
-    return reports.filter(
-      (r) =>
-        r.companyName.toLowerCase().includes(s) ||
-        r.customerId.toLowerCase().includes(s) ||
-        r.email.toLowerCase().includes(s) ||
-        r.name.toLowerCase().includes(s),
+    const list = s
+      ? reports.filter(
+          (r) =>
+            r.companyName.toLowerCase().includes(s) ||
+            r.customerId.toLowerCase().includes(s) ||
+            r.email.toLowerCase().includes(s) ||
+            r.name.toLowerCase().includes(s),
+        )
+      : reports
+    return [...list].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     )
   }, [reports, q])
 
@@ -266,14 +270,51 @@ export default function AdminReportsPage() {
 
   const [sendingId, setSendingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
 
-  const reportMonthKey = (r: ReportRow) =>
-    parsePeriodToMonthKey(r.period, r.date) || currentMonthInput()
+  const reportMonthKey = (r: ReportRow): string | null =>
+    parsePeriodToMonthKey(r.period, r.date)
 
-  const downloadReport = (r: ReportRow, format: "pdf" | "excel") => {
+  const triggerFileDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const downloadReport = async (r: ReportRow, format: "pdf" | "excel") => {
     const period = reportMonthKey(r)
-    const url = `/api/admin/reports/download?customerId=${encodeURIComponent(r.customerId)}&period=${encodeURIComponent(period)}&format=${format}`
-    window.open(url, "_blank", "noopener,noreferrer")
+    if (!period) {
+      alert("Could not determine report month for this entry.")
+      return
+    }
+    const key = `${r.id}-${format}`
+    setDownloadingKey(key)
+    try {
+      const url = `/api/admin/reports/download?customerId=${encodeURIComponent(r.customerId)}&period=${encodeURIComponent(period)}&format=${format}`
+      const res = await fetch(url, { credentials: "include" })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || "Failed to generate report")
+      }
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition")
+      const filenameMatch = disposition?.match(/filename="(.+)"/)
+      const fallback =
+        format === "excel"
+          ? `${r.customerId}-Impact-Report.xlsx`
+          : `${r.customerId}-ESG-Report.pdf`
+      triggerFileDownload(blob, filenameMatch?.[1] || fallback)
+    } catch (error) {
+      console.error("Report download failed:", error)
+      alert(error instanceof Error ? error.message : "Could not download report. Please try again.")
+    } finally {
+      setDownloadingKey(null)
+    }
   }
 
   const deleteReport = async (r: ReportRow) => {
@@ -472,141 +513,6 @@ export default function AdminReportsPage() {
         </Card>
       </div>
 
-      <Card className="glass border-border/50">
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Recent Reports</CardTitle>
-              <CardDescription>Latest generated reports across all clients</CardDescription>
-            </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search company, ID, email..."
-                className="pl-9"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              No reports yet. Generate for a Customer ID + month below.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {filtered.slice(0, 30).map((r) => {
-                const kg = Number(r.collectionKg) || 0
-                return (
-                  <div
-                    key={r.id}
-                    className="flex flex-col gap-3 rounded-xl border border-border/50 bg-background/50 p-4 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <p className="truncate font-medium text-foreground">{r.name}</p>
-                        <Badge variant="outline" className="text-[10px] capitalize">
-                          {r.type}
-                        </Badge>
-                        {r.period && (
-                          <Badge variant="outline" className="bg-primary/5 text-[10px]">
-                            {r.period}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {r.companyName} · {r.customerId} · {r.email}
-                      </p>
-                      <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        <span>
-                          {new Date(r.date).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span className="text-[#1B7339] font-semibold">
-                          · {kg.toLocaleString("en-IN", { maximumFractionDigits: 1 })} kg collected
-                        </span>
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => downloadReport(r, "pdf")}
-                      >
-                        <Download className="mr-1.5 h-3.5 w-3.5" />
-                        PDF
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => downloadReport(r, "excel")}
-                      >
-                        <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
-                        Excel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        disabled={sending}
-                        onClick={() => {
-                          void sendReports({
-                            customerId: r.customerId,
-                            period: reportMonthKey(r),
-                          })
-                        }}
-                      >
-                        {sending && sendingId === r.customerId ? (
-                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Mail className="mr-1.5 h-3.5 w-3.5" />
-                        )}
-                        Email
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full border-red-200 text-red-700 hover:bg-red-50"
-                        disabled={deletingId === r.id}
-                        onClick={() => void deleteReport(r)}
-                      >
-                        {deletingId === r.id ? (
-                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                        )}
-                        Delete
-                      </Button>
-                      <Badge
-                        variant="outline"
-                        className={
-                          r.status === "Active"
-                            ? "shrink-0 border-secondary/30 bg-secondary/10 text-secondary"
-                            : "shrink-0"
-                        }
-                      >
-                        {r.status}
-                      </Badge>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="glass border-border/50">
           <CardHeader>
@@ -737,6 +643,161 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="glass border-border/50">
+        <CardHeader>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Recent Reports</CardTitle>
+              <CardDescription>
+                Latest generated reports, newest first
+              </CardDescription>
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search company, ID, email..."
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              No reports yet. Generate for a Customer ID + month above.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {filtered.slice(0, 30).map((r) => {
+                const kg = Number(r.collectionKg) || 0
+                return (
+                  <div
+                    key={r.id}
+                    className="flex flex-col gap-3 rounded-xl border border-border/50 bg-background/50 p-4 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <p className="truncate font-medium text-foreground">{r.name}</p>
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {r.type}
+                        </Badge>
+                        {r.period && (
+                          <Badge variant="outline" className="bg-primary/5 text-[10px]">
+                            {r.period}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {r.companyName} · {r.customerId} · {r.email}
+                      </p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                        <span>
+                          Generated{" "}
+                          {new Date(r.date).toLocaleString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <span className="text-[#1B7339] font-semibold">
+                          · {kg.toLocaleString("en-IN", { maximumFractionDigits: 1 })} kg collected
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={downloadingKey === `${r.id}-pdf`}
+                        onClick={() => void downloadReport(r, "pdf")}
+                      >
+                        {downloadingKey === `${r.id}-pdf` ? (
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        PDF
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={downloadingKey === `${r.id}-excel`}
+                        onClick={() => void downloadReport(r, "excel")}
+                      >
+                        {downloadingKey === `${r.id}-excel` ? (
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        Excel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={sending}
+                        onClick={() => {
+                          const periodKey = reportMonthKey(r)
+                          if (!periodKey) {
+                            alert("Could not determine report month for this entry.")
+                            return
+                          }
+                          void sendReports({
+                            customerId: r.customerId,
+                            period: periodKey,
+                          })
+                        }}
+                      >
+                        {sending && sendingId === r.customerId ? (
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        Email
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-red-200 text-red-700 hover:bg-red-50"
+                        disabled={deletingId === r.id}
+                        onClick={() => void deleteReport(r)}
+                      >
+                        {deletingId === r.id ? (
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        Delete
+                      </Button>
+                      <Badge
+                        variant="outline"
+                        className={
+                          r.status === "Active"
+                            ? "shrink-0 border-secondary/30 bg-secondary/10 text-secondary"
+                            : "shrink-0"
+                        }
+                      >
+                        {r.status}
+                      </Badge>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="glass border-destructive/20">
         <CardHeader>

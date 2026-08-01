@@ -24,6 +24,10 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  if (format !== "pdf" && format !== "excel") {
+    return NextResponse.json({ success: false, error: "format must be pdf or excel" }, { status: 400 })
+  }
+
   try {
     if (format === "excel") {
       const { buffer, filename } = await generateImpactReportExcel(customerId, { period })
@@ -36,8 +40,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const { buffer, filename } = await generateImpactReportPdf(customerId, { period })
-    return new NextResponse(new Uint8Array(buffer), {
+    const { pdfBuffer, filename } = await generateImpactReportPdf(customerId, { period })
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,

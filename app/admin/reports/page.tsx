@@ -33,12 +33,21 @@ import {
 } from "lucide-react"
 import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   buildEsgReportEmailHtml,
   buildEsgReportEmailText,
   DEFAULT_ESG_EMAIL_COPY,
   type EsgEmailCopy,
 } from "@/lib/email-templates"
 import { parsePeriodToMonthKey } from "@/lib/report-periods"
+import { resolveReportRecipients } from "@/lib/report-recipients"
 
 type ReportRow = {
   id: string
@@ -129,6 +138,15 @@ export default function AdminReportsPage() {
   const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [editingEmail, setEditingEmail] = useState<Record<string, string>>({})
   const [savingEmailId, setSavingEmailId] = useState<string | null>(null)
+
+  const [sendPreview, setSendPreview] = useState<{
+    customerId: string
+    period: string
+    companyName: string
+    to: string
+    cc: string[]
+  } | null>(null)
+  const [loadingSendPreview, setLoadingSendPreview] = useState(false)
 
   const loadDeliveries = async (status = deliveryFilter, search = deliveryQ) => {
     setDeliveryLoading(true)
@@ -335,14 +353,68 @@ export default function AdminReportsPage() {
     }
   }
 
-  const sendReports = async (opts?: { customerId?: string; period?: string }) => {
+  const prepareIndividualSend = async (
+    customerId: string,
+    periodKey: string,
+    companyName?: string,
+  ) => {
+    setLoadingSendPreview(true)
+    try {
+      const res = await fetch(
+        `/api/admin/customers?q=${encodeURIComponent(customerId)}&take=20`,
+      )
+      const data = await res.json()
+      const customer = (data.customers || []).find(
+        (c: { id: string }) => c.id === customerId,
+      ) as
+        | {
+            id: string
+            companyName: string
+            email?: string
+            primaryPocEmail?: string | null
+            collectionPocs?: string | null
+          }
+        | undefined
+      if (!customer) {
+        alert("Customer not found")
+        return
+      }
+      const recipients = resolveReportRecipients(customer)
+      if (!recipients.to) {
+        alert("No Primary POC email on file for this client.")
+        return
+      }
+      setSendPreview({
+        customerId,
+        period: periodKey,
+        companyName: companyName || customer.companyName || customerId,
+        to: recipients.to,
+        cc: recipients.cc,
+      })
+    } catch {
+      alert("Could not load recipient emails. Please try again.")
+    } finally {
+      setLoadingSendPreview(false)
+    }
+  }
+
+  const sendReports = async (opts?: {
+    customerId?: string
+    period?: string
+    skipConfirm?: boolean
+  }) => {
     const targetCustomer = opts?.customerId ?? sendCustomerId
     const targetPeriod = opts?.period ?? period
     const personal = targetCustomer !== "__all__"
-    const confirmMsg = personal
-      ? `Send ${targetPeriod} ESG report to ${targetCustomer}?\n\nTo: Primary POC\nCC: all Collection POCs\nAttachments: PDF + Excel`
-      : `Send ${targetPeriod} ESG report emails to all active clients?\n\nTo: each client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
-    if (!confirm(confirmMsg)) return
+
+    if (personal && !opts?.skipConfirm) {
+      const company = customers.find((c) => c.id === targetCustomer)?.companyName
+      await prepareIndividualSend(targetCustomer, targetPeriod, company)
+      return
+    }
+
+    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nTo: each client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
+    if (!personal && !confirm(confirmMsg)) return
 
     setSending(true)
     setSendingId(personal ? targetCustomer : "__all__")
@@ -746,17 +818,14 @@ export default function AdminReportsPage() {
                         size="sm"
                         variant="outline"
                         className="rounded-full"
-                        disabled={sending}
+                        disabled={sending || loadingSendPreview}
                         onClick={() => {
                           const periodKey = reportMonthKey(r)
                           if (!periodKey) {
                             alert("Could not determine report month for this entry.")
                             return
                           }
-                          void sendReports({
-                            customerId: r.customerId,
-                            period: periodKey,
-                          })
+                          void prepareIndividualSend(r.customerId, periodKey, r.companyName)
                         }}
                       >
                         {sending && sendingId === r.customerId ? (
@@ -1097,6 +1166,74 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={Boolean(sendPreview)} onOpenChange={(open) => !open && setSendPreview(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm report email</DialogTitle>
+            <DialogDescription>
+              {sendPreview
+                ? `${sendPreview.companyName} · ${sendPreview.period} ESG report`
+                : "Review recipients before sending."}
+            </DialogDescription>
+          </DialogHeader>
+          {sendPreview && (
+            <div className="space-y-4 text-sm">
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">To</p>
+                <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 font-medium text-foreground">
+                  {sendPreview.to}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">CC</p>
+                {sendPreview.cc.length > 0 ? (
+                  <ul className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                    {sendPreview.cc.map((email) => (
+                      <li key={email} className="text-foreground">
+                        {email}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-muted-foreground">
+                    No Collection POC emails on file
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Attachments: PDF + Excel</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setSendPreview(null)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="bg-[#1B7339] hover:bg-[#145a2c]"
+              disabled={!sendPreview || sending}
+              onClick={() => {
+                if (!sendPreview) return
+                const { customerId, period } = sendPreview
+                setSendPreview(null)
+                void sendReports({ customerId, period, skipConfirm: true })
+              }}
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

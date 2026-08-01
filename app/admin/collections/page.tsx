@@ -13,6 +13,7 @@ import {
   AdminSheetSection,
 } from "@/components/admin/admin-detail-sheet"
 import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
+import { SearchableSelect } from "@/components/admin/searchable-select"
 
 type Row = {
   id: string
@@ -87,6 +88,20 @@ export default function AdminCollectionsPage() {
     }
     return [...set].sort()
   }, [rows])
+
+  const lsuSelectOptions = useMemo(
+    () => lsuOptions.map((name) => ({ value: name, label: name })),
+    [lsuOptions],
+  )
+
+  const customerFilterOptions = useMemo(
+    () =>
+      customers.map((c) => ({
+        id: c.id,
+        companyName: c.companyName,
+      })),
+    [customers],
+  )
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -261,35 +276,26 @@ export default function AdminCollectionsPage() {
         <CardContent className="grid gap-3 sm:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Client</Label>
-            <Select value={filterClient} onValueChange={setFilterClient}>
-              <SelectTrigger>
-                <SelectValue placeholder="All clients" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All clients</SelectItem>
-                {customers.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.companyName} ({c.id})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomerSearchSelect
+              customers={customerFilterOptions}
+              value={filterClient}
+              onChange={setFilterClient}
+              allValue="all"
+              allLabel="All clients"
+              placeholder="Search client by name or ID…"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">LSU</Label>
-            <Select value={filterLsu} onValueChange={setFilterLsu}>
-              <SelectTrigger>
-                <SelectValue placeholder="All LSU" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All LSU</SelectItem>
-                {lsuOptions.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={lsuSelectOptions}
+              value={filterLsu}
+              onChange={setFilterLsu}
+              allValue="all"
+              allLabel="All LSU"
+              placeholder="All LSU"
+              searchPlaceholder="Search LSU…"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Month</Label>

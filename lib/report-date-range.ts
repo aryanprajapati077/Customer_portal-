@@ -88,13 +88,14 @@ export function resolveReportDateWindow(options: {
     }
   }
 
-  // installation till date (all history up to today, or legacy period as-of)
-  if (options.period && /^\d{4}-\d{2}$/.test(options.period) && !options.range) {
+  // YYYY-MM period without explicit range = that calendar month only (admin monthly reports)
+  if (options.period && /^\d{4}-\d{2}$/.test(options.period)) {
     const [py, pm] = options.period.split("-").map(Number)
     return {
+      startDate: new Date(py, pm - 1, 1, 0, 0, 0, 0),
       endDate: endOfMonth(py, pm - 1),
       period: options.period,
-      label: "Installation till date",
+      label: new Date(py, pm - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
     }
   }
 

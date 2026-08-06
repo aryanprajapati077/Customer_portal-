@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
+import { TurnstileWidget } from "@/components/turnstile-widget"
 
 export default function ContactPage() {
   const [name, setName] = useState("")
@@ -13,12 +14,18 @@ export default function ContactPage() {
   const [phone, setPhone] = useState("")
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const captchaRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim())
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (captchaRequired && !turnstileToken) {
+      setError("Please complete the captcha verification.")
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
@@ -35,6 +42,7 @@ export default function ContactPage() {
           category: "contact",
           source: "contact",
           phone: phone.trim() || undefined,
+          turnstileToken,
         }),
       })
       const data = await res.json().catch(() => null)
@@ -199,9 +207,10 @@ export default function ContactPage() {
                   {error}
                 </p>
               )}
+              <TurnstileWidget onToken={setTurnstileToken} className="min-h-[65px]" />
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || (captchaRequired && !turnstileToken)}
                 className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#145a2c] disabled:opacity-60"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

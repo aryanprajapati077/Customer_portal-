@@ -194,10 +194,12 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const { sendKrOrderConfirmationEmail } = await import("@/lib/kr-order-email")
-        const { queueEmail } = await import("@/lib/email-queue")
-        queueEmail("kr-order", () =>
-          sendKrOrderConfirmationEmail({
+        const { isEmailEnabled } = await import("@/lib/email-settings")
+        if (await isEmailEnabled("kr_order_confirmation")) {
+          const { sendKrOrderConfirmationEmail } = await import("@/lib/kr-order-email")
+          const { queueEmail } = await import("@/lib/email-queue")
+          queueEmail("kr-order", () =>
+            sendKrOrderConfirmationEmail({
             to: customer.email,
             contactName: customer.contactPerson,
             companyName: customer.companyName,
@@ -210,7 +212,8 @@ export async function POST(request: NextRequest) {
             })),
             useKrCredits,
           }),
-        )
+          )
+        }
       } catch (emailErr) {
         console.error("Order confirmation email queue failed:", emailErr)
       }

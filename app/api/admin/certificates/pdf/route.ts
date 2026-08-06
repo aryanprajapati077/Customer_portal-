@@ -3,6 +3,7 @@ import { generateServiceCertificatePdf } from "@/lib/generate-service-certificat
 import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-certificate-pdf"
 import { sendCertificateEmail } from "@/lib/certificate-email"
 import { queueEmail } from "@/lib/email-queue"
+import { isEmailEnabled } from "@/lib/email-settings"
 import { sql } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
 import { requireAdminSession } from "@/lib/admin-auth-server"
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
       const certLabel = `${generated.certificate.name} (${generated.certificate.certificateNumber})`
 
       queueEmail("certificate", async () => {
+        if (!(await isEmailEnabled("certificate_email"))) return
         const mail = await sendCertificateEmail({
           to: toEmail,
           companyName: generated.customer.companyName,

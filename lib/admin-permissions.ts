@@ -10,6 +10,8 @@ export const ADMIN_PERMISSIONS = [
   { key: "reports", label: "Reports & Email", href: "/admin/reports" },
   { key: "newsletter", label: "Newsletter", href: "/admin/newsletter" },
   { key: "email-templates", label: "Email Templates", href: "/admin/email-templates" },
+  { key: "email-settings", label: "Email On/Off", href: "/admin/email-settings" },
+  { key: "customer-pocs", label: "Customer POCs", href: "/admin/customer-pocs" },
   { key: "collections", label: "Collections", href: "/admin/collections" },
   { key: "pending-collections", label: "Pending Collections", href: "/admin/pending-collections" },
   { key: "renewals", label: "Renewals", href: "/admin/renewals" },

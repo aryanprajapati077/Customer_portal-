@@ -4,6 +4,7 @@ import { Resend } from "resend"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { sql } from "@/lib/db"
 import { saveBase64File, saveBase64Image } from "@/lib/upload"
+import { verifyTurnstileToken } from "@/lib/turnstile"
 
 function mapStatus(status: string) {
   const s = (status || "").toLowerCase()
@@ -71,9 +72,18 @@ export async function POST(request: Request) {
     const customerId = body.customerId ? String(body.customerId) : null
     const attachmentBase64 = body.attachmentBase64 ? String(body.attachmentBase64) : ""
     const attachmentName = body.attachmentName ? String(body.attachmentName) : "attachment"
+    const turnstileToken = body.turnstileToken ? String(body.turnstileToken) : null
 
     if (!subject || !message) {
       return NextResponse.json({ error: "Subject and message are required" }, { status: 400 })
+    }
+
+    if (source === "contact") {
+      const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      const captcha = await verifyTurnstileToken(turnstileToken, forwarded)
+      if (!captcha.ok) {
+        return NextResponse.json({ error: captcha.error }, { status: 400 })
+      }
     }
 
     if (customerId) {

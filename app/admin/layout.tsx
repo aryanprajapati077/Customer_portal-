@@ -31,6 +31,8 @@ import {
   UsersRound,
   BarChart3,
   CalendarClock,
+  Contact,
+  ToggleRight,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -57,6 +59,8 @@ const nav = [
   { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
   { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
   { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
+  { href: "/admin/email-settings", label: "Email On/Off", icon: ToggleRight },
+  { href: "/admin/customer-pocs", label: "Customer POCs", icon: Contact },
   { href: "/admin/collections", label: "Collections", icon: Package },
   { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
   { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },

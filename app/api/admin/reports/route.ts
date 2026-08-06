@@ -20,6 +20,7 @@ import { resolveReportRecipients } from "@/lib/report-recipients"
 import { logEmailDelivery } from "@/lib/email-delivery-log"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
+import { isEmailEnabled } from "@/lib/email-settings"
 
 function parsePeriodMonth(period?: string | null): Date | undefined {
   if (!period?.trim()) return undefined
@@ -142,6 +143,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { success: false, error: "Email not configured. Set RESEND_API_KEY in .env" },
           { status: 503 },
+        )
+      }
+      if (!(await isEmailEnabled("esg_report"))) {
+        return NextResponse.json(
+          { success: false, error: "ESG report emails are turned off in Email On/Off settings." },
+          { status: 403 },
         )
       }
       const mailer = resend

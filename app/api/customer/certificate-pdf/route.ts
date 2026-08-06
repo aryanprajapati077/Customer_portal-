@@ -3,6 +3,7 @@ import { generateServiceCertificatePdf } from "@/lib/generate-service-certificat
 import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-certificate-pdf"
 import { sendCertificateEmail } from "@/lib/certificate-email"
 import { queueEmail } from "@/lib/email-queue"
+import { isEmailEnabled } from "@/lib/email-settings"
 import { sql } from "@/lib/db"
 import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 import { prisma } from "@/lib/prisma"
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
 
       // Respond immediately — Resend delivery runs in background
       queueEmail("certificate", async () => {
+        if (!(await isEmailEnabled("certificate_email"))) return
         const mail = await sendCertificateEmail({
           to: toEmail,
           companyName: generated.customer.companyName,

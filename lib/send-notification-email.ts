@@ -10,6 +10,7 @@ import {
 import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
 import { queueEmail } from "@/lib/email-queue"
+import { isEmailEnabled, type EmailToggleId } from "@/lib/email-settings"
 
 async function ensureEmailTemplateTable() {
   await sql.query(`
@@ -112,6 +113,11 @@ export async function sendNotificationEmail(options: {
     .toLowerCase()
     .trim()
   if (!to.includes("@")) return { sent: false, reason: "no_email" as const }
+
+  const enabled = await isEmailEnabled(options.templateId as EmailToggleId)
+  if (!enabled) {
+    return { sent: false, reason: "disabled" as const, subject: "", html: "", text: "" }
+  }
 
   const copy = await getNotificationTemplate(options.templateId)
   const built = buildNotificationEmail(

@@ -7,6 +7,7 @@ import {
   parseLocation,
 } from "@/lib/esg-metrics"
 import { parsePeriodMonth } from "@/lib/generate-impact-report-pdf"
+import { fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
 
 const MONTHS_SHORT = [
   "Jan",
@@ -123,59 +124,9 @@ export async function generateImpactReportExcel(
     endDate: options?.endDate,
   })
   const asOfDate = window.endDate || parsePeriodMonth(options?.period)
-  const startIso = window.startDate?.toISOString()
   const endIso = window.endDate?.toISOString()
 
-  const collectionQuery =
-    scopeIds.length === 1
-      ? startIso && endIso
-        ? sql`
-            SELECT weight, date, status, notes
-            FROM "Collection"
-            WHERE "customerId" = ${scopeIds[0]}
-              AND date >= ${startIso}
-              AND date <= ${endIso}
-            ORDER BY date ASC
-          `
-        : endIso
-          ? sql`
-              SELECT weight, date, status, notes
-              FROM "Collection"
-              WHERE "customerId" = ${scopeIds[0]}
-                AND date <= ${endIso}
-              ORDER BY date ASC
-            `
-          : sql`
-              SELECT weight, date, status, notes
-              FROM "Collection"
-              WHERE "customerId" = ${scopeIds[0]}
-              ORDER BY date ASC
-            `
-      : startIso && endIso
-        ? sql`
-            SELECT weight, date, status, notes
-            FROM "Collection"
-            WHERE "customerId" = ANY(${scopeIds}::text[])
-              AND date >= ${startIso}
-              AND date <= ${endIso}
-            ORDER BY date ASC
-          `
-        : endIso
-          ? sql`
-              SELECT weight, date, status, notes
-              FROM "Collection"
-              WHERE "customerId" = ANY(${scopeIds}::text[])
-                AND date <= ${endIso}
-              ORDER BY date ASC
-            `
-          : sql`
-              SELECT weight, date, status, notes
-              FROM "Collection"
-              WHERE "customerId" = ANY(${scopeIds}::text[])
-              ORDER BY date ASC
-            `
-
-  const [customerRows, aggregateRows, collectionRows] = await Promise.all([
+  const [customerRows, aggregateRows] = await Promise.all([
     sql`
       SELECT id, "companyName", address, "joinDate", "serviceStartDate", "disposalUnitInstalled",
              "totalWasteCollected", "kraftrebornCredits", "contactPerson", email
@@ -193,11 +144,21 @@ export async function generateImpactReportExcel(
           WHERE id = ANY(${scopeIds}::text[])
         `
       : Promise.resolve([]),
-    collectionQuery,
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
   if (!customer) throw new Error("Customer not found")
+
+  const cumulativeStart = serviceStartIso(
+    customer.serviceStartDate as string | Date | null,
+    customer.joinDate as string | Date | null,
+  )
+
+  const collectionRows = await fetchReportCollections(scopeIds, {
+    startIso: cumulativeStart,
+    endIso,
+    withMeta: true,
+  })
 
   const aggregate = aggregateRows[0] as
     | {
@@ -213,7 +174,7 @@ export async function generateImpactReportExcel(
       id: String(customer.id),
       companyName: String(customer.companyName),
       address: customer.address as string | null,
-      joinDate: customer.joinDate as string | Date | null,
+      joinDate: (customer.serviceStartDate || customer.joinDate) as string | Date | null,
       disposalUnitInstalled: isAggregate
         ? Number(aggregate?.disposalUnitInstalled) || 0
         : Number(customer.disposalUnitInstalled) || 0,
@@ -248,7 +209,7 @@ export async function generateImpactReportExcel(
     byMonth.set(key, cur)
   }
 
-  // Ensure continuous months from service start / join / first collection to as-of
+  // All months from service start through report as-of date
   const end = asOfDate ?? new Date()
   const serviceStart = (customer.serviceStartDate || customer.joinDate) as string | Date | null
   let start = serviceStart ? new Date(serviceStart) : end
@@ -263,8 +224,7 @@ export async function generateImpactReportExcel(
     monthKeys.push(monthKey(cursor))
     cursor.setMonth(cursor.getMonth() + 1)
   }
-  // Cap to last 120 months (installation → now) for long tenures
-  const limitedKeys = monthKeys.length > 120 ? monthKeys.slice(-120) : monthKeys
+  const limitedKeys = monthKeys
 
   const workbook = new ExcelJS.Workbook()
   workbook.creator = "BuffIndia"
@@ -317,7 +277,7 @@ export async function generateImpactReportExcel(
   const summaryStart = 11
   sheet.mergeCells(`A${summaryStart}:D${summaryStart}`)
   styleHeader(sheet.getCell(`A${summaryStart}`), "FFBDD7EE")
-  sheet.getCell(`A${summaryStart}`).value = "2. IMPACT SUMMARY (CUMULATIVE)"
+  sheet.getCell(`A${summaryStart}`).value = "2. IMPACT SUMMARY (CUMULATIVE FROM SERVICE START)"
   sheet.getRow(summaryStart).height = 22
 
   const summaryHeader = summaryStart + 1
@@ -356,7 +316,7 @@ export async function generateImpactReportExcel(
   const monthStart = summaryHeader + summaryRows.length + 2
   sheet.mergeCells(`A${monthStart}:I${monthStart}`)
   styleHeader(sheet.getCell(`A${monthStart}`), "FFFFF2CC")
-  sheet.getCell(`A${monthStart}`).value = "3. MONTH-WISE IMPACT DETAILS"
+  sheet.getCell(`A${monthStart}`).value = "3. MONTH-WISE IMPACT DETAILS (FROM SERVICE START)"
   sheet.getRow(monthStart).height = 22
 
   const monthHeaderRow = monthStart + 1
@@ -464,7 +424,8 @@ export async function generateImpactReportExcel(
   const notes = [
     "1 kg of cigarette waste is estimated to be equal to 3,000 cigarette butts.",
     "A single cigarette butt can contaminate up to 100 litres of water.",
-    "Figures are cumulative for the reporting period.",
+    "Figures in Impact Summary are cumulative from service start through the reporting period.",
+    "Month-wise table lists every month from service start (including zero-collection months).",
   ]
   notes.forEach((n, i) => {
     sheet.getCell(`A${notesRow + 1 + i}`).value = `- ${n}`

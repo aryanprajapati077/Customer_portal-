@@ -3,6 +3,7 @@ import { sql } from "@/lib/db"
 import { computeImpactReportData } from "@/lib/esg-metrics"
 import { ImpactReportPdfDocument } from "@/lib/impact-report-pdf"
 import { resolveLogoForPdf } from "@/lib/resolve-logo"
+import { fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
 import React from "react"
 import { renderToBuffer } from "@react-pdf/renderer"
 
@@ -26,63 +27,6 @@ export type ImpactReportOptions = {
   scopeCustomerIds?: string[]
 }
 
-async function fetchCollections(
-  customerIds: string[],
-  startIso?: string,
-  endIso?: string,
-) {
-  if (customerIds.length === 1) {
-    const customerId = customerIds[0]!
-    return startIso && endIso
-      ? sql`
-          SELECT weight, date
-          FROM "Collection"
-          WHERE "customerId" = ${customerId}
-            AND date >= ${startIso}
-            AND date <= ${endIso}
-          ORDER BY date DESC
-        `
-      : endIso
-        ? sql`
-            SELECT weight, date
-            FROM "Collection"
-            WHERE "customerId" = ${customerId}
-              AND date <= ${endIso}
-            ORDER BY date DESC
-          `
-        : sql`
-            SELECT weight, date
-            FROM "Collection"
-            WHERE "customerId" = ${customerId}
-            ORDER BY date DESC
-          `
-  }
-
-  return startIso && endIso
-    ? sql`
-        SELECT weight, date
-        FROM "Collection"
-        WHERE "customerId" = ANY(${customerIds}::text[])
-          AND date >= ${startIso}
-          AND date <= ${endIso}
-        ORDER BY date DESC
-      `
-    : endIso
-      ? sql`
-          SELECT weight, date
-          FROM "Collection"
-          WHERE "customerId" = ANY(${customerIds}::text[])
-            AND date <= ${endIso}
-          ORDER BY date DESC
-        `
-      : sql`
-          SELECT weight, date
-          FROM "Collection"
-          WHERE "customerId" = ANY(${customerIds}::text[])
-          ORDER BY date DESC
-        `
-}
-
 export async function generateImpactReportPdf(
   customerId: string,
   options?: ImpactReportOptions,
@@ -100,12 +44,11 @@ export async function generateImpactReportPdf(
     endDate: options?.endDate,
   })
 
-  const startIso = window.startDate?.toISOString()
   const endIso = window.endDate?.toISOString()
 
-  const [customerRows, aggregateRows, collectionRows] = await Promise.all([
+  const [customerRows, aggregateRows] = await Promise.all([
     sql`
-      SELECT id, "companyName", address, "joinDate", "disposalUnitInstalled",
+      SELECT id, "companyName", address, "joinDate", "serviceStartDate", "disposalUnitInstalled",
              "totalWasteCollected", "kraftrebornCredits", "contactPerson", email, "logoUrl"
       FROM "Customer"
       WHERE id = ${customerId}
@@ -121,13 +64,22 @@ export async function generateImpactReportPdf(
           WHERE id = ANY(${scopeIds}::text[])
         `
       : Promise.resolve([]),
-    fetchCollections(scopeIds, startIso, endIso),
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
   if (!customer) {
     throw new Error("Customer not found")
   }
+
+  const cumulativeStart = serviceStartIso(
+    customer.serviceStartDate as string | Date | null,
+    customer.joinDate as string | Date | null,
+  )
+
+  const collectionRows = await fetchReportCollections(scopeIds, {
+    startIso: cumulativeStart,
+    endIso,
+  })
 
   const aggregate = aggregateRows[0] as
     | {
@@ -142,7 +94,7 @@ export async function generateImpactReportPdf(
       id: String(customer.id),
       companyName: String(customer.companyName),
       address: customer.address as string | null,
-      joinDate: customer.joinDate as string | Date | null,
+      joinDate: (customer.serviceStartDate || customer.joinDate) as string | Date | null,
       disposalUnitInstalled: isAggregate
         ? Number(aggregate?.disposalUnitInstalled) || 0
         : Number(customer.disposalUnitInstalled) || 0,

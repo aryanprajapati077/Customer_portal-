@@ -3,6 +3,7 @@ import { sql } from "@/lib/db"
 import { hashPassword } from "@/lib/password"
 import { generatePortalPassword, sendWelcomeEmail } from "@/lib/welcome-email"
 import { queueEmail } from "@/lib/email-queue"
+import { isEmailEnabled } from "@/lib/email-settings"
 
 async function ensureWelcomeColumn() {
   await sql.query(`
@@ -142,6 +143,13 @@ export async function POST(request: NextRequest) {
           ? "No pending clients — welcome email already sent (or no matching customers)."
           : "No customers found.",
       })
+    }
+
+    if (!(await isEmailEnabled("welcome_email"))) {
+      return NextResponse.json(
+        { success: false, error: "Welcome emails are turned off in Email On/Off settings." },
+        { status: 403 },
+      )
     }
 
     let queued = 0

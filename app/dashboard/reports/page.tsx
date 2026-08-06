@@ -27,7 +27,7 @@ const PERIOD_OPTIONS: { value: ReportRangeKey; label: string }[] = [
 ]
 
 export default function ReportsPage() {
-  const { customer, authLoading, dataLoading, reports, certificates } = usePortalData()
+  const { customer, authLoading, dataLoading, reports, certificates, selectedLocationId } = usePortalData()
   const [period, setPeriod] = useState<ReportRangeKey>("this-year")
 
   return (
@@ -39,7 +39,7 @@ export default function ReportsPage() {
           subtitle="Download ESG impact reports and sustainability certificates."
           actions={
             <div className="flex flex-wrap gap-2">
-              <DownloadImpactReport customerId={customer?.id} defaultRange="this-year">
+              <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId} defaultRange="this-year">
                 <OutlineButton>
                   <Download className="w-4 h-4" />
                   Download Impact Report
@@ -80,6 +80,7 @@ export default function ReportsPage() {
             <DownloadImpactReport
               key={period}
               customerId={customer?.id}
+              locationId={selectedLocationId}
               defaultRange={period}
             >
               <button
@@ -144,7 +145,7 @@ export default function ReportsPage() {
                             Download
                           </button>
                         ) : (
-                          <DownloadImpactReport customerId={customer?.id}>
+                          <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
                             <button
                               type="button"
                               className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-[#2E7D32] text-[#2E7D32] text-[13px] font-semibold hover:bg-[#E8F5E9]"
@@ -185,6 +186,7 @@ export default function ReportsPage() {
                         <CertificateDownloadButton
                           customerId={customer?.id}
                           certificateId={c.id}
+                          certificateType={c.type}
                           driveFileUrl={c.driveFileUrl}
                         />
                       </div>

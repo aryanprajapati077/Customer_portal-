@@ -88,7 +88,7 @@ export default function AdminCertificatesPage() {
     setResult(null)
     try {
       const res = await fetch(
-        `/api/customer/certificate-pdf?customerId=${encodeURIComponent(customerId)}&type=services`,
+        `/api/admin/certificates/pdf?customerId=${encodeURIComponent(customerId)}&type=services`,
       )
       if (!res.ok) {
         const errBody = await res.json().catch(() => null)
@@ -131,7 +131,7 @@ export default function AdminCertificatesPage() {
     setBusy("email")
     setResult(null)
     try {
-      const res = await fetch("/api/customer/certificate-pdf", {
+      const res = await fetch("/api/admin/certificates/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "email", customerId, type: "services" }),
@@ -334,7 +334,7 @@ export default function AdminCertificatesPage() {
                         setBusy("email")
                         setResult(null)
                         try {
-                          const res = await fetch("/api/customer/certificate-pdf", {
+                          const res = await fetch("/api/admin/certificates/pdf", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({

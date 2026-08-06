@@ -4,66 +4,64 @@ import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-ce
 import { sendCertificateEmail } from "@/lib/certificate-email"
 import { queueEmail } from "@/lib/email-queue"
 import { sql } from "@/lib/db"
-import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 import { prisma } from "@/lib/prisma"
+import { requireAdminSession } from "@/lib/admin-auth-server"
+import { hasAdminPermission } from "@/lib/admin-permissions"
 
-async function resolveKraftRebornCertificate(
-  customerId: string,
-  certificateId?: string,
-  orderId?: string,
-  amount?: number,
-  productCount?: number,
-) {
-  if (certificateId) {
-    const cert = await prisma.certificate.findFirst({
-      where: { id: certificateId, customerId },
-    })
-    if (!cert || cert.type !== "KraftReborn") {
-      throw new Error("KraftReborn certificate not found")
-    }
-    const order = await prisma.shopOrder.findFirst({
-      where: { orderNumber: cert.certificateNumber, customerId },
-      include: { items: true },
-    })
-    if (!order) throw new Error("Order not found for certificate")
-    return {
-      orderId: order.orderNumber,
-      orderAmountRupees: order.subtotal,
-      productCount: order.items.reduce((s, i) => s + i.quantity, 0),
-    }
+async function requireCertificatesAdmin(request: NextRequest) {
+  const session = await requireAdminSession(request)
+  if (!session) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }) }
   }
-  if (!orderId || !amount || amount <= 0) {
-    throw new Error("orderId and amount required")
+  if (!hasAdminPermission(session.role, session.permissions, "certificates")) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }) }
   }
+  return { ok: true as const, session }
+}
+
+async function resolveKraftRebornFromCertificate(certificateId: string) {
+  const cert = await prisma.certificate.findUnique({ where: { id: certificateId } })
+  if (!cert || cert.type !== "KraftReborn") {
+    throw new Error("KraftReborn certificate not found")
+  }
+  const orderNumber = cert.certificateNumber
+  const order = await prisma.shopOrder.findFirst({
+    where: { orderNumber },
+    include: { items: true },
+  })
+  if (!order) throw new Error("Order not found for certificate")
+  const productCount = order.items.reduce((s, i) => s + i.quantity, 0)
   return {
-    orderId,
-    orderAmountRupees: amount,
-    productCount: productCount ?? 1,
+    orderId: order.orderNumber,
+    orderAmountRupees: order.subtotal,
+    productCount,
+    customerId: cert.customerId,
   }
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireCertificatesAdmin(request)
+  if (!auth.ok) return auth.response
+
   try {
-    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
-    if (!auth.ok) return auth.response
-    const customerId = auth.customerId
+    const customerId = request.nextUrl.searchParams.get("customerId")?.trim()
     const type = request.nextUrl.searchParams.get("type") || "services"
     const certificateId = request.nextUrl.searchParams.get("certificateId") || undefined
-    const orderId = request.nextUrl.searchParams.get("orderId") || undefined
-    const amount = Number(request.nextUrl.searchParams.get("amount") || 0)
-    const contactName = request.nextUrl.searchParams.get("contactName") || "Partner"
-    const productCount = Number(request.nextUrl.searchParams.get("productCount") || 1)
+
+    if (!customerId) {
+      return NextResponse.json({ success: false, error: "customerId required" }, { status: 400 })
+    }
 
     if (type === "kraftreborn") {
-      const kr = await resolveKraftRebornCertificate(
-        customerId,
-        certificateId,
-        orderId,
-        amount,
-        productCount,
-      )
+      if (!certificateId) {
+        return NextResponse.json({ success: false, error: "certificateId required" }, { status: 400 })
+      }
+      const kr = await resolveKraftRebornFromCertificate(certificateId)
+      if (kr.customerId !== customerId) {
+        return NextResponse.json({ success: false, error: "Certificate does not belong to customer" }, { status: 403 })
+      }
       const { pdfBuffer, filename } = await generateKraftRebornCertificatePdf({
-        contactName,
+        contactName: "Partner",
         orderId: kr.orderId,
         orderAmountRupees: kr.orderAmountRupees,
         productCount: kr.productCount,
@@ -84,30 +82,28 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Certificate PDF error:", error)
+    console.error("Admin certificate PDF error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to generate certificate",
-      },
+      { success: false, error: error instanceof Error ? error.message : "Failed to generate certificate" },
       { status: 500 },
     )
   }
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireCertificatesAdmin(request)
+  if (!auth.ok) return auth.response
+
   try {
-    const session = await requireCustomerSession()
-    if (!session.ok) return session.response
-
     const body = await request.json()
-    const denied = assertCustomerAccess(session.customerId, body?.customerId)
-    if (denied) return denied
-
-    const action = String(body?.action || "download")
-    const customerId = session.customerId
+    const action = String(body?.action || "email")
+    const customerId = String(body?.customerId || "").trim()
     const certificateId = body?.certificateId ? String(body.certificateId) : undefined
     const type = String(body?.type || "services")
+
+    if (!customerId) {
+      return NextResponse.json({ success: false, error: "customerId required" }, { status: 400 })
+    }
 
     if (type !== "services") {
       return NextResponse.json(
@@ -119,8 +115,7 @@ export async function POST(request: NextRequest) {
     const generated = await generateServiceCertificatePdf(customerId, certificateId)
 
     if (action === "email" || action === "send") {
-      const toEmail =
-        String(body?.to || "").trim() || generated.customer.email
+      const toEmail = String(body?.to || "").trim() || generated.customer.email
       if (!toEmail) {
         return NextResponse.json({ success: false, error: "No email on customer" }, { status: 400 })
       }
@@ -128,7 +123,6 @@ export async function POST(request: NextRequest) {
       const notifId = `notif_cert_${customerId}_${Date.now()}`
       const certLabel = `${generated.certificate.name} (${generated.certificate.certificateNumber})`
 
-      // Respond immediately — Resend delivery runs in background
       queueEmail("certificate", async () => {
         const mail = await sendCertificateEmail({
           to: toEmail,
@@ -170,7 +164,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Certificate POST error:", error)
+    console.error("Admin certificate POST error:", error)
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Failed" },
       { status: 500 },

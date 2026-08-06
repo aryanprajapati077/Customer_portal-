@@ -241,6 +241,7 @@ model OrderItem {
   price       Float
   quantity    Int
   allowsLogo  Boolean   @default(false)
+  selectedColor String?
 
   @@index([orderId])
 }

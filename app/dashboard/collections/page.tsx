@@ -48,7 +48,7 @@ function frequencyDescription(freq?: string | null) {
 }
 
 export default function CollectionsPage() {
-  const { customer, authLoading, dataLoading, collections, metrics, handleRefresh, isRefreshing, isGroupView } =
+  const { customer, authLoading, dataLoading, collections, metrics, handleRefresh, isRefreshing, isGroupView, selectedLocationId } =
     usePortalData()
   const [sortAsc, setSortAsc] = useState(false)
   const [period, setPeriod] = useState<Period>("this-year")
@@ -150,7 +150,7 @@ export default function CollectionsPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DownloadImpactReport customerId={customer?.id}>
+              <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
                 <OutlineButton>
                   <Download className="w-4 h-4" />
                   Download Collection Report
@@ -285,7 +285,7 @@ export default function CollectionsPage() {
                         {formatKg(Number(c.weight) || 0)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <DownloadImpactReport customerId={customer?.id}>
+                        <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
                           <button type="button" className="portal-btn-outline-green">
                             <Download className="w-4 h-4" />
                             Download Report

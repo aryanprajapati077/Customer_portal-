@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { hashPassword } from "@/lib/password"
-import { formatCustomerId, parseCustomerIdNumber } from "@/lib/india-locations"
+import { formatGroupCustomerId, parseGroupCustomerIdNumber } from "@/lib/india-locations"
 import { ensureGroupColumns, getGroupLocations } from "@/lib/group-customer-access"
 import { generatePortalPassword } from "@/lib/welcome-email"
 import { queueEmail } from "@/lib/email-queue"
@@ -30,14 +30,14 @@ async function sendGroupWelcomeEmail(options: {
   })
 }
 
-async function nextCustomerId(): Promise<string> {
-  const rows = await sql`SELECT id FROM "Customer" WHERE id ~ '^BI[0-9]+$'`
+async function nextGroupCustomerId(): Promise<string> {
+  const rows = await sql`SELECT id FROM "Customer" WHERE id ~ '^BIG[0-9]+$'`
   let max = 0
   for (const row of rows as { id: string }[]) {
-    const n = parseCustomerIdNumber(row.id)
+    const n = parseGroupCustomerIdNumber(row.id)
     if (n != null && n > max) max = n
   }
-  return formatCustomerId(max + 1)
+  return formatGroupCustomerId(max + 1)
 }
 
 export async function GET() {
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Email already in use" }, { status: 409 })
     }
 
-    const id = await nextCustomerId()
+    const id = await nextGroupCustomerId()
     const hashed = await hashPassword(password)
 
     await sql`

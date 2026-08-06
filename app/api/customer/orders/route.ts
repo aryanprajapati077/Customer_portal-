@@ -5,6 +5,7 @@ import { creditsToRupees } from "@/lib/kraftreborn"
 import { formatOrderNumber } from "@/lib/shop-constants"
 import { saveBase64Image } from "@/lib/upload"
 import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
+import { ensureOrderItemColorColumn } from "@/lib/shop-order-schema"
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
       price: number
       quantity: number
       allowsLogo: boolean
+      selectedColor: string | null
     }
 
     const resolvedItems: ResolvedItem[] = items.map(
@@ -90,16 +92,19 @@ export async function POST(request: NextRequest) {
         price?: number
         quantity?: number
         allowsLogo?: boolean
+        color?: string
       }) => {
         const qty = Math.max(1, Math.min(99, Number(i.quantity) || 1))
         const pid = String(i.productId || "").trim()
         const db = pid ? byId.get(pid) : undefined
+        const color = i.color ? String(i.color).trim().slice(0, 40) : null
         return {
           productId: db ? db.id : null,
           productName: db?.name || String(i.name || "Product").slice(0, 120),
           price: db ? Number(db.price) : Math.max(0, Number(i.price) || 0),
           quantity: qty,
           allowsLogo: db ? Boolean(db.allowsLogo) : Boolean(i.allowsLogo),
+          selectedColor: color || null,
         }
       },
     )
@@ -136,6 +141,8 @@ export async function POST(request: NextRequest) {
         )
       }
     }
+
+    await ensureOrderItemColorColumn()
 
     let logoUrl: string | null = null
     let order

@@ -28,6 +28,8 @@ type ReportFormat = "pdf" | "excel"
 
 interface DownloadImpactReportProps {
   customerId?: string
+  /** Group location filter — aggregates linked locations when omitted. */
+  locationId?: string | null
   /** YYYY-MM when range is month */
   period?: string
   defaultRange?: ReportRange
@@ -60,6 +62,7 @@ function resolvePeriod(range: ReportRange, period?: string): string | undefined 
 
 export function DownloadImpactReport({
   customerId,
+  locationId,
   period,
   defaultRange = "installation",
   children,
@@ -93,6 +96,7 @@ export function DownloadImpactReport({
       const resolved = resolvePeriod(range, period)
       const payload = {
         customerId,
+        locationId: locationId || undefined,
         period: resolved,
         range,
         startDate: range === "custom" ? startDate : undefined,

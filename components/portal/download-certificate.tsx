@@ -19,6 +19,7 @@ type CertType = "services" | "kraftreborn"
 interface DownloadCertificateProps {
   customerId?: string
   certificateId?: string
+  certificateType?: string
   defaultType?: CertType
   children: React.ReactNode
 }
@@ -37,11 +38,16 @@ async function triggerDownload(blob: Blob, filename: string) {
 export function DownloadCertificate({
   customerId,
   certificateId,
+  certificateType,
   defaultType = "services",
   children,
 }: DownloadCertificateProps) {
+  const initialType: CertType =
+    certificateType === "KraftReborn" || certificateType === "kraftreborn"
+      ? "kraftreborn"
+      : defaultType
   const [open, setOpen] = useState(false)
-  const [type, setType] = useState<CertType>(defaultType)
+  const [type, setType] = useState<CertType>(initialType)
   const [busy, setBusy] = useState<"download" | "email" | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -215,11 +221,13 @@ export function DownloadCertificate({
 export function CertificateDownloadButton({
   customerId,
   certificateId,
+  certificateType,
   driveFileUrl,
   className,
 }: {
   customerId?: string
   certificateId?: string
+  certificateType?: string
   driveFileUrl?: string | null
   className?: string
 }) {
@@ -240,7 +248,12 @@ export function CertificateDownloadButton({
   }
 
   return (
-    <DownloadCertificate customerId={customerId} certificateId={certificateId} defaultType="services">
+    <DownloadCertificate
+      customerId={customerId}
+      certificateId={certificateId}
+      certificateType={certificateType}
+      defaultType={certificateType === "KraftReborn" ? "kraftreborn" : "services"}
+    >
       <button
         type="button"
         className={cn(

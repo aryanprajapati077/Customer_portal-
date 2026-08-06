@@ -21,10 +21,15 @@ export async function generateServiceCertificatePdf(customerId: string, certific
   const cert = certRows[0] as Record<string, unknown> | undefined
   if (!cert) throw new Error("Certificate not found after sync")
 
+  const ownerCustomerId = String(cert.customerId || customerId)
+  if (certificateId && ownerCustomerId !== customerId) {
+    throw new Error("Certificate does not belong to customer")
+  }
+
   const customerRows = await sql`
     SELECT id, email, "companyName", "contactPerson", address, "logoUrl", "tradeName", city, state,
            COALESCE(phone, "primaryPocNumber") AS phone
-    FROM "Customer" WHERE id = ${customerId} LIMIT 1
+    FROM "Customer" WHERE id = ${ownerCustomerId} LIMIT 1
   `
   const customer = customerRows[0] as {
     id: string

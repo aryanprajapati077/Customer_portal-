@@ -30,7 +30,7 @@ type TabId = (typeof TABS)[number]["id"]
 function ImpactContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { customer, authLoading, dataLoading, isRefreshing, collections, metrics, handleRefresh } =
+  const { customer, authLoading, dataLoading, isRefreshing, collections, metrics, handleRefresh, selectedLocationId } =
     usePortalData()
 
   const tab = useMemo<TabId>(() => {
@@ -59,7 +59,7 @@ function ImpactContent() {
                   <Calendar className="w-4 h-4" />
                   This Year
                 </OutlineButton>
-                <DownloadImpactReport customerId={customer?.id}>
+                <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
                   <OutlineButton>
                     <Download className="w-4 h-4" />
                     Download Impact Report

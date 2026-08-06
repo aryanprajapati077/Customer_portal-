@@ -2,8 +2,10 @@ import React from "react"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { prisma } from "@/lib/prisma"
 import { OrderSheetPdf, type OrderSheetData } from "@/lib/order-sheet-pdf"
+import { ensureOrderItemColorColumn } from "@/lib/shop-order-schema"
 
 export async function generateOrderSheetPdf(orderId: string) {
+  await ensureOrderItemColorColumn()
   const order = await prisma.shopOrder.findUnique({
     where: { id: orderId },
     include: {
@@ -33,6 +35,7 @@ export async function generateOrderSheetPdf(orderId: string) {
       quantity: i.quantity,
       price: i.price,
       allowsLogo: i.allowsLogo,
+      selectedColor: (i as { selectedColor?: string | null }).selectedColor || null,
     })),
   }
 

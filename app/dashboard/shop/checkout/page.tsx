@@ -96,6 +96,7 @@ export default function CheckoutPage() {
             price: l.product.price,
             quantity: l.quantity,
             allowsLogo: l.product.allowsLogo,
+            color: l.color || null,
           })),
         }),
       })

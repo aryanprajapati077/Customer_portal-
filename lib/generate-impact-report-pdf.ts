@@ -22,31 +22,18 @@ export type ImpactReportOptions = {
   startDate?: string
   endDate?: string
   logoUrl?: string | null
+  /** Aggregate collections across linked locations (group portal). */
+  scopeCustomerIds?: string[]
 }
 
-export async function generateImpactReportPdf(
-  customerId: string,
-  options?: ImpactReportOptions,
+async function fetchCollections(
+  customerIds: string[],
+  startIso?: string,
+  endIso?: string,
 ) {
-  const window = resolveReportDateWindow({
-    range: options?.range,
-    period: options?.period,
-    startDate: options?.startDate,
-    endDate: options?.endDate,
-  })
-
-  const startIso = window.startDate?.toISOString()
-  const endIso = window.endDate?.toISOString()
-
-  const [customerRows, collectionRows] = await Promise.all([
-    sql`
-      SELECT id, "companyName", address, "joinDate", "disposalUnitInstalled",
-             "totalWasteCollected", "kraftrebornCredits", "contactPerson", email, "logoUrl"
-      FROM "Customer"
-      WHERE id = ${customerId}
-      LIMIT 1
-    `,
-    startIso && endIso
+  if (customerIds.length === 1) {
+    const customerId = customerIds[0]!
+    return startIso && endIso
       ? sql`
           SELECT weight, date
           FROM "Collection"
@@ -68,7 +55,73 @@ export async function generateImpactReportPdf(
             FROM "Collection"
             WHERE "customerId" = ${customerId}
             ORDER BY date DESC
-          `,
+          `
+  }
+
+  return startIso && endIso
+    ? sql`
+        SELECT weight, date
+        FROM "Collection"
+        WHERE "customerId" = ANY(${customerIds}::text[])
+          AND date >= ${startIso}
+          AND date <= ${endIso}
+        ORDER BY date DESC
+      `
+    : endIso
+      ? sql`
+          SELECT weight, date
+          FROM "Collection"
+          WHERE "customerId" = ANY(${customerIds}::text[])
+            AND date <= ${endIso}
+          ORDER BY date DESC
+        `
+      : sql`
+          SELECT weight, date
+          FROM "Collection"
+          WHERE "customerId" = ANY(${customerIds}::text[])
+          ORDER BY date DESC
+        `
+}
+
+export async function generateImpactReportPdf(
+  customerId: string,
+  options?: ImpactReportOptions,
+) {
+  const scopeIds =
+    options?.scopeCustomerIds && options.scopeCustomerIds.length > 0
+      ? options.scopeCustomerIds
+      : [customerId]
+  const isAggregate = scopeIds.length > 1
+
+  const window = resolveReportDateWindow({
+    range: options?.range,
+    period: options?.period,
+    startDate: options?.startDate,
+    endDate: options?.endDate,
+  })
+
+  const startIso = window.startDate?.toISOString()
+  const endIso = window.endDate?.toISOString()
+
+  const [customerRows, aggregateRows, collectionRows] = await Promise.all([
+    sql`
+      SELECT id, "companyName", address, "joinDate", "disposalUnitInstalled",
+             "totalWasteCollected", "kraftrebornCredits", "contactPerson", email, "logoUrl"
+      FROM "Customer"
+      WHERE id = ${customerId}
+      LIMIT 1
+    `,
+    isAggregate
+      ? sql`
+          SELECT
+            COALESCE(SUM("disposalUnitInstalled"), 0)::float AS "disposalUnitInstalled",
+            COALESCE(SUM("totalWasteCollected"), 0)::float AS "totalWasteCollected",
+            COALESCE(SUM("kraftrebornCredits"), 0)::float AS "kraftrebornCredits"
+          FROM "Customer"
+          WHERE id = ANY(${scopeIds}::text[])
+        `
+      : Promise.resolve([]),
+    fetchCollections(scopeIds, startIso, endIso),
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
@@ -76,15 +129,29 @@ export async function generateImpactReportPdf(
     throw new Error("Customer not found")
   }
 
+  const aggregate = aggregateRows[0] as
+    | {
+        disposalUnitInstalled?: number
+        totalWasteCollected?: number
+        kraftrebornCredits?: number
+      }
+    | undefined
+
   const reportData = computeImpactReportData(
     {
       id: String(customer.id),
       companyName: String(customer.companyName),
       address: customer.address as string | null,
       joinDate: customer.joinDate as string | Date | null,
-      disposalUnitInstalled: Number(customer.disposalUnitInstalled) || 0,
-      totalWasteCollected: Number(customer.totalWasteCollected) || 0,
-      kraftrebornCredits: Number(customer.kraftrebornCredits) || 0,
+      disposalUnitInstalled: isAggregate
+        ? Number(aggregate?.disposalUnitInstalled) || 0
+        : Number(customer.disposalUnitInstalled) || 0,
+      totalWasteCollected: isAggregate
+        ? Number(aggregate?.totalWasteCollected) || 0
+        : Number(customer.totalWasteCollected) || 0,
+      kraftrebornCredits: isAggregate
+        ? Number(aggregate?.kraftrebornCredits) || 0
+        : Number(customer.kraftrebornCredits) || 0,
     },
     collectionRows as { weight?: number | string | null }[],
     window.endDate,

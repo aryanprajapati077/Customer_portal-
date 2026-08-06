@@ -33,6 +33,7 @@ export type AdminUserMinAggregateOutputType = {
   totpSecret: string | null
   totpEnabled: boolean | null
   active: boolean | null
+  permissions: string | null
   createdById: string | null
   lastLoginAt: Date | null
   createdAt: Date | null
@@ -48,6 +49,7 @@ export type AdminUserMaxAggregateOutputType = {
   totpSecret: string | null
   totpEnabled: boolean | null
   active: boolean | null
+  permissions: string | null
   createdById: string | null
   lastLoginAt: Date | null
   createdAt: Date | null
@@ -63,6 +65,7 @@ export type AdminUserCountAggregateOutputType = {
   totpSecret: number
   totpEnabled: number
   active: number
+  permissions: number
   createdById: number
   lastLoginAt: number
   createdAt: number
@@ -80,6 +83,7 @@ export type AdminUserMinAggregateInputType = {
   totpSecret?: true
   totpEnabled?: true
   active?: true
+  permissions?: true
   createdById?: true
   lastLoginAt?: true
   createdAt?: true
@@ -95,6 +99,7 @@ export type AdminUserMaxAggregateInputType = {
   totpSecret?: true
   totpEnabled?: true
   active?: true
+  permissions?: true
   createdById?: true
   lastLoginAt?: true
   createdAt?: true
@@ -110,6 +115,7 @@ export type AdminUserCountAggregateInputType = {
   totpSecret?: true
   totpEnabled?: true
   active?: true
+  permissions?: true
   createdById?: true
   lastLoginAt?: true
   createdAt?: true
@@ -198,6 +204,7 @@ export type AdminUserGroupByOutputType = {
   totpSecret: string | null
   totpEnabled: boolean
   active: boolean
+  permissions: string | null
   createdById: string | null
   lastLoginAt: Date | null
   createdAt: Date
@@ -234,6 +241,7 @@ export type AdminUserWhereInput = {
   totpSecret?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   totpEnabled?: Prisma.BoolFilter<"AdminUser"> | boolean
   active?: Prisma.BoolFilter<"AdminUser"> | boolean
+  permissions?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   createdById?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
@@ -251,6 +259,7 @@ export type AdminUserOrderByWithRelationInput = {
   totpSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   totpEnabled?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  permissions?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -271,6 +280,7 @@ export type AdminUserWhereUniqueInput = Prisma.AtLeast<{
   totpSecret?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   totpEnabled?: Prisma.BoolFilter<"AdminUser"> | boolean
   active?: Prisma.BoolFilter<"AdminUser"> | boolean
+  permissions?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   createdById?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
@@ -288,6 +298,7 @@ export type AdminUserOrderByWithAggregationInput = {
   totpSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   totpEnabled?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  permissions?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -309,6 +320,7 @@ export type AdminUserScalarWhereWithAggregatesInput = {
   totpSecret?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
   totpEnabled?: Prisma.BoolWithAggregatesFilter<"AdminUser"> | boolean
   active?: Prisma.BoolWithAggregatesFilter<"AdminUser"> | boolean
+  permissions?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
   createdById?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AdminUser"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AdminUser"> | Date | string
@@ -324,6 +336,7 @@ export type AdminUserCreateInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -340,6 +353,7 @@ export type AdminUserUncheckedCreateInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   createdById?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -356,6 +370,7 @@ export type AdminUserUpdateInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -372,6 +387,7 @@ export type AdminUserUncheckedUpdateInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -388,6 +404,7 @@ export type AdminUserCreateManyInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   createdById?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -403,6 +420,7 @@ export type AdminUserUpdateManyMutationInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,6 +435,7 @@ export type AdminUserUncheckedUpdateManyInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -447,6 +466,7 @@ export type AdminUserCountOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   totpEnabled?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -462,6 +482,7 @@ export type AdminUserMaxOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   totpEnabled?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -477,6 +498,7 @@ export type AdminUserMinOrderByAggregateInput = {
   totpSecret?: Prisma.SortOrder
   totpEnabled?: Prisma.SortOrder
   active?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -550,6 +572,7 @@ export type AdminUserCreateWithoutCreatedUsersInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -565,6 +588,7 @@ export type AdminUserUncheckedCreateWithoutCreatedUsersInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   createdById?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -585,6 +609,7 @@ export type AdminUserCreateWithoutCreatedByInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -600,6 +625,7 @@ export type AdminUserUncheckedCreateWithoutCreatedByInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -636,6 +662,7 @@ export type AdminUserUpdateWithoutCreatedUsersInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -651,6 +678,7 @@ export type AdminUserUncheckedUpdateWithoutCreatedUsersInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -685,6 +713,7 @@ export type AdminUserScalarWhereInput = {
   totpSecret?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   totpEnabled?: Prisma.BoolFilter<"AdminUser"> | boolean
   active?: Prisma.BoolFilter<"AdminUser"> | boolean
+  permissions?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   createdById?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
@@ -700,6 +729,7 @@ export type AdminUserCreateManyCreatedByInput = {
   totpSecret?: string | null
   totpEnabled?: boolean
   active?: boolean
+  permissions?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -714,6 +744,7 @@ export type AdminUserUpdateWithoutCreatedByInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -729,6 +760,7 @@ export type AdminUserUncheckedUpdateWithoutCreatedByInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -744,6 +776,7 @@ export type AdminUserUncheckedUpdateManyWithoutCreatedByInput = {
   totpSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totpEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -789,6 +822,7 @@ export type AdminUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   totpSecret?: boolean
   totpEnabled?: boolean
   active?: boolean
+  permissions?: boolean
   createdById?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -807,6 +841,7 @@ export type AdminUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   totpSecret?: boolean
   totpEnabled?: boolean
   active?: boolean
+  permissions?: boolean
   createdById?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -823,6 +858,7 @@ export type AdminUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   totpSecret?: boolean
   totpEnabled?: boolean
   active?: boolean
+  permissions?: boolean
   createdById?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -839,13 +875,14 @@ export type AdminUserSelectScalar = {
   totpSecret?: boolean
   totpEnabled?: boolean
   active?: boolean
+  permissions?: boolean
   createdById?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AdminUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "passwordHash" | "role" | "totpSecret" | "totpEnabled" | "active" | "createdById" | "lastLoginAt" | "createdAt" | "updatedAt", ExtArgs["result"]["adminUser"]>
+export type AdminUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "passwordHash" | "role" | "totpSecret" | "totpEnabled" | "active" | "permissions" | "createdById" | "lastLoginAt" | "createdAt" | "updatedAt", ExtArgs["result"]["adminUser"]>
 export type AdminUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.AdminUser$createdByArgs<ExtArgs>
   createdUsers?: boolean | Prisma.AdminUser$createdUsersArgs<ExtArgs>
@@ -873,6 +910,7 @@ export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     totpSecret: string | null
     totpEnabled: boolean
     active: boolean
+    permissions: string | null
     createdById: string | null
     lastLoginAt: Date | null
     createdAt: Date
@@ -1310,6 +1348,7 @@ export interface AdminUserFieldRefs {
   readonly totpSecret: Prisma.FieldRef<"AdminUser", 'String'>
   readonly totpEnabled: Prisma.FieldRef<"AdminUser", 'Boolean'>
   readonly active: Prisma.FieldRef<"AdminUser", 'Boolean'>
+  readonly permissions: Prisma.FieldRef<"AdminUser", 'String'>
   readonly createdById: Prisma.FieldRef<"AdminUser", 'String'>
   readonly lastLoginAt: Prisma.FieldRef<"AdminUser", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"AdminUser", 'DateTime'>

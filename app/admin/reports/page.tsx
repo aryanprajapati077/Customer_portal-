@@ -313,7 +313,7 @@ export default function AdminReportsPage() {
     const key = `${r.id}-${format}`
     setDownloadingKey(key)
     try {
-      const url = `/api/admin/reports/download?customerId=${encodeURIComponent(r.customerId)}&period=${encodeURIComponent(period)}&format=${format}`
+      const url = `/api/admin/reports/download?reportId=${encodeURIComponent(r.id)}&format=${format}`
       const res = await fetch(url, { credentials: "include" })
       if (!res.ok) {
         const data = await res.json().catch(() => null)

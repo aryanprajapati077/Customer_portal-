@@ -1,23 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateImpactReportExcel } from "@/lib/generate-impact-report-excel"
-import { resolveCustomerId } from "@/lib/customer-api-auth"
+import { resolveCustomerScope } from "@/lib/customer-api-auth"
+
+function displayCustomerId(
+  sessionCustomerId: string,
+  scopeIds: string[],
+): string {
+  return scopeIds.length === 1 ? scopeIds[0]! : sessionCustomerId
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
+    const locationId = request.nextUrl.searchParams.get("locationId")
+    const auth = await resolveCustomerScope(
+      request.nextUrl.searchParams.get("customerId"),
+      locationId,
+    )
     if (!auth.ok) return auth.response
-    const customerId = auth.customerId
+
     const period = request.nextUrl.searchParams.get("period") || undefined
     const range = request.nextUrl.searchParams.get("range") || undefined
     const startDate = request.nextUrl.searchParams.get("startDate") || undefined
     const endDate = request.nextUrl.searchParams.get("endDate") || undefined
 
-    const { buffer, filename } = await generateImpactReportExcel(customerId, {
-      period,
-      range,
-      startDate,
-      endDate,
-    })
+    const { buffer, filename } = await generateImpactReportExcel(
+      displayCustomerId(auth.sessionCustomerId, auth.customerIds),
+      {
+        period,
+        range,
+        startDate,
+        endDate,
+        scopeCustomerIds: auth.customerIds,
+      },
+    )
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
@@ -36,22 +51,26 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       customerId?: string
+      locationId?: string
       period?: string
       range?: string
       startDate?: string
       endDate?: string
     }
 
-    const auth = await resolveCustomerId(body.customerId || null)
+    const auth = await resolveCustomerScope(body.customerId || null, body.locationId || null)
     if (!auth.ok) return auth.response
-    const customerId = auth.customerId
 
-    const { buffer, filename } = await generateImpactReportExcel(customerId, {
-      period: body.period,
-      range: body.range,
-      startDate: body.startDate,
-      endDate: body.endDate,
-    })
+    const { buffer, filename } = await generateImpactReportExcel(
+      displayCustomerId(auth.sessionCustomerId, auth.customerIds),
+      {
+        period: body.period,
+        range: body.range,
+        startDate: body.startDate,
+        endDate: body.endDate,
+        scopeCustomerIds: auth.customerIds,
+      },
+    )
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

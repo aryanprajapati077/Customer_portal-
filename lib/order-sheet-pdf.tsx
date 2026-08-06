@@ -44,7 +44,7 @@ export interface OrderSheetData {
   logoRequested: boolean
   logoUrl?: string | null
   notes?: string | null
-  items: { productName: string; quantity: number; price: number; allowsLogo: boolean }[]
+  items: { productName: string; quantity: number; price: number; allowsLogo: boolean; selectedColor?: string | null }[]
 }
 
 export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
@@ -70,7 +70,7 @@ export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Payment</Text>
-          <Text style={styles.value}>{data.useKrCredits ? "KR Credits (deduct on completion)" : "Other"}</Text>
+          <Text style={styles.value}>{data.useKrCredits ? "KR Credits (deducted on order)" : "Other"}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Ship To</Text>
@@ -106,6 +106,7 @@ export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
           <View key={i} style={styles.tableRow}>
             <Text style={styles.col1}>
               {item.productName}
+              {item.selectedColor ? ` · ${item.selectedColor}` : ""}
               {item.allowsLogo ? " (logo customisation)" : ""}
             </Text>
             <Text style={styles.col2}>{item.quantity}</Text>

@@ -1845,7 +1845,8 @@ export const OrderItemScalarFieldEnum = {
   productName: 'productName',
   price: 'price',
   quantity: 'quantity',
-  allowsLogo: 'allowsLogo'
+  allowsLogo: 'allowsLogo',
+  selectedColor: 'selectedColor'
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
@@ -1886,6 +1887,7 @@ export const AdminUserScalarFieldEnum = {
   totpSecret: 'totpSecret',
   totpEnabled: 'totpEnabled',
   active: 'active',
+  permissions: 'permissions',
   createdById: 'createdById',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',

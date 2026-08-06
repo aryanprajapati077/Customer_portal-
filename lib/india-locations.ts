@@ -219,3 +219,13 @@ export function parseCustomerIdNumber(id: string): number | null {
   const m = /^BI(\d+)$/i.exec(String(id).trim())
   return m ? Number(m[1]) : null
 }
+
+/** Group portal accounts use BIG## (separate from location BI## IDs). */
+export function formatGroupCustomerId(n: number): string {
+  return `BIG${String(n).padStart(2, "0")}`
+}
+
+export function parseGroupCustomerIdNumber(id: string): number | null {
+  const m = /^BIG(\d+)$/i.exec(String(id).trim())
+  return m ? Number(m[1]) : null
+}

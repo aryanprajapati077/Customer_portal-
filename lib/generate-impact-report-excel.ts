@@ -101,8 +101,20 @@ function thinBorder(cell: ExcelJS.Cell) {
 
 export async function generateImpactReportExcel(
   customerId: string,
-  options?: { period?: string; range?: string; startDate?: string; endDate?: string },
+  options?: {
+    period?: string
+    range?: string
+    startDate?: string
+    endDate?: string
+    scopeCustomerIds?: string[]
+  },
 ) {
+  const scopeIds =
+    options?.scopeCustomerIds && options.scopeCustomerIds.length > 0
+      ? options.scopeCustomerIds
+      : [customerId]
+  const isAggregate = scopeIds.length > 1
+
   const { resolveReportDateWindow } = await import("@/lib/report-date-range")
   const window = resolveReportDateWindow({
     range: options?.range,
@@ -114,7 +126,56 @@ export async function generateImpactReportExcel(
   const startIso = window.startDate?.toISOString()
   const endIso = window.endDate?.toISOString()
 
-  const [customerRows, collectionRows] = await Promise.all([
+  const collectionQuery =
+    scopeIds.length === 1
+      ? startIso && endIso
+        ? sql`
+            SELECT weight, date, status, notes
+            FROM "Collection"
+            WHERE "customerId" = ${scopeIds[0]}
+              AND date >= ${startIso}
+              AND date <= ${endIso}
+            ORDER BY date ASC
+          `
+        : endIso
+          ? sql`
+              SELECT weight, date, status, notes
+              FROM "Collection"
+              WHERE "customerId" = ${scopeIds[0]}
+                AND date <= ${endIso}
+              ORDER BY date ASC
+            `
+          : sql`
+              SELECT weight, date, status, notes
+              FROM "Collection"
+              WHERE "customerId" = ${scopeIds[0]}
+              ORDER BY date ASC
+            `
+      : startIso && endIso
+        ? sql`
+            SELECT weight, date, status, notes
+            FROM "Collection"
+            WHERE "customerId" = ANY(${scopeIds}::text[])
+              AND date >= ${startIso}
+              AND date <= ${endIso}
+            ORDER BY date ASC
+          `
+        : endIso
+          ? sql`
+              SELECT weight, date, status, notes
+              FROM "Collection"
+              WHERE "customerId" = ANY(${scopeIds}::text[])
+                AND date <= ${endIso}
+              ORDER BY date ASC
+            `
+          : sql`
+              SELECT weight, date, status, notes
+              FROM "Collection"
+              WHERE "customerId" = ANY(${scopeIds}::text[])
+              ORDER BY date ASC
+            `
+
+  const [customerRows, aggregateRows, collectionRows] = await Promise.all([
     sql`
       SELECT id, "companyName", address, "joinDate", "serviceStartDate", "disposalUnitInstalled",
              "totalWasteCollected", "kraftrebornCredits", "contactPerson", email
@@ -122,33 +183,29 @@ export async function generateImpactReportExcel(
       WHERE id = ${customerId}
       LIMIT 1
     `,
-    startIso && endIso
+    isAggregate
       ? sql`
-          SELECT weight, date, status, notes
-          FROM "Collection"
-          WHERE "customerId" = ${customerId}
-            AND date >= ${startIso}
-            AND date <= ${endIso}
-          ORDER BY date ASC
+          SELECT
+            COALESCE(SUM("disposalUnitInstalled"), 0)::float AS "disposalUnitInstalled",
+            COALESCE(SUM("totalWasteCollected"), 0)::float AS "totalWasteCollected",
+            COALESCE(SUM("kraftrebornCredits"), 0)::float AS "kraftrebornCredits"
+          FROM "Customer"
+          WHERE id = ANY(${scopeIds}::text[])
         `
-      : endIso
-        ? sql`
-            SELECT weight, date, status, notes
-            FROM "Collection"
-            WHERE "customerId" = ${customerId}
-              AND date <= ${endIso}
-            ORDER BY date ASC
-          `
-        : sql`
-            SELECT weight, date, status, notes
-            FROM "Collection"
-            WHERE "customerId" = ${customerId}
-            ORDER BY date ASC
-          `,
+      : Promise.resolve([]),
+    collectionQuery,
   ])
 
   const customer = customerRows[0] as Record<string, unknown> | undefined
   if (!customer) throw new Error("Customer not found")
+
+  const aggregate = aggregateRows[0] as
+    | {
+        disposalUnitInstalled?: number
+        totalWasteCollected?: number
+        kraftrebornCredits?: number
+      }
+    | undefined
 
   const collections = collectionRows as CollectionRow[]
   const reportData = computeImpactReportData(
@@ -157,9 +214,15 @@ export async function generateImpactReportExcel(
       companyName: String(customer.companyName),
       address: customer.address as string | null,
       joinDate: customer.joinDate as string | Date | null,
-      disposalUnitInstalled: Number(customer.disposalUnitInstalled) || 0,
-      totalWasteCollected: Number(customer.totalWasteCollected) || 0,
-      kraftrebornCredits: Number(customer.kraftrebornCredits) || 0,
+      disposalUnitInstalled: isAggregate
+        ? Number(aggregate?.disposalUnitInstalled) || 0
+        : Number(customer.disposalUnitInstalled) || 0,
+      totalWasteCollected: isAggregate
+        ? Number(aggregate?.totalWasteCollected) || 0
+        : Number(customer.totalWasteCollected) || 0,
+      kraftrebornCredits: isAggregate
+        ? Number(aggregate?.kraftrebornCredits) || 0
+        : Number(customer.kraftrebornCredits) || 0,
     },
     collections,
     asOfDate,

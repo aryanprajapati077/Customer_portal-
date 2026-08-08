@@ -405,15 +405,6 @@ function PageFooter({ dark = false }: { dark?: boolean }) {
         <Text style={styles.darkFooterText}>
           A cleaner today. <Text style={{ color: ORANGE, fontWeight: "bold" }}>A better tomorrow.</Text>
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Text style={[styles.darkFooterText, { fontSize: 6 }]}>Proudly supported by</Text>
-          <Link src="https://iimaventures.com">
-            <Image src={asset("iima.png")} style={{ width: 22, height: 16, objectFit: "contain" }} />
-          </Link>
-          <Link src="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html">
-            <Image src={asset("kotak.png")} style={{ width: 42, height: 14, objectFit: "contain" }} />
-          </Link>
-        </View>
       </View>
     )
   }
@@ -426,15 +417,6 @@ function PageFooter({ dark = false }: { dark?: boolean }) {
       <Text style={styles.footerText}>
         A cleaner today. <Text style={{ color: ORANGE, fontWeight: "bold" }}>A better tomorrow.</Text>
       </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-        <Text style={[styles.footerText, { fontSize: 6 }]}>Proudly supported by</Text>
-        <Link src="https://iimaventures.com">
-          <Image src={asset("iima.png")} style={{ width: 20, height: 14, objectFit: "contain" }} />
-        </Link>
-        <Link src="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html">
-          <Image src={asset("kotak.png")} style={{ width: 40, height: 12, objectFit: "contain" }} />
-        </Link>
-      </View>
     </View>
   )
 }
@@ -1733,15 +1715,6 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
               A cleaner today.{" "}
               <Text style={{ color: ORANGE, fontWeight: "bold" }}>A better tomorrow.</Text>
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-              <Text style={{ fontSize: 6, color: MUTED }}>Proudly supported by</Text>
-              <Link src="https://iimaventures.com">
-                <Image src={asset("iima.png")} style={{ width: 20, height: 14, objectFit: "contain" }} />
-              </Link>
-              <Link src="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html">
-                <Image src={asset("kotak.png")} style={{ width: 40, height: 12, objectFit: "contain" }} />
-              </Link>
-            </View>
           </View>
         </View>
       </Page>

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Sparkles, ShieldCheck, Upload, Wallet, CheckCircle2, AlertCircle, Building2, Stamp } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { OrderReceiptAnimation } from "@/components/dashboard/shop/order-receipt-animation"
 
 export default function CheckoutPage() {
   const { customer, refreshCustomerData } = useAuth()
@@ -27,6 +28,13 @@ export default function CheckoutPage() {
   const [logoFileName, setLogoFileName] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const [receiptData, setReceiptData] = useState<{
+    orderNumber: string
+    items: { name: string; quantity: number; price: number }[]
+    total: number
+  } | null>(null)
+  const pendingNavRef = useRef<string | null>(null)
 
   const hasLogoEligibleItems = lines.some((l) => l.product.allowsLogo)
   const credits = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
@@ -126,16 +134,33 @@ export default function CheckoutPage() {
       )
 
       orderPlacedRef.current = true
-      clearCart()
-      await refreshCustomerData()
-      router.replace(`/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`)
+      pendingNavRef.current = `/dashboard/shop?ordered=${encodeURIComponent(data.order.orderNumber)}`
+      setReceiptData({
+        orderNumber: data.order.orderNumber,
+        items: lines.map((l) => ({
+          name: l.product.name,
+          quantity: l.quantity,
+          price: l.product.price,
+        })),
+        total: data.order.subtotal,
+      })
+      setReceiptOpen(true)
+      setSubmitting(false)
     } catch {
       setError("Network error. Please try again.")
       setSubmitting(false)
     }
   }
 
-  if (lines.length === 0) {
+  const finishOrder = async () => {
+    clearCart()
+    await refreshCustomerData()
+    if (pendingNavRef.current) {
+      router.replace(pendingNavRef.current)
+    }
+  }
+
+  if (lines.length === 0 && !receiptOpen) {
     return (
       <ShopShell showBack backHref="/dashboard/shop" title="Checkout">
         <div className="flex justify-center py-16">
@@ -147,6 +172,18 @@ export default function CheckoutPage() {
 
   return (
     <ShopShell showBack backHref="/dashboard/shop/cart" title="Checkout">
+      <OrderReceiptAnimation
+        open={receiptOpen}
+        orderNumber={receiptData?.orderNumber ?? ""}
+        companyName={customer?.companyName || "Your company"}
+        items={receiptData?.items ?? []}
+        total={receiptData?.total ?? 0}
+        onComplete={() => {
+          setReceiptOpen(false)
+          void finishOrder()
+        }}
+      />
+
       <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
         <div className="space-y-6">
           <Card className="border-stone-200/60 bg-white/80 rounded-2xl shadow-sm">
@@ -412,11 +449,20 @@ export default function CheckoutPage() {
         </div>
 
         <div>
-          <Card className="border-stone-200/60 bg-white/90 rounded-2xl shadow-md sticky top-36">
-            <CardHeader>
-              <CardTitle className="text-lg font-serif">Order summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="sticky top-36 overflow-hidden rounded-[1.5rem] border border-[#DCE8DC] bg-gradient-to-br from-white via-[#FAFFFB] to-[#F4F9F5] shadow-[0_12px_40px_rgba(27,115,57,0.1)]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#C8F000]/15 blur-2xl"
+            />
+            <div className="relative border-b border-[#E8F0EA] px-6 py-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#1B7339]/75">
+                Your order
+              </p>
+              <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-[#141414]">
+                Order summary
+              </h2>
+            </div>
+            <div className="relative space-y-4 px-6 py-5">
               <div className="space-y-3 max-h-64 overflow-auto">
                 {lines.map((line) => (
                   <div key={line.productId} className="flex justify-between gap-2 text-sm">
@@ -449,9 +495,9 @@ export default function CheckoutPage() {
 
               <Button
                 size="lg"
-                className="w-full rounded-full h-12 bg-[#1B7339] hover:bg-[#145a2c]"
+                className="w-full rounded-full h-12 bg-[#1B7339] hover:bg-[#145a2c] shadow-[0_6px_24px_rgba(27,115,57,0.3)]"
                 onClick={handlePlaceOrder}
-                disabled={submitting || !useKrCredits || !canPayWithCredits}
+                disabled={submitting || !useKrCredits || !canPayWithCredits || receiptOpen}
               >
                 {submitting ? (
                   <>
@@ -465,8 +511,8 @@ export default function CheckoutPage() {
                   </>
                 )}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </ShopShell>

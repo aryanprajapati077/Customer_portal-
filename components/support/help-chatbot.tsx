@@ -11,6 +11,15 @@ import {
   SUPPORT_TOPICS,
   type SupportTopic,
 } from "@/lib/support-knowledge"
+import {
+  findLandingFaqAnswer,
+  LANDING_DEFAULT_REPLY,
+  LANDING_FAQ_TOPICS,
+  LANDING_QUICK_PROMPTS,
+  LANDING_WELCOME,
+  WHATSAPP_URL,
+  type LandingFaqTopic,
+} from "@/lib/landing-chatbot-knowledge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -30,17 +39,30 @@ function uid() {
   return Math.random().toString(36).slice(2, 11)
 }
 
-const WELCOME: ChatMessage = {
+const PORTAL_WELCOME: ChatMessage = {
   id: "welcome",
   role: "bot",
   text: "Hi — I'm the BuffIndia Help Guide. Ask about login, credits, orders, reports, or pick a topic below.",
 }
 
+function isLandingPath(pathname: string | null) {
+  if (!pathname) return false
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname.startsWith("/login")) {
+    return false
+  }
+  return true
+}
+
 export function HelpChatbot() {
   const pathname = usePathname()
+  const landingMode = isLandingPath(pathname)
   const { customer } = useAuth()
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME])
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    landingMode
+      ? { id: "welcome", role: "bot", text: LANDING_WELCOME }
+      : PORTAL_WELCOME,
+  ])
   const [input, setInput] = useState("")
   const [showTicketForm, setShowTicketForm] = useState(false)
   const [ticketSubject, setTicketSubject] = useState("")
@@ -51,6 +73,14 @@ export function HelpChatbot() {
   const [typing, setTyping] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setMessages([
+      landingMode
+        ? { id: "welcome", role: "bot", text: LANDING_WELCOME }
+        : PORTAL_WELCOME,
+    ])
+  }, [landingMode])
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -66,12 +96,26 @@ export function HelpChatbot() {
     if (open && !showTicketForm) inputRef.current?.focus()
   }, [open, showTicketForm])
 
-  const addBotReply = (topic: SupportTopic | null, userText: string) => {
+  const addBotReply = (topic: SupportTopic | LandingFaqTopic | null, userText: string) => {
     setTyping(false)
     if (topic) {
       setMessages((prev) => [
         ...prev,
-        { id: uid(), role: "bot", text: topic.answer, topic, links: topic.links },
+        { id: uid(), role: "bot", text: topic.answer, links: topic.links },
+      ])
+    } else if (landingMode) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "bot",
+          text: LANDING_DEFAULT_REPLY,
+          links: [
+            { label: "Chat on WhatsApp", href: WHATSAPP_URL },
+            { label: "Request a callback", href: "/contact" },
+            { label: "Impact calculator", href: "/#calculator" },
+          ],
+        },
       ])
     } else {
       setMessages((prev) => [
@@ -96,11 +140,11 @@ export function HelpChatbot() {
     setMessages((prev) => [...prev, { id: uid(), role: "user", text: trimmed }])
     setInput("")
     setTyping(true)
-    const topic = findSupportAnswer(trimmed)
+    const topic = landingMode ? findLandingFaqAnswer(trimmed) : findSupportAnswer(trimmed)
     setTimeout(() => addBotReply(topic, trimmed), 480)
   }
 
-  const handleTopicClick = (topic: SupportTopic) => {
+  const handleTopicClick = (topic: SupportTopic | LandingFaqTopic) => {
     if (typing) return
     setMessages((prev) => [...prev, { id: uid(), role: "user", text: topic.label }])
     setTyping(true)
@@ -108,7 +152,7 @@ export function HelpChatbot() {
       setTyping(false)
       setMessages((prev) => [
         ...prev,
-        { id: uid(), role: "bot", text: topic.answer, topic, links: topic.links },
+        { id: uid(), role: "bot", text: topic.answer, links: topic.links },
       ])
     }, 400)
   }
@@ -281,20 +325,22 @@ export function HelpChatbot() {
 
               {messages.length <= 2 && !showTicketForm && !typing && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {SUPPORT_TOPICS.slice(0, 6).map((topic) => (
-                    <button
-                      key={topic.id}
-                      type="button"
-                      onClick={() => handleTopicClick(topic)}
-                      className="rounded-full border border-[#DCE8DC] bg-white px-2.5 py-1.5 text-[11.5px] text-[#2A2A2A] transition-colors hover:border-[#1B7339]/40 hover:bg-[#E8F5E9]"
-                    >
-                      {topic.icon} {topic.label}
-                    </button>
-                  ))}
+                  {(landingMode ? LANDING_FAQ_TOPICS : SUPPORT_TOPICS)
+                    .slice(0, 6)
+                    .map((topic) => (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => handleTopicClick(topic)}
+                        className="rounded-full border border-[#DCE8DC] bg-white px-2.5 py-1.5 text-[11.5px] text-[#2A2A2A] transition-colors hover:border-[#1B7339]/40 hover:bg-[#E8F5E9]"
+                      >
+                        {topic.icon} {topic.label}
+                      </button>
+                    ))}
                 </div>
               )}
 
-              {showTicketForm && !ticketSent && (
+              {showTicketForm && !ticketSent && !landingMode && (
                 <form
                   onSubmit={handleSubmitTicket}
                   className="space-y-3 rounded-2xl border border-[#DCE8DC] bg-white p-3"
@@ -357,7 +403,7 @@ export function HelpChatbot() {
 
             {!showTicketForm && (
               <div className="flex gap-1 overflow-x-auto px-3 pb-2 scrollbar-none">
-                {QUICK_PROMPTS.slice(0, 4).map((prompt) => (
+                {(landingMode ? LANDING_QUICK_PROMPTS : QUICK_PROMPTS).slice(0, 4).map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
@@ -393,22 +439,28 @@ export function HelpChatbot() {
                 </div>
               )}
               <div className="flex items-center justify-between text-[11px] text-[#7A7A7A]">
-                <button
-                  type="button"
-                  className="hover:text-[#1B7339]"
-                  onClick={() => {
-                    setShowTicketForm(true)
-                    setTicketSent(false)
-                  }}
-                >
-                  Submit ticket
-                </button>
+                {!landingMode ? (
+                  <button
+                    type="button"
+                    className="hover:text-[#1B7339]"
+                    onClick={() => {
+                      setShowTicketForm(true)
+                      setTicketSent(false)
+                    }}
+                  >
+                    Submit ticket
+                  </button>
+                ) : (
+                  <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="hover:text-[#1B7339]">
+                    WhatsApp us
+                  </a>
+                )}
                 <Link
-                  href="/dashboard/support"
+                  href={landingMode ? "/contact" : "/dashboard/support"}
                   className="hover:text-[#1B7339]"
                   onClick={() => setOpen(false)}
                 >
-                  Support center →
+                  {landingMode ? "Contact →" : "Support center →"}
                 </Link>
               </div>
             </div>

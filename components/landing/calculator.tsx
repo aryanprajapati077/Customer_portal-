@@ -31,25 +31,19 @@ import {
 } from "@/components/ui/select"
 import {
   INDUSTRIES,
+  ORGANISATION_PRIORITIES,
   calculateImpact,
   formatCompactLitres,
   formatInr,
   type Industry,
-  type KioskType,
+  type OrganisationPriority,
 } from "@/lib/impact-calculator"
 
-const EMP_PRESETS = [
+const OCCUPANCY_PRESETS = [
   { label: "1 – 50", value: 40 },
   { label: "51 – 200", value: 120 },
   { label: "201 – 500", value: 320 },
   { label: "500+", value: 650 },
-]
-
-const LOC_PRESETS = [
-  { label: "1", value: 1 },
-  { label: "2 – 5", value: 3 },
-  { label: "6 – 15", value: 10 },
-  { label: "16+", value: 22 },
 ]
 
 const ZONE_PRESETS = [
@@ -61,46 +55,43 @@ const ZONE_PRESETS = [
 
 export function LandingCalculator() {
   const [industry, setIndustry] = useState<Industry | "">("")
-  const [employees, setEmployees] = useState<number | null>(null)
-  const [locations, setLocations] = useState<number | null>(null)
+  const [occupancy, setOccupancy] = useState<number | null>(null)
   const [smokingZones, setSmokingZones] = useState<number | null>(null)
-  const [kioskType, setKioskType] = useState<KioskType | "">("")
+  const [priority, setPriority] = useState<OrganisationPriority | "">("")
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
   const [pdfDownload, setPdfDownload] = useState<{ filename: string; href: string } | null>(null)
 
-  const needsKiosk = industry === "Corporate Office" || industry === "Hotel"
-  const needsEmployees = industry === "Corporate Office"
-  const needsZones = industry === "Hotel"
+  const needsPriority = industry === "Corporate Office" || industry === "Hotel & Hospitality"
+  const needsOccupancy = industry === "Corporate Office"
+  const needsZones = industry === "Hotel & Hospitality"
 
   const ready =
     Boolean(industry) &&
-    (!needsEmployees || (employees != null && locations != null)) &&
+    (!needsOccupancy || occupancy != null) &&
     (!needsZones || smokingZones != null) &&
-    (!needsKiosk || Boolean(kioskType))
+    (!needsPriority || Boolean(priority))
 
   const estimate = useMemo(() => {
     if (!ready || !industry) return null
     return calculateImpact({
       industry,
-      employees: employees ?? undefined,
-      locations: locations ?? undefined,
+      occupancy: occupancy ?? undefined,
       smokingZones: smokingZones ?? undefined,
-      kioskType: kioskType || undefined,
+      priority: priority || undefined,
     })
-  }, [ready, industry, employees, locations, smokingZones, kioskType])
+  }, [ready, industry, occupancy, smokingZones, priority])
 
   const fieldTrigger =
     "mt-1.5 h-11 w-full rounded-xl border border-[#E5E2DA] bg-[#FBFBF8] px-3 text-[14px] text-[#141414] outline-none transition focus:border-[#1B7339] focus:bg-white focus:ring-2 focus:ring-[#1B7339]/15"
 
   const onIndustryChange = (v: string) => {
     setIndustry(v as Industry)
-    setEmployees(null)
-    setLocations(null)
+    setOccupancy(null)
     setSmokingZones(null)
-    setKioskType("")
+    setPriority("")
   }
 
   const submitProposal = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -119,10 +110,9 @@ export function LandingCalculator() {
       phone: String(form.get("phone") || ""),
       city: String(form.get("city") || ""),
       industry,
-      employees: needsEmployees ? employees : undefined,
-      locations: needsEmployees ? locations : undefined,
+      occupancy: needsOccupancy ? occupancy : undefined,
       smokingZones: needsZones ? smokingZones : undefined,
-      kioskType: needsKiosk ? kioskType : undefined,
+      priority: needsPriority ? priority : undefined,
     }
     try {
       const res = await fetch("/api/proposal", {
@@ -185,45 +175,25 @@ export function LandingCalculator() {
               </Select>
             </div>
 
-            {needsEmployees ? (
-              <>
-                <div>
-                  <p className="text-[13px] font-medium text-[#374151]">No. of Employees</p>
-                  <Select
-                    value={employees != null ? String(employees) : undefined}
-                    onValueChange={(v) => setEmployees(Number(v))}
-                  >
-                    <SelectTrigger className={fieldTrigger}>
-                      <SelectValue placeholder="- -" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EMP_PRESETS.map((o) => (
-                        <SelectItem key={o.label} value={String(o.value)}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <p className="text-[13px] font-medium text-[#374151]">No. of Locations</p>
-                  <Select
-                    value={locations != null ? String(locations) : undefined}
-                    onValueChange={(v) => setLocations(Number(v))}
-                  >
-                    <SelectTrigger className={fieldTrigger}>
-                      <SelectValue placeholder="- -" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LOC_PRESETS.map((o) => (
-                        <SelectItem key={o.label} value={String(o.value)}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
+            {needsOccupancy ? (
+              <div>
+                <p className="text-[13px] font-medium text-[#374151]">Total Workplace Occupancy</p>
+                <Select
+                  value={occupancy != null ? String(occupancy) : undefined}
+                  onValueChange={(v) => setOccupancy(Number(v))}
+                >
+                  <SelectTrigger className={fieldTrigger}>
+                    <SelectValue placeholder="- -" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OCCUPANCY_PRESETS.map((o) => (
+                      <SelectItem key={o.label} value={String(o.value)}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : null}
 
             {needsZones ? (
@@ -247,21 +217,28 @@ export function LandingCalculator() {
               </div>
             ) : null}
 
-            {needsKiosk ? (
+            {needsPriority ? (
               <div>
-                <p className="text-[13px] font-medium text-[#374151]">Kiosk Preference</p>
-                <Select
-                  value={kioskType || undefined}
-                  onValueChange={(v) => setKioskType(v as KioskType)}
-                >
-                  <SelectTrigger className={fieldTrigger}>
-                    <SelectValue placeholder="- -" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Basic">Basic</SelectItem>
-                    <SelectItem value="Advanced">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
+                <p className="text-[13px] font-medium text-[#374151]">
+                  What is more important for your organisation?
+                </p>
+                <div className="mt-2 grid gap-2">
+                  {ORGANISATION_PRIORITIES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPriority(opt.value)}
+                      className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                        priority === opt.value
+                          ? "border-[#1B7339] bg-[#E8F5E9] shadow-sm"
+                          : "border-[#E5E2DA] bg-[#FBFBF8] hover:border-[#1B7339]/40"
+                      }`}
+                    >
+                      <p className="text-[13px] font-semibold text-[#141414]">{opt.label}</p>
+                      <p className="mt-0.5 text-[12px] text-[#6B6B6B]">{opt.hint}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
 
@@ -457,6 +434,38 @@ export function LandingCalculator() {
                   <p className="mt-2 text-[12px] leading-relaxed text-[#5A5A5A]">
                     {estimate.impactNote}
                   </p>
+                ) : null}
+                {estimate.solutions && estimate.solutions.length > 1 ? (
+                  <div className="mt-4 space-y-2 border-t border-[#D7E8DB] pt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8A8A]">
+                      {estimate.priority === "both" ? "Compare solutions" : "Alternative option"}
+                    </p>
+                    {estimate.solutions.map((tier) => (
+                      <div
+                        key={tier.kioskType}
+                        className={`rounded-xl px-3 py-2.5 ${
+                          tier.isRecommended ? "bg-white ring-1 ring-[#1B7339]/30" : "bg-white/60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[12px] font-semibold text-[#141414]">
+                            {tier.label}
+                            {tier.isRecommended ? (
+                              <span className="ml-1.5 text-[10px] font-bold uppercase text-[#1B7339]">
+                                Recommended
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="text-[12px] font-bold text-[#1B7339]">
+                            ₹{formatInr(tier.annualInvestment)}
+                          </p>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-[#6B6B6B]">
+                          {tier.recommendedKiosks} kiosks · ₹{formatInr(tier.pricing.totalInclGst)} incl. GST
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 ) : null}
               </div>
             </>

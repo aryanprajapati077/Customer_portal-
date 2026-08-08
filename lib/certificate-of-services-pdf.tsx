@@ -380,17 +380,6 @@ export function CertificateOfServicesPdf({ data }: { data: ServiceCertificateDat
                 src={asset("buffindia-logo-brand.png")}
                 style={{ width: 148, height: 62, objectFit: "contain" }}
               />
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={styles.supported}>Proudly supported by</Text>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                  <Link src="https://iimaventures.com">
-                    <Image src={asset("iima.png")} style={{ width: 52, height: 24, objectFit: "contain" }} />
-                  </Link>
-                  <Link src="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html">
-                    <Image src={asset("kotak.png")} style={{ width: 72, height: 22, objectFit: "contain" }} />
-                  </Link>
-                </View>
-              </View>
             </View>
 
             <Text style={styles.title}>CERTIFICATE</Text>

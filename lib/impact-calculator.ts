@@ -1,22 +1,23 @@
-/** Buffindia Impact Calculator — FRD v1.0 */
+/** Buffindia Impact Calculator — FRD v3.0 */
 
 export const INDUSTRIES = [
   "Corporate Office",
-  "Hotel",
+  "Hotel & Hospitality",
   "Restaurant / Café / Bar",
   "Residential Society",
-  "Public Space",
-  "Other",
 ] as const
 
 export type Industry = (typeof INDUSTRIES)[number]
 export type KioskType = "Basic" | "Advanced"
+export type OrganisationPriority = "cost" | "premium" | "both"
 
 export type CalculatorInput = {
   industry: Industry
-  employees?: number
-  locations?: number
+  /** Total workplace occupancy (corporate) */
+  occupancy?: number
   smokingZones?: number
+  priority?: OrganisationPriority
+  /** @deprecated use priority — kept for proposal API compatibility */
   kioskType?: KioskType
 }
 
@@ -28,9 +29,17 @@ export type PricingBreakdown = {
   subtotalExclGst: number
   gstAmount: number
   totalInclGst: number
-  /** Human-readable rate card used */
   rateCard: string[]
   inclusions: string[]
+}
+
+export type SolutionTier = {
+  kioskType: KioskType
+  label: string
+  isRecommended: boolean
+  recommendedKiosks: number
+  pricing: PricingBreakdown
+  annualInvestment: number
 }
 
 export type ImpactEstimate = {
@@ -39,14 +48,14 @@ export type ImpactEstimate = {
   packageName: string
   kioskType: KioskType | null
   recommendedKiosks: number | null
+  priority: OrganisationPriority | null
+  solutions: SolutionTier[] | null
   /** Alias of pricing.subtotalExclGst for display */
   annualInvestment: number | null
   annualInvestmentNote: string | null
   pricing: PricingBreakdown | null
-  /** Snapshot of inputs used */
   inputs: {
-    employees?: number
-    locations?: number
+    occupancy?: number
     smokingZones?: number
     estimatedSmokers?: number
   }
@@ -63,6 +72,11 @@ export type ImpactEstimate = {
 }
 
 export const GST_RATE_PCT = 18
+export const ORGANISATION_PRIORITIES: { value: OrganisationPriority; label: string; hint: string }[] = [
+  { value: "cost", label: "Cost Optimisation", hint: "Basic infrastructure recommended first" },
+  { value: "premium", label: "Premium Experience & Design", hint: "Premium infrastructure recommended" },
+  { value: "both", label: "Show Me Both", hint: "Compare Basic vs Premium side by side" },
+]
 
 const GST_NOTE = `excl. GST / year · +${GST_RATE_PCT}% GST`
 
@@ -76,22 +90,22 @@ function ceilDiv(n: number, d: number) {
 function kioskRateCard(type: KioskType): string[] {
   if (type === "Basic") {
     return [
-      "Basic Kiosk — minimum 2 kiosks",
+      "Basic Infrastructure — minimum 2 kiosks",
       `₹${formatInr(BASIC_RATE.base)} + GST / year (covers 2 kiosks)`,
       `Additional kiosk: ₹${formatInr(BASIC_RATE.additional)} / year`,
     ]
   }
   return [
-    "Advanced Kiosk — minimum 2 kiosks",
+    "Premium Infrastructure — minimum 2 kiosks",
     `₹${formatInr(ADVANCED_RATE.base)} + GST / year (covers 2 kiosks)`,
     `Additional kiosk: ₹${formatInr(ADVANCED_RATE.additional)} / year`,
   ]
 }
 
-function priceKioskFleet(type: KioskType, count: number): PricingBreakdown {
+function priceKioskFleet(type: KioskType, recommendedCount: number): PricingBreakdown {
   const rate = type === "Basic" ? BASIC_RATE : ADVANCED_RATE
-  const n = Math.max(rate.minKiosks, Math.round(count))
-  const additionalCount = Math.max(0, n - rate.minKiosks)
+  const billedKiosks = Math.max(rate.minKiosks, Math.round(recommendedCount))
+  const additionalCount = Math.max(0, billedKiosks - rate.minKiosks)
   const baseAmount = rate.base
   const additionalAmount = additionalCount * rate.additional
   const subtotalExclGst = baseAmount + additionalAmount
@@ -111,6 +125,9 @@ function priceKioskFleet(type: KioskType, count: number): PricingBreakdown {
     })
   }
 
+  const extraInclusions =
+    type === "Advanced" ? ["Priority support"] : []
+
   return {
     currency: "INR",
     gstRatePct: GST_RATE_PCT,
@@ -120,12 +137,52 @@ function priceKioskFleet(type: KioskType, count: number): PricingBreakdown {
     totalInclGst,
     rateCard: kioskRateCard(type),
     inclusions: [
-      `${n} × ${type} kiosk${n === 1 ? "" : "s"}`,
+      `${billedKiosks} × ${type} kiosk${billedKiosks === 1 ? "" : "s"}`,
       "Collection & recycling service",
       "Monthly ESG / impact reporting",
+      ...extraInclusions,
       `Complimentary KraftReborn products equal to annual subscription (₹${formatInr(subtotalExclGst)})`,
     ],
   }
+}
+
+function buildSolutionTiers(
+  recommendedKiosks: number,
+  priority: OrganisationPriority,
+): SolutionTier[] {
+  const basic: SolutionTier = {
+    kioskType: "Basic",
+    label: "Basic Infrastructure",
+    isRecommended: priority === "cost" || priority === "both",
+    recommendedKiosks,
+    pricing: priceKioskFleet("Basic", recommendedKiosks),
+    annualInvestment: priceKioskFleet("Basic", recommendedKiosks).subtotalExclGst,
+  }
+  const premium: SolutionTier = {
+    kioskType: "Advanced",
+    label: "Premium Infrastructure",
+    isRecommended: priority === "premium",
+    recommendedKiosks,
+    pricing: priceKioskFleet("Advanced", recommendedKiosks),
+    annualInvestment: priceKioskFleet("Advanced", recommendedKiosks).subtotalExclGst,
+  }
+
+  if (priority === "premium") {
+    premium.isRecommended = true
+    basic.isRecommended = false
+  } else if (priority === "cost") {
+    basic.isRecommended = true
+    premium.isRecommended = false
+  } else {
+    basic.isRecommended = true
+    premium.isRecommended = false
+  }
+
+  return priority === "premium" ? [premium, basic] : [basic, premium]
+}
+
+function pickPrimarySolution(tiers: SolutionTier[]): SolutionTier {
+  return tiers.find((t) => t.isRecommended) ?? tiers[0]
 }
 
 function flatPackagePricing(
@@ -152,61 +209,57 @@ function flatPackagePricing(
   }
 }
 
-function corporateImpact(
-  employees: number,
-  locations: number,
-  kioskType: KioskType,
-): ImpactEstimate {
-  const employeesPerLocation = employees / locations
-  const smokers = employees * 0.18
-  const smokersPerLocation = employeesPerLocation * 0.18
+function corporateImpact(occupancy: number, priority: OrganisationPriority): ImpactEstimate {
+  const smokers = occupancy * 0.18
   const butts = smokers * 2 * 20 * 10
   const wasteKg = butts / 3000
   const waterLitres = butts * 100
-  const kiosksPerLocation = Math.max(2, ceilDiv(smokersPerLocation, 35))
-  const recommendedKiosks = kiosksPerLocation * locations
-  const pricing = priceKioskFleet(kioskType, recommendedKiosks)
-  const annualInvestment = pricing.subtotalExclGst
+  const recommendedKiosks = ceilDiv(smokers, 35)
+  const solutions = buildSolutionTiers(recommendedKiosks, priority)
+  const primary = pickPrimarySolution(solutions)
   const co2Tonnes = butts * 0.0005
 
   return {
     industry: "Corporate Office",
     mode: "quantified",
-    packageName: `${kioskType} Plan`,
-    kioskType,
+    packageName: primary.label,
+    kioskType: primary.kioskType,
     recommendedKiosks,
-    annualInvestment,
+    priority,
+    solutions,
+    annualInvestment: primary.annualInvestment,
     annualInvestmentNote: GST_NOTE,
-    pricing,
-    inputs: { employees, locations, estimatedSmokers: Math.round(smokers) },
+    pricing: primary.pricing,
+    inputs: { occupancy, estimatedSmokers: Math.round(smokers) },
     buttsDiverted: butts,
     wasteKg,
     waterLitres,
     wasteRecycledPct: 99,
     tobaccoAshPct: 10,
     microplasticFilterPct: 90,
-    kraftRebornValue: annualInvestment,
+    kraftRebornValue: primary.annualInvestment,
     co2Tonnes,
     impactNote: null,
-    summaryLine: `${recommendedKiosks} ${kioskType.toLowerCase()} kiosks · ₹${formatInr(annualInvestment)} excl. GST · ₹${formatInr(pricing.totalInclGst)} incl. GST`,
+    summaryLine: `${recommendedKiosks} kiosks · ${primary.label} · ₹${formatInr(primary.annualInvestment)} excl. GST · ₹${formatInr(primary.pricing.totalInclGst)} incl. GST`,
   }
 }
 
-function hotelEstimate(smokingZones: number, kioskType: KioskType): ImpactEstimate {
-  // FRD: one kiosk per smoking zone; pricing still applies minimum 2
-  const recommendedKiosks = Math.max(2, Math.round(smokingZones))
-  const pricing = priceKioskFleet(kioskType, recommendedKiosks)
-  const annualInvestment = pricing.subtotalExclGst
+function hotelEstimate(smokingZones: number, priority: OrganisationPriority): ImpactEstimate {
+  const recommendedKiosks = Math.max(1, Math.round(smokingZones))
+  const solutions = buildSolutionTiers(recommendedKiosks, priority)
+  const primary = pickPrimarySolution(solutions)
 
   return {
-    industry: "Hotel",
+    industry: "Hotel & Hospitality",
     mode: "survey",
-    packageName: `${kioskType} Plan`,
-    kioskType,
+    packageName: primary.label,
+    kioskType: primary.kioskType,
     recommendedKiosks,
-    annualInvestment,
+    priority,
+    solutions,
+    annualInvestment: primary.annualInvestment,
     annualInvestmentNote: GST_NOTE,
-    pricing,
+    pricing: primary.pricing,
     inputs: { smokingZones },
     buttsDiverted: null,
     wasteKg: null,
@@ -214,24 +267,29 @@ function hotelEstimate(smokingZones: number, kioskType: KioskType): ImpactEstima
     wasteRecycledPct: 99,
     tobaccoAshPct: 10,
     microplasticFilterPct: 90,
-    kraftRebornValue: annualInvestment,
+    kraftRebornValue: primary.annualInvestment,
     co2Tonnes: null,
-    impactNote: "Estimated environmental impact will be calculated after the site survey.",
-    summaryLine: `${recommendedKiosks} ${kioskType.toLowerCase()} kiosks · ₹${formatInr(annualInvestment)} excl. GST · ₹${formatInr(pricing.totalInclGst)} incl. GST`,
+    impactNote: "Environmental impact will be provided after the site survey.",
+    summaryLine: `${recommendedKiosks} kiosks · ${primary.label} · ₹${formatInr(primary.annualInvestment)} excl. GST · ₹${formatInr(primary.pricing.totalInclGst)} incl. GST`,
   }
 }
 
 function restaurantPackage(): ImpactEstimate {
-  const pricing = flatPackagePricing(25_000, "Restaurant / Café / Bar annual package", [
+  const pricing = flatPackagePricing(30_000, "Standard Hospitality Package (Recommended)", [
     "50 branded tabletop ashtrays",
-    "Optional kiosks available at additional cost",
+    "Collection & recycling",
+    "Quarterly ESG reporting",
+    "Optional Basic kiosk @ ₹6,000/year each",
+    "Optional Premium kiosk @ ₹15,000/year each",
   ])
   return {
     industry: "Restaurant / Café / Bar",
     mode: "package",
-    packageName: "Restaurant Package",
+    packageName: "Standard Hospitality Package",
     kioskType: null,
     recommendedKiosks: null,
+    priority: null,
+    solutions: null,
     annualInvestment: pricing.subtotalExclGst,
     annualInvestmentNote: GST_NOTE,
     pricing,
@@ -244,15 +302,16 @@ function restaurantPackage(): ImpactEstimate {
     microplasticFilterPct: 90,
     kraftRebornValue: pricing.subtotalExclGst,
     co2Tonnes: null,
-    impactNote:
-      "Impact calculated after implementation. Optional kiosks at additional cost.",
-    summaryLine: `Flat package · ₹${formatInr(25_000)} excl. GST · ₹${formatInr(pricing.totalInclGst)} incl. GST · 50 tabletop ashtrays`,
+    impactNote: "Impact calculated after implementation. Optional kiosk infrastructure available at additional cost.",
+    summaryLine: `Flat package · ₹${formatInr(30_000)} excl. GST · ₹${formatInr(pricing.totalInclGst)} incl. GST · 50 tabletop ashtrays`,
   }
 }
 
 function residentialPackage(): ImpactEstimate {
   const pricing = flatPackagePricing(12_000, "Residential Society annual package", [
     "4 tabletop ashtrays",
+    "Collection & recycling",
+    "ESG reporting",
   ])
   return {
     industry: "Residential Society",
@@ -260,6 +319,8 @@ function residentialPackage(): ImpactEstimate {
     packageName: "Residential Package",
     kioskType: null,
     recommendedKiosks: null,
+    priority: null,
+    solutions: null,
     annualInvestment: pricing.subtotalExclGst,
     annualInvestmentNote: GST_NOTE,
     pricing,
@@ -277,44 +338,27 @@ function residentialPackage(): ImpactEstimate {
   }
 }
 
-function contactOnly(industry: Industry): ImpactEstimate {
-  return {
-    industry,
-    mode: "contact",
-    packageName: "Custom Proposal",
-    kioskType: null,
-    recommendedKiosks: null,
-    annualInvestment: null,
-    annualInvestmentNote: null,
-    pricing: null,
-    inputs: {},
-    buttsDiverted: null,
-    wasteKg: null,
-    waterLitres: null,
-    wasteRecycledPct: 99,
-    tobaccoAshPct: 10,
-    microplasticFilterPct: 90,
-    kraftRebornValue: null,
-    co2Tonnes: null,
-    impactNote: "Please contact our team for a customised proposal.",
-    summaryLine: "Custom proposal — our team will tailor scope and pricing.",
+function normalizePriority(input: CalculatorInput): OrganisationPriority {
+  if (input.priority === "cost" || input.priority === "premium" || input.priority === "both") {
+    return input.priority
   }
+  if (input.kioskType === "Basic") return "cost"
+  if (input.kioskType === "Advanced") return "premium"
+  return "both"
 }
 
 export function calculateImpact(input: CalculatorInput): ImpactEstimate {
   const industry = input.industry
+  const priority = normalizePriority(input)
 
   if (industry === "Corporate Office") {
-    const employees = Math.max(1, Number(input.employees) || 0)
-    const locations = Math.max(1, Number(input.locations) || 1)
-    const kioskType: KioskType = input.kioskType === "Basic" ? "Basic" : "Advanced"
-    return corporateImpact(employees, locations, kioskType)
+    const occupancy = Math.max(1, Number(input.occupancy) || 0)
+    return corporateImpact(occupancy, priority)
   }
 
-  if (industry === "Hotel") {
+  if (industry === "Hotel & Hospitality") {
     const zones = Math.max(1, Number(input.smokingZones) || 0)
-    const kioskType: KioskType = input.kioskType === "Basic" ? "Basic" : "Advanced"
-    return hotelEstimate(zones, kioskType)
+    return hotelEstimate(zones, priority)
   }
 
   if (industry === "Restaurant / Café / Bar") {
@@ -325,7 +369,7 @@ export function calculateImpact(input: CalculatorInput): ImpactEstimate {
     return residentialPackage()
   }
 
-  return contactOnly(industry)
+  return residentialPackage()
 }
 
 export function formatInr(n: number) {
@@ -344,5 +388,13 @@ export function formatCompactLitres(litres: number) {
 }
 
 export function isIndustry(value: string): value is Industry {
-  return (INDUSTRIES as readonly string[]).includes(value)
+  if ((INDUSTRIES as readonly string[]).includes(value)) return true
+  // Legacy alias
+  if (value === "Hotel") return true
+  return false
+}
+
+export function normalizeIndustry(value: string): Industry {
+  if (value === "Hotel") return "Hotel & Hospitality"
+  return value as Industry
 }

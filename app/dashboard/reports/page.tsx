@@ -1,7 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Download, FileBarChart2, FileText } from "lucide-react"
+import {
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  Download,
+  FileBarChart2,
+  FileText,
+  History,
+  Sparkles,
+} from "lucide-react"
 import { PortalShell } from "@/components/portal/portal-shell"
 import { PageHeader } from "@/components/portal/page-header"
 import { OutlineButton } from "@/components/portal/outline-button"
@@ -9,26 +18,52 @@ import { usePortalData } from "@/hooks/use-portal-data"
 import { DownloadImpactReport } from "@/components/portal/download-impact-report"
 import { CertificateDownloadButton, DownloadCertificate } from "@/components/portal/download-certificate"
 import { formatPortalDate } from "@/lib/portal-metrics"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 import type { ReportRangeKey } from "@/lib/report-date-range"
 
-const PERIOD_OPTIONS: { value: ReportRangeKey; label: string }[] = [
-  { value: "this-year", label: "Current Year" },
-  { value: "quarterly", label: "Quarterly" },
-  { value: "installation", label: "Installation till date" },
-  { value: "month", label: "This month" },
-  { value: "custom", label: "Start date to end date" },
+const PERIOD_OPTIONS: {
+  value: ReportRangeKey
+  label: string
+  description: string
+  icon: typeof Calendar
+}[] = [
+  {
+    value: "this-year",
+    label: "Current Year",
+    description: "Jan 1 through today",
+    icon: Calendar,
+  },
+  {
+    value: "quarterly",
+    label: "Quarterly",
+    description: "Current quarter to date",
+    icon: CalendarRange,
+  },
+  {
+    value: "installation",
+    label: "Installation till date",
+    description: "From service start to today",
+    icon: History,
+  },
+  {
+    value: "month",
+    label: "This month",
+    description: "Current calendar month",
+    icon: CalendarDays,
+  },
+  {
+    value: "custom",
+    label: "Custom range",
+    description: "Pick start and end dates",
+    icon: Sparkles,
+  },
 ]
 
 export default function ReportsPage() {
   const { customer, authLoading, dataLoading, reports, certificates, selectedLocationId } = usePortalData()
   const [period, setPeriod] = useState<ReportRangeKey>("this-year")
+
+  const selected = PERIOD_OPTIONS.find((p) => p.value === period) ?? PERIOD_OPTIONS[0]
 
   return (
     <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)}>
@@ -55,42 +90,88 @@ export default function ReportsPage() {
           }
         />
 
-        <div className="portal-card p-4">
-          <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">Generate by period</p>
-          <p className="text-[12px] text-[#7A7A7A] mb-3">
-            Choose current year, quarterly, installation till date, this month, or a custom start–end
-            date range when you download.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="space-y-1.5 flex-1 max-w-sm">
-              <label className="text-[12px] font-medium text-[#5A5A5A]">Report period</label>
-              <Select value={period} onValueChange={(v) => setPeriod(v as ReportRangeKey)}>
-                <SelectTrigger className="h-10 rounded-xl border-[#D8D8D8] bg-white text-[13px]">
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERIOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <div className="relative overflow-hidden rounded-[1.25rem] border border-[#DCE8DC] bg-gradient-to-br from-white via-[#F8FBF9] to-[#EEF6F0] p-5 shadow-[0_8px_32px_rgba(27,115,57,0.06)]">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#C8F000]/10 blur-3xl"
+          />
+          <div className="relative">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#1B7339]/80">
+                  Generate by period
+                </p>
+                <h3 className="mt-1 text-[17px] font-semibold text-[#141414]">
+                  Choose your reporting window
+                </h3>
+                <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[#6B6B6B]">
+                  Select a preset or custom range — your download will reflect collections and impact
+                  for that period.
+                </p>
+              </div>
+              <div className="rounded-full border border-[#C8E6D4] bg-white/80 px-3 py-1.5 text-[12px] font-medium text-[#1B7339]">
+                Selected: {selected.label}
+              </div>
             </div>
-            <DownloadImpactReport
-              key={period}
-              customerId={customer?.id}
-              locationId={selectedLocationId}
-              defaultRange={period}
-            >
-              <button
-                type="button"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1B7339] px-4 text-[13px] font-semibold text-white hover:bg-[#145a2c]"
+
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {PERIOD_OPTIONS.map((opt) => {
+                const Icon = opt.icon
+                const active = period === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPeriod(opt.value)}
+                    className={cn(
+                      "group flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-all duration-200",
+                      active
+                        ? "border-[#1B7339] bg-white shadow-[0_4px_20px_rgba(27,115,57,0.12)] ring-1 ring-[#1B7339]/20"
+                        : "border-[#E5E5E5] bg-white/70 hover:border-[#1B7339]/35 hover:bg-white",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+                        active
+                          ? "bg-[#1B7339] text-white"
+                          : "bg-[#E8F5E9] text-[#1B7339] group-hover:bg-[#D4EDD8]",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold text-[#141414]">{opt.label}</span>
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-[#8A8A8A]">
+                        {opt.description}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[12px] text-[#7A7A7A]">
+                {period === "custom"
+                  ? "You'll pick exact dates in the download dialog."
+                  : `Ready to export your ${selected.label.toLowerCase()} report.`}
+              </p>
+              <DownloadImpactReport
+                key={period}
+                customerId={customer?.id}
+                locationId={selectedLocationId}
+                defaultRange={period}
               >
-                <Download className="w-4 h-4" />
-                Download report
-              </button>
-            </DownloadImpactReport>
+                <button
+                  type="button"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1B7339] px-6 text-[13px] font-semibold text-white shadow-[0_6px_20px_rgba(27,115,57,0.25)] transition hover:bg-[#145a2c] hover:shadow-[0_8px_24px_rgba(27,115,57,0.3)]"
+                >
+                  <Download className="w-4 h-4" />
+                  Download {selected.label} report
+                </button>
+              </DownloadImpactReport>
+            </div>
           </div>
         </div>
 

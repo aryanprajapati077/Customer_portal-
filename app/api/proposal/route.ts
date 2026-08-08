@@ -7,9 +7,10 @@ import {
   calculateImpact,
   formatInr,
   isIndustry,
+  normalizeIndustry,
   type CalculatorInput,
   type Industry,
-  type KioskType,
+  type OrganisationPriority,
 } from "@/lib/impact-calculator"
 
 export async function POST(request: Request) {
@@ -30,18 +31,26 @@ export async function POST(request: Request) {
     if (!isIndustry(industryRaw)) {
       return NextResponse.json({ error: "Invalid industry" }, { status: 400 })
     }
-    const industry = industryRaw as Industry
+    const industry = normalizeIndustry(industryRaw) as Industry
 
-    const kioskRaw = body.kioskType ? String(body.kioskType) : undefined
-    const kioskType: KioskType | undefined =
-      kioskRaw === "Basic" || kioskRaw === "Advanced" ? kioskRaw : undefined
+    const priorityRaw = body.priority ? String(body.priority) : undefined
+    const priority: OrganisationPriority | undefined =
+      priorityRaw === "cost" || priorityRaw === "premium" || priorityRaw === "both"
+        ? priorityRaw
+        : undefined
 
     const input: CalculatorInput = {
       industry,
-      employees: body.employees != null ? Number(body.employees) : undefined,
-      locations: body.locations != null ? Number(body.locations) : undefined,
+      occupancy:
+        body.occupancy != null
+          ? Number(body.occupancy)
+          : body.employees != null
+            ? Number(body.employees)
+            : undefined,
       smokingZones: body.smokingZones != null ? Number(body.smokingZones) : undefined,
-      kioskType,
+      priority,
+      kioskType:
+        body.kioskType === "Basic" || body.kioskType === "Advanced" ? body.kioskType : undefined,
     }
 
     const estimate = calculateImpact(input)

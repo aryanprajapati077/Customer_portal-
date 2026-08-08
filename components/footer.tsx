@@ -116,34 +116,44 @@ export function Footer() {
           <p className="text-center text-xs text-white/55 sm:text-left sm:text-sm">
             © {new Date().getFullYear()} BuffIndia. All rights reserved.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-8">
+            <a href="/" className="transition-opacity hover:opacity-90">
+              <Image
+                src="/logo.svg"
+                alt="Buffindia"
+                width={120}
+                height={36}
+                className="h-8 w-auto object-contain"
+              />
+            </a>
+            <span className="hidden h-6 w-px bg-white/15 sm:block" aria-hidden />
             <span className="text-[11px] text-white/45">Proudly supported by</span>
             <a
               href="https://iimaventures.com"
               target="_blank"
               rel="noreferrer"
-              className="opacity-80 transition-opacity hover:opacity-100"
+              className="transition-opacity hover:opacity-90"
             >
               <Image
-                src="/portal/iima-logo.png"
+                src="/portal/iima-ventures-logo.png"
                 alt="IIMA Ventures"
-                width={88}
-                height={36}
-                className="h-8 w-auto object-contain brightness-0 invert"
+                width={100}
+                height={40}
+                className="h-9 w-auto object-contain"
               />
             </a>
             <a
               href="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html"
               target="_blank"
               rel="noreferrer"
-              className="opacity-80 transition-opacity hover:opacity-100"
+              className="transition-opacity hover:opacity-90"
             >
               <Image
                 src="/portal/kotak-bizlabs-logo.png"
                 alt="Kotak BizLabs"
-                width={120}
-                height={28}
-                className="h-6 w-auto object-contain brightness-0 invert"
+                width={130}
+                height={32}
+                className="h-7 w-auto object-contain"
               />
             </a>
           </div>

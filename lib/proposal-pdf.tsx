@@ -250,11 +250,8 @@ export function ProposalPdfDocument({ lead, estimate, generatedAt }: ProposalPdf
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. CALCULATOR INPUTS</Text>
-          {estimate.inputs.employees != null ? (
-            <Row label="Total employees" value={formatInr(estimate.inputs.employees)} />
-          ) : null}
-          {estimate.inputs.locations != null ? (
-            <Row label="Number of locations" value={String(estimate.inputs.locations)} />
+          {estimate.inputs.occupancy != null ? (
+            <Row label="Total workplace occupancy" value={formatInr(estimate.inputs.occupancy)} />
           ) : null}
           {estimate.inputs.estimatedSmokers != null ? (
             <Row

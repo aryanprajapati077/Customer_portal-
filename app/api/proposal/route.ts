@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { resend, getResendFrom } from "@/lib/resend"
 import { generateProposalPdf } from "@/lib/generate-proposal-pdf"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
+import { queueEmail } from "@/lib/email-queue"
 import {
   calculateImpact,
   formatInr,
@@ -12,6 +13,8 @@ import {
   type Industry,
   type OrganisationPriority,
 } from "@/lib/impact-calculator"
+
+export const maxDuration = 60
 
 export async function POST(request: Request) {
   try {
@@ -55,8 +58,10 @@ export async function POST(request: Request) {
 
     const estimate = calculateImpact(input)
     const lead = { fullName, companyName, email, phone, city }
-
     const pricing = estimate.pricing
+
+    const { pdfBuffer, filename } = await generateProposalPdf(lead, estimate)
+
     const message = [
       "Impact Calculator — detailed proposal request",
       `Industry: ${estimate.industry}`,
@@ -87,19 +92,6 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join("\n")
 
-    const ticket = await prisma.supportTicket.create({
-      data: {
-        name: fullName,
-        email,
-        subject: `Impact proposal — ${companyName} (${industry})`,
-        message,
-        category: "proposal",
-        source: "impact-calculator",
-        status: "open",
-      },
-    })
-
-    const { pdfBuffer, filename } = await generateProposalPdf(lead, estimate)
     const salesTo = process.env.SALES_EMAIL || process.env.ADMIN_EMAIL
     const firstName = fullName.split(" ")[0] || "there"
 
@@ -109,56 +101,71 @@ export async function POST(request: Request) {
         ? `\nEst. annual investment: ₹${formatInr(estimate.annualInvestment)} ${estimate.annualInvestmentNote || ""}`
         : ""
 
-    await sendNotificationEmail({
-      templateId: "impact_proposal",
-      to: email,
-      queue: false,
-      label: "impact_proposal_customer",
-      vars: {
-        name: firstName,
-        company: companyName,
-        industry: estimate.industry,
-        packageName: estimate.packageName,
-        summaryLine: estimate.summaryLine,
-        investmentLine,
-        kioskLine:
-          estimate.recommendedKiosks != null
-            ? `\nRecommended kiosks: ${estimate.recommendedKiosks}${estimate.kioskType ? ` (${estimate.kioskType})` : ""}`
-            : "",
-        buttsLine:
-          estimate.buttsDiverted != null
-            ? `\nCigarette butts diverted / year: ${formatInr(estimate.buttsDiverted)}`
-            : "",
-        waterLine:
-          estimate.waterLitres != null
-            ? `\nWater pollution prevented: ${formatInr(Math.round(estimate.waterLitres))} litres`
-            : "",
-        kraftLine:
-          estimate.kraftRebornValue != null
-            ? `\nComplimentary KraftReborn value: ₹${formatInr(estimate.kraftRebornValue)}`
-            : "",
-        city,
-        phone,
-      },
-      attachments: [{ filename, content: pdfBuffer }],
-    }).catch((err) => console.error("Proposal customer email failed:", err))
+    queueEmail("impact_proposal_ticket", async () => {
+      await prisma.supportTicket.create({
+        data: {
+          name: fullName,
+          email,
+          subject: `Impact proposal — ${companyName} (${industry})`,
+          message,
+          category: "proposal",
+          source: "impact-calculator",
+          status: "open",
+        },
+      })
+    })
+
+    queueEmail("impact_proposal_customer", async () => {
+      await sendNotificationEmail({
+        templateId: "impact_proposal",
+        to: email,
+        queue: false,
+        label: "impact_proposal_customer",
+        vars: {
+          name: firstName,
+          company: companyName,
+          industry: estimate.industry,
+          packageName: estimate.packageName,
+          summaryLine: estimate.summaryLine,
+          investmentLine,
+          kioskLine:
+            estimate.recommendedKiosks != null
+              ? `\nRecommended kiosks: ${estimate.recommendedKiosks}${estimate.kioskType ? ` (${estimate.kioskType})` : ""}`
+              : "",
+          buttsLine:
+            estimate.buttsDiverted != null
+              ? `\nCigarette butts diverted / year: ${formatInr(estimate.buttsDiverted)}`
+              : "",
+          waterLine:
+            estimate.waterLitres != null
+              ? `\nWater pollution prevented: ${formatInr(Math.round(estimate.waterLitres))} litres`
+              : "",
+          kraftLine:
+            estimate.kraftRebornValue != null
+              ? `\nComplimentary KraftReborn value: ₹${formatInr(estimate.kraftRebornValue)}`
+              : "",
+          city,
+          phone,
+        },
+        attachments: [{ filename, content: pdfBuffer }],
+      })
+    })
 
     if (resend && salesTo) {
-      await resend.emails
-        .send({
+      queueEmail("impact_proposal_sales", async () => {
+        await resend!.emails.send({
           from: getResendFrom(),
           to: salesTo,
           replyTo: email,
           subject: `[Lead] Impact proposal — ${companyName}`,
-          text: `New Impact Calculator lead (#${ticket.id.slice(-8).toUpperCase()})\n\n${message}`,
+          text: `New Impact Calculator lead\n\n${message}`,
           attachments: [{ filename, content: pdfBuffer }],
         })
-        .catch((err) => console.error("Proposal sales email failed:", err))
+      })
     }
 
     return NextResponse.json({
       ok: true,
-      id: ticket.id,
       emailed: Boolean(resend),
       filename,
       pdfBase64: pdfBuffer.toString("base64"),
@@ -173,6 +180,9 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     console.error("Proposal API error:", err)
-    return NextResponse.json({ error: "Failed to generate proposal" }, { status: 500 })
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to generate proposal" },
+      { status: 500 },
+    )
   }
 }

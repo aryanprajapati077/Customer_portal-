@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://impact.buffindia.com/sitemap.xml
+Sitemap: https://buffindia.com/sitemap.xml

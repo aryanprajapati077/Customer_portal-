@@ -8,6 +8,8 @@ import { sql } from "@/lib/db"
 import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 import { prisma } from "@/lib/prisma"
 
+export const maxDuration = 60
+
 async function resolveKraftRebornCertificate(
   customerId: string,
   certificateId?: string,
@@ -43,6 +45,47 @@ async function resolveKraftRebornCertificate(
   }
 }
 
+function pdfResponse(pdfBuffer: Buffer, filename: string) {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
+    },
+  })
+}
+
+async function generateCertificatePdf(
+  customerId: string,
+  type: string,
+  options: {
+    certificateId?: string
+    orderId?: string
+    amount?: number
+    contactName?: string
+    productCount?: number
+  },
+) {
+  if (type === "kraftreborn") {
+    const kr = await resolveKraftRebornCertificate(
+      customerId,
+      options.certificateId,
+      options.orderId,
+      options.amount,
+      options.productCount,
+    )
+    return generateKraftRebornCertificatePdf({
+      contactName: options.contactName || "Partner",
+      orderId: kr.orderId,
+      orderAmountRupees: kr.orderAmountRupees,
+      productCount: kr.productCount,
+    })
+  }
+
+  const generated = await generateServiceCertificatePdf(customerId, options.certificateId)
+  return { pdfBuffer: generated.pdfBuffer, filename: generated.filename, generated }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
@@ -55,35 +98,19 @@ export async function GET(request: NextRequest) {
     const contactName = request.nextUrl.searchParams.get("contactName") || "Partner"
     const productCount = Number(request.nextUrl.searchParams.get("productCount") || 1)
 
-    if (type === "kraftreborn") {
-      const kr = await resolveKraftRebornCertificate(
-        customerId,
-        certificateId,
-        orderId,
-        amount,
-        productCount,
-      )
-      const { pdfBuffer, filename } = await generateKraftRebornCertificatePdf({
-        contactName,
-        orderId: kr.orderId,
-        orderAmountRupees: kr.orderAmountRupees,
-        productCount: kr.productCount,
-      })
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${filename}"`,
-        },
-      })
+    const result = await generateCertificatePdf(customerId, type, {
+      certificateId,
+      orderId,
+      amount,
+      contactName,
+      productCount,
+    })
+
+    if ("generated" in result) {
+      return pdfResponse(result.pdfBuffer, result.filename)
     }
 
-    const { pdfBuffer, filename } = await generateServiceCertificatePdf(customerId, certificateId)
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    })
+    return pdfResponse(result.pdfBuffer, result.filename)
   } catch (error) {
     console.error("Certificate PDF error:", error)
     return NextResponse.json(
@@ -110,18 +137,16 @@ export async function POST(request: NextRequest) {
     const certificateId = body?.certificateId ? String(body.certificateId) : undefined
     const type = String(body?.type || "services")
 
-    if (type !== "services") {
-      return NextResponse.json(
-        { success: false, error: "Email share currently supports Certificate of Services" },
-        { status: 400 },
-      )
-    }
-
-    const generated = await generateServiceCertificatePdf(customerId, certificateId)
-
     if (action === "email" || action === "send") {
-      const toEmail =
-        String(body?.to || "").trim() || generated.customer.email
+      if (type !== "services") {
+        return NextResponse.json(
+          { success: false, error: "Email share currently supports Certificate of Services" },
+          { status: 400 },
+        )
+      }
+
+      const generated = await generateServiceCertificatePdf(customerId, certificateId)
+      const toEmail = String(body?.to || "").trim() || generated.customer.email
       if (!toEmail) {
         return NextResponse.json({ success: false, error: "No email on customer" }, { status: 400 })
       }
@@ -129,7 +154,6 @@ export async function POST(request: NextRequest) {
       const notifId = `notif_cert_${customerId}_${Date.now()}`
       const certLabel = `${generated.certificate.name} (${generated.certificate.certificateNumber})`
 
-      // Respond immediately — Resend delivery runs in background
       queueEmail("certificate", async () => {
         if (!(await isEmailEnabled("certificate_email"))) return
         const mail = await sendCertificateEmail({
@@ -165,12 +189,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return new NextResponse(new Uint8Array(generated.pdfBuffer), {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${generated.filename}"`,
-      },
+    const result = await generateCertificatePdf(customerId, type, {
+      certificateId,
+      orderId: body?.orderId ? String(body.orderId) : undefined,
+      amount: body?.amount != null ? Number(body.amount) : undefined,
+      contactName: body?.contactName ? String(body.contactName) : "Partner",
+      productCount: body?.productCount != null ? Number(body.productCount) : 1,
     })
+
+    if ("generated" in result) {
+      return pdfResponse(result.pdfBuffer, result.filename)
+    }
+
+    return pdfResponse(result.pdfBuffer, result.filename)
   } catch (error) {
     console.error("Certificate POST error:", error)
     return NextResponse.json(

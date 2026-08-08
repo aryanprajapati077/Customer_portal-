@@ -35,6 +35,15 @@ async function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+async function parseDownloadError(res: Response): Promise<string> {
+  try {
+    const data = await res.json()
+    return String(data?.error || data?.message || `Request failed (${res.status})`)
+  } catch {
+    return `Request failed (${res.status})`
+  }
+}
+
 export function DownloadCertificate({
   customerId,
   certificateId,
@@ -56,11 +65,23 @@ export function DownloadCertificate({
     setBusy("download")
     setMessage(null)
     try {
-      const params = new URLSearchParams({ customerId, type })
-      if (certificateId) params.set("certificateId", certificateId)
+      const res = await fetch("/api/customer/certificate-pdf", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "download",
+          customerId,
+          certificateId,
+          type,
+        }),
+      })
 
-      const res = await fetch(`/api/customer/certificate-pdf?${params.toString()}`)
-      if (!res.ok) throw new Error("Failed")
+      const contentType = res.headers.get("content-type") || ""
+      if (!res.ok || !contentType.includes("pdf")) {
+        throw new Error(await parseDownloadError(res))
+      }
+
       const blob = await res.blob()
       const disposition = res.headers.get("Content-Disposition")
       const filenameMatch = disposition?.match(/filename="(.+)"/)
@@ -71,7 +92,11 @@ export function DownloadCertificate({
       setOpen(false)
     } catch (error) {
       console.error("Certificate download failed:", error)
-      alert("Could not download certificate. Please try again.")
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Could not download certificate. Please try again.",
+      )
     } finally {
       setBusy(null)
     }
@@ -84,6 +109,7 @@ export function DownloadCertificate({
     try {
       const res = await fetch("/api/customer/certificate-pdf", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "email",

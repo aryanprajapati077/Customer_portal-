@@ -119,6 +119,7 @@ export function LandingCalculator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(55_000),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data?.error || "Could not generate proposal")
@@ -135,7 +136,13 @@ export function LandingCalculator() {
       }
       setDone(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      if (err instanceof Error && err.name === "TimeoutError") {
+        setError("Request timed out. Please try again — your proposal may still be emailed shortly.")
+      } else if (err instanceof TypeError) {
+        setError("Network error. Check your connection and try again.")
+      } else {
+        setError(err instanceof Error ? err.message : "Something went wrong")
+      }
     } finally {
       setLoading(false)
     }

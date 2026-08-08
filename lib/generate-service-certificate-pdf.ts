@@ -11,7 +11,7 @@ import { absoluteUrl } from "@/lib/site-config"
 export async function generateServiceCertificatePdf(customerId: string, certificateId?: string) {
   const sync = await syncServiceCertificate(customerId)
   if (!("id" in sync) || !sync.id) {
-    throw new Error(`Customer ${customerId} not found`)
+    throw new Error("Certificate could not be prepared. Please contact support@buffindia.com.")
   }
 
   const id = certificateId || sync.id

@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { buildCertificateEmailHtml } from "@/lib/certificate-email"
+import { AdminPrintSlip } from "@/components/admin/admin-print-slip"
 
 type CertRow = {
   id: string
@@ -48,6 +49,8 @@ export default function AdminCertificatesPage() {
   const [customerId, setCustomerId] = useState("")
   const [busy, setBusy] = useState<"generate" | "email" | null>(null)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [slipOpen, setSlipOpen] = useState(false)
+  const [slipMeta, setSlipMeta] = useState<{ companyName: string; customerId: string; filename: string } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -104,6 +107,12 @@ export default function AdminCertificatesPage() {
       a.download = filename
       a.click()
       URL.revokeObjectURL(url)
+      setSlipMeta({
+        companyName: selectedCustomer?.companyName || customerId,
+        customerId,
+        filename,
+      })
+      setSlipOpen(true)
       setResult({ ok: true, text: `Certificate generated for ${customerId} (logo from customer profile).` })
       await load()
     } catch (err) {
@@ -171,6 +180,28 @@ export default function AdminCertificatesPage() {
 
   return (
     <div className="space-y-6">
+      <AdminPrintSlip
+        open={slipOpen}
+        variant="certificate"
+        companyName={slipMeta?.companyName || ""}
+        reference={slipMeta ? `ID ${slipMeta.customerId}` : undefined}
+        lines={
+          slipMeta
+            ? [
+                { label: "Certificate", value: "Clean Environmental Partnership" },
+                { label: "File", value: slipMeta.filename },
+                { label: "Issued by", value: "Buffindia ImpactOS" },
+              ]
+            : []
+        }
+        successMessage="Certificate printed & downloaded!"
+        footerNote="PDF saved to your device — ready to share with the client."
+        onComplete={() => {
+          setSlipOpen(false)
+          setSlipMeta(null)
+        }}
+      />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">

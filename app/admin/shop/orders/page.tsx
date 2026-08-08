@@ -30,6 +30,7 @@ import {
   User,
   Wallet,
 } from "lucide-react"
+import { AdminPrintSlip } from "@/components/admin/admin-print-slip"
 
 type OrderRow = {
   id: string
@@ -66,6 +67,14 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selected, setSelected] = useState<OrderRow | null>(null)
   const [updating, setUpdating] = useState(false)
+  const [slipOpen, setSlipOpen] = useState(false)
+  const [slipData, setSlipData] = useState<{
+    variant: "dispatch" | "order-complete"
+    orderNumber: string
+    companyName: string
+    total: number
+    itemCount: number
+  } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -115,6 +124,17 @@ export default function AdminOrdersPage() {
                 : 0,
             }
           : null
+        const row = rows.find((r) => r.id === id) || selected
+        if (row && (status === "shipped" || status === "completed")) {
+          setSlipData({
+            variant: status === "shipped" ? "dispatch" : "order-complete",
+            orderNumber: row.orderNumber,
+            companyName: row.customer.companyName,
+            total: row.subtotal,
+            itemCount: row.itemCount,
+          })
+          setSlipOpen(true)
+        }
         setRows((prev) =>
           prev.map((r) => (r.id === id ? { ...r, status, ...(updated || {}) } : r)),
         )
@@ -151,6 +171,39 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
+      <AdminPrintSlip
+        open={slipOpen}
+        variant={slipData?.variant || "dispatch"}
+        companyName={slipData?.companyName || ""}
+        reference={slipData ? `#${slipData.orderNumber}` : undefined}
+        lines={
+          slipData
+            ? [
+                { label: "Items", value: String(slipData.itemCount) },
+                { label: "Order total", value: formatInr(slipData.total) },
+                {
+                  label: "Action",
+                  value: slipData.variant === "dispatch" ? "Dispatch email sent" : "KR credits deducted",
+                },
+              ]
+            : []
+        }
+        successMessage={
+          slipData?.variant === "dispatch"
+            ? "Order marked as shipped!"
+            : "Order completed — certificate generated!"
+        }
+        footerNote={
+          slipData?.variant === "dispatch"
+            ? "Customer notified via email."
+            : "Impact certificate & delivery email sent to customer."
+        }
+        onComplete={() => {
+          setSlipOpen(false)
+          setSlipData(null)
+        }}
+      />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="admin-page-title flex items-center gap-2">

@@ -14,6 +14,7 @@ import {
 } from "@/components/admin/admin-detail-sheet"
 import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 import { SearchableSelect } from "@/components/admin/searchable-select"
+import { AdminPrintSlip } from "@/components/admin/admin-print-slip"
 
 type Row = {
   id: string
@@ -70,6 +71,13 @@ export default function AdminCollectionsPage() {
   })
   const [savingEdit, setSavingEdit] = useState(false)
   const [savingCell, setSavingCell] = useState<string | null>(null)
+  const [slipOpen, setSlipOpen] = useState(false)
+  const [slipData, setSlipData] = useState<{
+    companyName: string
+    weight: number
+    date: string
+    location: string
+  } | null>(null)
   const months = useMemo(() => monthOptions(), [])
 
   const [draft, setDraft] = useState({
@@ -215,6 +223,16 @@ export default function AdminCollectionsPage() {
       })
       const data = await res.json()
       if (data?.success) {
+        const company =
+          customers.find((c) => c.id === draft.customerId)?.companyName || draft.customerId
+        const collectionDate = resolveCollectionDate()
+        setSlipData({
+          companyName: company,
+          weight: Number(draft.weight),
+          date: collectionDate,
+          location: draft.location || "—",
+        })
+        setSlipOpen(true)
         await load()
         setDraft((d) => ({ ...d, weight: 1, location: "" }))
       }
@@ -244,6 +262,29 @@ export default function AdminCollectionsPage() {
 
   return (
     <div className="space-y-6">
+      <AdminPrintSlip
+        open={slipOpen}
+        variant="collection"
+        companyName={slipData?.companyName || ""}
+        reference={slipData ? `Logged ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : undefined}
+        lines={
+          slipData
+            ? [
+                { label: "Weight collected", value: `${slipData.weight} kg` },
+                { label: "Collection date", value: slipData.date },
+                { label: "Location", value: slipData.location },
+                { label: "Status", value: "Completed" },
+              ]
+            : []
+        }
+        successMessage="Collection logged successfully!"
+        footerNote="Customer dashboard & ESG reports will sync automatically."
+        onComplete={() => {
+          setSlipOpen(false)
+          setSlipData(null)
+        }}
+      />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="admin-page-title flex items-center gap-2">

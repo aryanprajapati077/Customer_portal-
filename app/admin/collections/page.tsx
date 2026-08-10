@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Package, Plus, Search, Filter, Table2, Sparkles } from "lucide-react"
+import { Loader2, Package, Plus, Search, Filter, Table2, Sparkles, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
 import {
   AdminDetailSheet,
   AdminSheetSection,
@@ -51,11 +51,133 @@ function toDateInput(raw: string) {
   return d.toISOString().slice(0, 10)
 }
 
+type ColumnFilterKey =
+  | "customerId"
+  | "companyName"
+  | "lsuName"
+  | "date"
+  | "weight"
+  | "location"
+  | "status"
+  | "microplastics"
+
+const COLUMN_FILTERS: { key: ColumnFilterKey; label: string; placeholder: string }[] = [
+  { key: "customerId", label: "Customer ID", placeholder: "BI001…" },
+  { key: "companyName", label: "Brand", placeholder: "Brand…" },
+  { key: "lsuName", label: "LSU", placeholder: "LSU…" },
+  { key: "date", label: "Date", placeholder: "YYYY-MM-DD…" },
+  { key: "weight", label: "Weight (kg)", placeholder: "kg…" },
+  { key: "location", label: "Location", placeholder: "Location…" },
+  { key: "status", label: "Status", placeholder: "Status…" },
+  { key: "microplastics", label: "Microplastics", placeholder: "kg…" },
+]
+
+const EMPTY_COLUMN_FILTERS: Record<ColumnFilterKey, string> = {
+  customerId: "",
+  companyName: "",
+  lsuName: "",
+  date: "",
+  weight: "",
+  location: "",
+  status: "",
+  microplastics: "",
+}
+
+function microplasticsKg(weight: number) {
+  return (Number(weight || 0) * 0.8).toFixed(2)
+}
+
+function rowCellValue(r: Row, key: ColumnFilterKey): string {
+  switch (key) {
+    case "customerId":
+      return r.customerId
+    case "companyName":
+      return r.companyName
+    case "lsuName":
+      return r.lsuName || ""
+    case "date":
+      return toDateInput(r.date)
+    case "weight":
+      return String(r.weight ?? "")
+    case "location":
+      return r.location || ""
+    case "status":
+      return r.status
+    case "microplastics":
+      return microplasticsKg(r.weight)
+  }
+}
+
+function rowMatchesSearch(r: Row, query: string) {
+  const s = query.trim().toLowerCase()
+  if (!s) return true
+  const haystack = [
+    r.id,
+    r.customerId,
+    r.companyName,
+    r.lsuName || "",
+    toDateInput(r.date),
+    String(r.weight ?? ""),
+    r.location || "",
+    r.status,
+    microplasticsKg(r.weight),
+    r.notes || "",
+  ]
+    .join(" ")
+    .toLowerCase()
+  return haystack.includes(s)
+}
+
+function rowMatchesColumnFilters(r: Row, filters: Record<ColumnFilterKey, string>) {
+  return COLUMN_FILTERS.every(({ key }) => {
+    const value = filters[key].trim().toLowerCase()
+    if (!value) return true
+    return rowCellValue(r, key).toLowerCase().includes(value)
+  })
+}
+
+type SortDir = "asc" | "desc"
+
+function customerIdSortKey(id: string) {
+  const match = id.match(/(\d+)/)
+  return match ? Number(match[1]) : 0
+}
+
+function compareRows(a: Row, b: Row, key: ColumnFilterKey, dir: SortDir) {
+  let cmp = 0
+  switch (key) {
+    case "customerId": {
+      const na = customerIdSortKey(a.customerId)
+      const nb = customerIdSortKey(b.customerId)
+      cmp = na !== nb ? na - nb : a.customerId.localeCompare(b.customerId)
+      break
+    }
+    case "date":
+      cmp = new Date(a.date).getTime() - new Date(b.date).getTime()
+      break
+    case "weight":
+      cmp = Number(a.weight ?? 0) - Number(b.weight ?? 0)
+      break
+    case "microplastics":
+      cmp = Number(a.weight ?? 0) - Number(b.weight ?? 0)
+      break
+    default:
+      cmp = rowCellValue(a, key).localeCompare(rowCellValue(b, key), undefined, {
+        sensitivity: "base",
+        numeric: true,
+      })
+  }
+  return dir === "asc" ? cmp : -cmp
+}
+
 export default function AdminCollectionsPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [customers, setCustomers] = useState<CustomerOption[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+  const [columnFilters, setColumnFilters] = useState(EMPTY_COLUMN_FILTERS)
+  const [sortKey, setSortKey] = useState<ColumnFilterKey>("customerId")
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [filterClient, setFilterClient] = useState<string>("all")
   const [filterMonth, setFilterMonth] = useState<string>("all")
   const [filterLsu, setFilterLsu] = useState<string>("all")
@@ -165,19 +287,30 @@ export default function AdminCollectionsPage() {
   }, [selectedRow?.id])
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return rows
-    return rows.filter((r) => {
-      return (
-        r.id.toLowerCase().includes(s) ||
-        r.customerId.toLowerCase().includes(s) ||
-        r.companyName.toLowerCase().includes(s) ||
-        (r.location || "").toLowerCase().includes(s) ||
-        (r.lsuName || "").toLowerCase().includes(s) ||
-        r.status.toLowerCase().includes(s)
-      )
-    })
-  }, [rows, q])
+    const next = rows.filter((r) => rowMatchesSearch(r, q) && rowMatchesColumnFilters(r, columnFilters))
+    return [...next].sort((a, b) => compareRows(a, b, sortKey, sortDir))
+  }, [rows, q, columnFilters, sortKey, sortDir])
+
+  const activeColumnFilterCount = useMemo(
+    () => Object.values(columnFilters).filter((value) => value.trim()).length,
+    [columnFilters],
+  )
+
+  const clearColumnFilters = () => setColumnFilters(EMPTY_COLUMN_FILTERS)
+
+  const toggleSort = (key: ColumnFilterKey) => {
+    if (sortKey === key) {
+      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"))
+      return
+    }
+    setSortKey(key)
+    setSortDir("asc")
+  }
+
+  const sortIcon = (key: ColumnFilterKey) => {
+    if (sortKey !== key) return <ArrowUpDown className="h-3 w-3 opacity-40" />
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+  }
 
   const resolveCollectionDate = () => {
     if (!monthCollectionMode) return draft.date
@@ -300,7 +433,7 @@ export default function AdminCollectionsPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search customer name, ID, location..."
+            placeholder="Search all fields — ID, brand, LSU, date, weight, location, status…"
             className="pl-9"
           />
         </div>
@@ -501,14 +634,23 @@ export default function AdminCollectionsPage() {
 
       <Card className="glass border-border/50 overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Table2 className="h-4 w-4" />
-            Collections sheet
-          </CardTitle>
-          <CardDescription>
-            {filtered.length} rows · edit weight / location / status inline · click ID to open full edit
-            {savingCell ? " · saving…" : ""}
-          </CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Table2 className="h-4 w-4" />
+                Collections sheet
+              </CardTitle>
+              <CardDescription>
+                {filtered.length} of {rows.length} rows · click column headers to sort · filter any column below
+                {savingCell ? " · saving…" : ""}
+              </CardDescription>
+            </div>
+            {activeColumnFilterCount > 0 ? (
+              <Button variant="outline" size="sm" onClick={clearColumnFilters} className="h-8 shrink-0">
+                Clear column filters ({activeColumnFilterCount})
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -522,21 +664,34 @@ export default function AdminCollectionsPage() {
               <table className="w-full min-w-[980px] border-collapse text-[12.5px]">
                 <thead className="sticky top-0 z-10 bg-[#E8F5E9]">
                   <tr>
-                    {[
-                      "Customer ID",
-                      "Brand",
-                      "LSU",
-                      "Date",
-                      "Weight (kg)",
-                      "Location",
-                      "Status",
-                      "Microplastics",
-                    ].map((h) => (
+                    {COLUMN_FILTERS.map((col) => (
                       <th
-                        key={h}
+                        key={col.key}
                         className="border-b border-[#C8E6D4] px-2.5 py-2 text-left font-semibold text-[#1B7339]"
                       >
-                        {h}
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(col.key)}
+                          className="inline-flex items-center gap-1 hover:text-[#145a2c]"
+                          title={`Sort by ${col.label}`}
+                        >
+                          {col.label}
+                          {sortIcon(col.key)}
+                        </button>
+                      </th>
+                    ))}
+                  </tr>
+                  <tr className="bg-[#F3FAF5]">
+                    {COLUMN_FILTERS.map((col) => (
+                      <th key={`${col.key}-filter`} className="border-b border-[#C8E6D4] px-1.5 py-1.5">
+                        <Input
+                          value={columnFilters[col.key]}
+                          onChange={(e) =>
+                            setColumnFilters((prev) => ({ ...prev, [col.key]: e.target.value }))
+                          }
+                          placeholder={col.placeholder}
+                          className="h-7 min-w-[88px] rounded border-[#D5E5D9] bg-white px-2 text-[11px] shadow-none placeholder:text-[#9AA89E]"
+                        />
                       </th>
                     ))}
                   </tr>
@@ -616,7 +771,7 @@ export default function AdminCollectionsPage() {
                         </Select>
                       </td>
                       <td className="px-2.5 py-1.5 text-[#666]">
-                        {(Number(r.weight || 0) * 0.8).toFixed(2)} kg
+                        {microplasticsKg(r.weight)} kg
                       </td>
                     </tr>
                   ))}

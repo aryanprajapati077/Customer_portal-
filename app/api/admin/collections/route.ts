@@ -247,3 +247,33 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}))
+    const id = String(body?.id || request.nextUrl.searchParams.get("id") || "").trim()
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Collection id required" }, { status: 400 })
+    }
+
+    const existing = await sql`
+      SELECT id, "customerId"
+      FROM "Collection"
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    if (!existing?.[0]) {
+      return NextResponse.json({ success: false, error: "Collection not found" }, { status: 404 })
+    }
+
+    const customerId = String((existing[0] as { customerId: string }).customerId)
+
+    await sql`DELETE FROM "Collection" WHERE id = ${id}`
+    await refreshCustomerWaste(customerId)
+
+    return NextResponse.json({ success: true, id, customerId })
+  } catch (error) {
+    console.error("Error deleting collection (admin):", error)
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
+  }
+}

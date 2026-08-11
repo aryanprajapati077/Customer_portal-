@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Package, Plus, Search, Filter, Table2, Sparkles, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
+import { Loader2, Package, Plus, Search, Filter, Table2, Sparkles, ArrowUp, ArrowDown, ArrowUpDown, Trash2 } from "lucide-react"
 import {
   AdminDetailSheet,
   AdminSheetSection,
@@ -192,6 +192,7 @@ export default function AdminCollectionsPage() {
     notes: "",
   })
   const [savingEdit, setSavingEdit] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [savingCell, setSavingCell] = useState<string | null>(null)
   const [slipOpen, setSlipOpen] = useState(false)
   const [slipData, setSlipData] = useState<{
@@ -387,6 +388,36 @@ export default function AdminCollectionsPage() {
       })
     } finally {
       setSavingEdit(false)
+    }
+  }
+
+  const deleteCollection = async (row: Row) => {
+    const label = `${row.customerId} · ${row.companyName} · ${toDateInput(row.date) || row.date} · ${row.weight} kg`
+    if (
+      !confirm(
+        `Delete this collection?\n\n${label}\n\nThis updates the customer's waste totals and cannot be undone.`,
+      )
+    ) {
+      return false
+    }
+
+    setDeletingId(row.id)
+    try {
+      const res = await fetch("/api/admin/collections", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: row.id }),
+      })
+      const data = await res.json()
+      if (data?.success) {
+        setRows((prev) => prev.filter((r) => r.id !== row.id))
+        setSelectedRow((current) => (current?.id === row.id ? null : current))
+        return true
+      }
+      alert(data?.error || "Could not delete collection")
+      return false
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -641,7 +672,7 @@ export default function AdminCollectionsPage() {
                 Collections sheet
               </CardTitle>
               <CardDescription>
-                {filtered.length} of {rows.length} rows · click column headers to sort · filter any column below
+                {filtered.length} of {rows.length} rows · click column headers to sort · filter any column below · click ID to edit or delete
                 {savingCell ? " · saving…" : ""}
               </CardDescription>
             </div>
@@ -680,10 +711,16 @@ export default function AdminCollectionsPage() {
                         </button>
                       </th>
                     ))}
+                    <th className="border-b border-[#C8E6D4] px-2.5 py-2 text-left font-semibold text-[#1B7339]">
+                      Delete
+                    </th>
                   </tr>
                   <tr className="bg-[#F3FAF5]">
                     {COLUMN_FILTERS.map((col) => (
-                      <th key={`${col.key}-filter`} className="border-b border-[#C8E6D4] px-1.5 py-1.5">
+                      <th
+                        key={`${col.key}-filter`}
+                        className="border-b border-[#C8E6D4] px-1.5 py-1.5"
+                      >
                         <Input
                           value={columnFilters[col.key]}
                           onChange={(e) =>
@@ -694,6 +731,7 @@ export default function AdminCollectionsPage() {
                         />
                       </th>
                     ))}
+                    <th className="border-b border-[#C8E6D4] px-1.5 py-1.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -773,6 +811,23 @@ export default function AdminCollectionsPage() {
                       <td className="px-2.5 py-1.5 text-[#666]">
                         {microplasticsKg(r.weight)} kg
                       </td>
+                      <td className="px-1.5 py-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={deletingId === r.id}
+                          onClick={() => void deleteCollection(r)}
+                          className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          title="Delete collection"
+                        >
+                          {deletingId === r.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -847,6 +902,20 @@ export default function AdminCollectionsPage() {
               <Button onClick={saveSelected} disabled={savingEdit} className="w-full">
                 {savingEdit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Save changes
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={deletingId === selectedRow.id}
+                onClick={() => void deleteCollection(selectedRow)}
+                className="w-full"
+              >
+                {deletingId === selectedRow.id ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Delete collection
               </Button>
             </div>
           </AdminSheetSection>

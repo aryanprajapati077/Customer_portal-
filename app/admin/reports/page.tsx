@@ -413,7 +413,7 @@ export default function AdminReportsPage() {
       return
     }
 
-    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nTo: each client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
+    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nClients with a pending or incomplete collection for this month will be skipped.\n\nTo: each eligible client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
     if (!personal && !confirm(confirmMsg)) return
 
     setSending(true)
@@ -646,7 +646,8 @@ export default function AdminReportsPage() {
               Email Reports
             </CardTitle>
             <CardDescription>
-              To = Primary POC · CC = all Collection POCs. Attachments: PDF + Excel.
+              To = Primary POC · CC = all Collection POCs. Attachments: PDF + Excel. Send to all skips
+              clients with pending or incomplete collections for the selected month.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -698,6 +699,24 @@ export default function AdminReportsPage() {
                   </span>
                   <span className="text-muted-foreground">{lastResult.skipped} skipped</span>
                 </div>
+                {!!lastResult.results?.some((r) => r.status === "skipped") && (
+                  <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
+                    {lastResult.results
+                      .filter((r) => r.status === "skipped")
+                      .slice(0, 12)
+                      .map((r) => (
+                        <p key={`${r.id}-${r.email}-skip`} className="text-[12px] text-muted-foreground">
+                          {r.id} · {r.email}
+                          {r.error ? ` — ${r.error}` : ""}
+                        </p>
+                      ))}
+                    {lastResult.results.filter((r) => r.status === "skipped").length > 12 ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        + {lastResult.results.filter((r) => r.status === "skipped").length - 12} more skipped
+                      </p>
+                    ) : null}
+                  </div>
+                )}
                 {!!lastResult.results?.some((r) => r.status === "failed") && (
                   <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
                     {lastResult.results

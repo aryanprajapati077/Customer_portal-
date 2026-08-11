@@ -21,6 +21,7 @@ import { logEmailDelivery } from "@/lib/email-delivery-log"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { isEmailEnabled } from "@/lib/email-settings"
+import { getReportSendBlockReason } from "@/lib/report-eligibility"
 
 function parsePeriodMonth(period?: string | null): Date | undefined {
   if (!period?.trim()) return undefined
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
                  FROM "Collection" col
                  WHERE col."customerId" = r."customerId"
                    AND date_trunc('month', col.date) = date_trunc('month', r.date)
+                   AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
                ), 0) AS "collectionKg"
         FROM "Report" r
         JOIN "Customer" c ON c.id = r."customerId"
@@ -169,12 +171,14 @@ export async function POST(request: NextRequest) {
       const customers = customerId
         ? await sql`
             SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
+                   "serviceStartDate", "collectionFrequency",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE id = ${customerId}
           `
         : await sql`
             SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
+                   "serviceStartDate", "collectionFrequency",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE status = 'Active'
@@ -193,6 +197,8 @@ export async function POST(request: NextRequest) {
         primaryPocName?: string | null
         status: string
         joinDate?: string | Date | null
+        serviceStartDate?: string | Date | null
+        collectionFrequency?: string | null
         primaryPocEmail?: string | null
         collectionPocs?: string | null
       }
@@ -211,11 +217,30 @@ export async function POST(request: NextRequest) {
           results.push({ id: row.id, email: row.email, status: "skipped", error: "Inactive" })
           continue
         }
+        const pendingReason = await getReportSendBlockReason(row.id, period, row)
+        if (pendingReason) {
+          results.push({ id: row.id, email: row.email, status: "skipped", error: pendingReason })
+          continue
+        }
         if (!resolveReportRecipients(row).to) {
           results.push({ id: row.id, email: row.email, status: "skipped", error: "No email" })
           continue
         }
         toSend.push(row)
+      }
+
+      if (customerId && toSend.length === 0) {
+        const skipped = results.find((r) => r.id === customerId && r.status === "skipped")
+        return NextResponse.json({
+          success: false,
+          error: skipped?.error || "Report cannot be sent for this client.",
+          period,
+          periodLabel,
+          sent: 0,
+          failed: 0,
+          skipped: results.filter((r) => r.status === "skipped").length,
+          results,
+        })
       }
 
       // Single-customer send: generate + queue Resend, return immediately

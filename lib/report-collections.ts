@@ -10,10 +10,14 @@ export type CollectionWeightRow = {
 /** Fetch collections for one or many customers, optionally bounded by date range. */
 export async function fetchReportCollections(
   customerIds: string[],
-  options?: { startIso?: string; endIso?: string; withMeta?: boolean },
+  options?: { startIso?: string; endIso?: string; withMeta?: boolean; completedOnly?: boolean },
 ): Promise<CollectionWeightRow[]> {
   const startIso = options?.startIso
   const endIso = options?.endIso
+  const completedOnly = options?.completedOnly !== false
+  const statusFilter = completedOnly
+    ? sql`AND LOWER(COALESCE(status, 'completed')) = 'completed'`
+    : sql``
 
   if (customerIds.length === 1) {
     const customerId = customerIds[0]!
@@ -25,6 +29,7 @@ export async function fetchReportCollections(
           WHERE "customerId" = ${customerId}
             AND date >= ${startIso}
             AND date <= ${endIso}
+            ${statusFilter}
           ORDER BY date ASC
         `
       }
@@ -34,6 +39,7 @@ export async function fetchReportCollections(
           FROM "Collection"
           WHERE "customerId" = ${customerId}
             AND date <= ${endIso}
+            ${statusFilter}
           ORDER BY date ASC
         `
       }
@@ -41,6 +47,7 @@ export async function fetchReportCollections(
         SELECT weight, date, status, notes
         FROM "Collection"
         WHERE "customerId" = ${customerId}
+          ${statusFilter}
         ORDER BY date ASC
       `
     }
@@ -52,6 +59,7 @@ export async function fetchReportCollections(
         WHERE "customerId" = ${customerId}
           AND date >= ${startIso}
           AND date <= ${endIso}
+          ${statusFilter}
         ORDER BY date DESC
       `
     }
@@ -61,6 +69,7 @@ export async function fetchReportCollections(
         FROM "Collection"
         WHERE "customerId" = ${customerId}
           AND date <= ${endIso}
+          ${statusFilter}
         ORDER BY date DESC
       `
     }
@@ -68,6 +77,7 @@ export async function fetchReportCollections(
       SELECT weight, date
       FROM "Collection"
       WHERE "customerId" = ${customerId}
+        ${statusFilter}
       ORDER BY date DESC
     `
   }
@@ -80,6 +90,7 @@ export async function fetchReportCollections(
         WHERE "customerId" = ANY(${customerIds}::text[])
           AND date >= ${startIso}
           AND date <= ${endIso}
+          ${statusFilter}
         ORDER BY date ASC
       `
     }
@@ -89,6 +100,7 @@ export async function fetchReportCollections(
         FROM "Collection"
         WHERE "customerId" = ANY(${customerIds}::text[])
           AND date <= ${endIso}
+          ${statusFilter}
         ORDER BY date ASC
       `
     }
@@ -96,6 +108,7 @@ export async function fetchReportCollections(
       SELECT weight, date, status, notes
       FROM "Collection"
       WHERE "customerId" = ANY(${customerIds}::text[])
+        ${statusFilter}
       ORDER BY date ASC
     `
   }
@@ -107,6 +120,7 @@ export async function fetchReportCollections(
       WHERE "customerId" = ANY(${customerIds}::text[])
         AND date >= ${startIso}
         AND date <= ${endIso}
+        ${statusFilter}
       ORDER BY date DESC
     `
   }
@@ -116,6 +130,7 @@ export async function fetchReportCollections(
       FROM "Collection"
       WHERE "customerId" = ANY(${customerIds}::text[])
         AND date <= ${endIso}
+        ${statusFilter}
       ORDER BY date DESC
     `
   }
@@ -123,6 +138,7 @@ export async function fetchReportCollections(
     SELECT weight, date
     FROM "Collection"
     WHERE "customerId" = ANY(${customerIds}::text[])
+      ${statusFilter}
     ORDER BY date DESC
   `
 }

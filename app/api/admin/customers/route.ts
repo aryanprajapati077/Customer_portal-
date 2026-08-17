@@ -70,6 +70,27 @@ async function nextCustomerId(): Promise<string> {
   return formatCustomerId(max + 1)
 }
 
+function parseOptionalIsoDate(raw: unknown): string | null {
+  if (raw == null || raw === "") return null
+  const d = new Date(String(raw))
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("Invalid date")
+  }
+  return d.toISOString()
+}
+
+async function findLoginEmailConflict(email: string, excludeId: string): Promise<string | null> {
+  const normalized = email.toLowerCase().trim()
+  const rows = await sql`
+    SELECT id, "companyName" FROM "Customer"
+    WHERE lower(email) = ${normalized} AND id <> ${excludeId}
+    LIMIT 1
+  `
+  const hit = rows[0] as { id?: string; companyName?: string } | undefined
+  if (!hit?.id) return null
+  return hit.companyName ? `${hit.id} (${hit.companyName})` : hit.id
+}
+
 function normalizeCollectionPocs(raw: unknown): CollectionPoc[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -427,7 +448,7 @@ export async function PATCH(request: NextRequest) {
     }
     if (body?.contractEndDate !== undefined) {
       updates.push(`"contractEndDate" = $${i++}`)
-      values.push(body.contractEndDate ? new Date(String(body.contractEndDate)).toISOString() : null)
+      values.push(parseOptionalIsoDate(body.contractEndDate))
     }
     if (body?.isGroup !== undefined) {
       updates.push(`"isGroup" = $${i++}`)
@@ -442,6 +463,13 @@ export async function PATCH(request: NextRequest) {
       if (!email.includes("@")) {
         return NextResponse.json({ success: false, error: "Valid email required" }, { status: 400 })
       }
+      const conflict = await findLoginEmailConflict(email, id)
+      if (conflict) {
+        return NextResponse.json(
+          { success: false, error: `Login email already in use by customer ${conflict}` },
+          { status: 400 },
+        )
+      }
       updates.push(`email = $${i++}`)
       values.push(email)
     }
@@ -454,6 +482,13 @@ export async function PATCH(request: NextRequest) {
       values.push(email)
       // Keep login email in sync when primary POC is the login identity
       if (body?.syncLoginEmail) {
+        const conflict = await findLoginEmailConflict(email, id)
+        if (conflict) {
+          return NextResponse.json(
+            { success: false, error: `Login email already in use by customer ${conflict}` },
+            { status: 400 },
+          )
+        }
         updates.push(`email = $${i++}`)
         values.push(email)
       }
@@ -498,7 +533,7 @@ export async function PATCH(request: NextRequest) {
     if (body?.collectionFrequency !== undefined) setText("collectionFrequency", body.collectionFrequency)
     if (body?.serviceStartDate !== undefined) {
       updates.push(`"serviceStartDate" = $${i++}`)
-      values.push(body.serviceStartDate ? new Date(String(body.serviceStartDate)).toISOString() : null)
+      values.push(parseOptionalIsoDate(body.serviceStartDate))
     }
     if (body?.noOfKiosk !== undefined) {
       const v = Math.max(0, Math.floor(Number(body.noOfKiosk) || 0))
@@ -589,8 +624,18 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, customer: rows?.[0] || null })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating customer:", error)
+    const pg = error as { code?: string; constraint?: string }
+    if (pg.code === "23505" && String(pg.constraint || "").includes("email")) {
+      return NextResponse.json(
+        { success: false, error: "Login email already in use by another customer" },
+        { status: 400 },
+      )
+    }
+    if (error instanceof Error && error.message === "Invalid date") {
+      return NextResponse.json({ success: false, error: "Invalid date" }, { status: 400 })
+    }
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }

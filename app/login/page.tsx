@@ -230,42 +230,6 @@ export default function LoginPage() {
               </Link>
             </p>
 
-            <div className="mt-10 rounded-xl border border-[#EEF0EE] bg-[#F7F8F7] px-4 py-4">
-              <p className="text-center text-[11px] font-medium tracking-wide text-[#8A8A8A]">
-                Proudly supported by
-              </p>
-              <div className="mt-3 flex items-center justify-center gap-6">
-                <a
-                  href="https://iimaventures.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="opacity-90 transition-opacity hover:opacity-100"
-                >
-                  <Image
-                    src="/portal/iima-logo.png"
-                    alt="IIMA Ventures"
-                    width={96}
-                    height={36}
-                    className="h-8 w-auto object-contain"
-                  />
-                </a>
-                <a
-                  href="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="opacity-90 transition-opacity hover:opacity-100"
-                >
-                  <Image
-                    src="/portal/kotak-bizlabs-logo.png"
-                    alt="Kotak BizLabs"
-                    width={110}
-                    height={36}
-                    className="h-7 w-auto object-contain"
-                  />
-                </a>
-              </div>
-            </div>
-
             <p className="mt-6 text-center text-[12px] text-[#9CA3AF]">
               Admin?{" "}
               <Link href="/admin/login" className="font-medium text-[#EF6C00] hover:underline">

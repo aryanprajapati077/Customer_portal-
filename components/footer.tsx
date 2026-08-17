@@ -126,36 +126,6 @@ export function Footer() {
                 className="h-8 w-auto object-contain"
               />
             </a>
-            <span className="hidden h-6 w-px bg-white/15 sm:block" aria-hidden />
-            <span className="text-[11px] text-white/45">Proudly supported by</span>
-            <a
-              href="https://iimaventures.com"
-              target="_blank"
-              rel="noreferrer"
-              className="transition-opacity hover:opacity-90"
-            >
-              <Image
-                src="/portal/iima-ventures-logo.png"
-                alt="IIMA Ventures"
-                width={100}
-                height={40}
-                className="h-9 w-auto object-contain"
-              />
-            </a>
-            <a
-              href="https://www.kotak.bank.in/en/about-us/kotak-bizlabs.html"
-              target="_blank"
-              rel="noreferrer"
-              className="transition-opacity hover:opacity-90"
-            >
-              <Image
-                src="/portal/kotak-bizlabs-logo.png"
-                alt="Kotak BizLabs"
-                width={130}
-                height={32}
-                className="h-7 w-auto object-contain"
-              />
-            </a>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
             {socialLinks.map((social) => (

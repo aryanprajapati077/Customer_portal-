@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Award, Target, Lightbulb, TrendingUp, Building2, Sparkles, ArrowRight } from "lucide-react"
+import { Award, Target, Lightbulb, TrendingUp, ArrowRight } from "lucide-react"
 import { InspirePage, InspireCard } from "@/components/marketing/inspire-page"
 
 const recognitions = [
@@ -9,16 +9,6 @@ const recognitions = [
     icon: Award,
     title: "Atal Innovation Mission",
     desc: "BuffIndia is proud to be supported by the Atal Innovation Mission, recognizing our innovative approach to cigarette waste management and circular design.",
-  },
-  {
-    icon: Building2,
-    title: "IIMA Ecosystem Support",
-    desc: "Rooted in Ahmedabad's innovation ecosystem, BuffIndia has grown with guidance and visibility associated with IIM Ahmedabad–linked entrepreneurship networks.",
-  },
-  {
-    icon: Sparkles,
-    title: "Kotak BizLabs & Startup Networks",
-    desc: "Engagement with programs such as Kotak BizLabs has helped BuffIndia scale operations, refine its service model, and reach corporates nationwide.",
   },
   {
     icon: Lightbulb,

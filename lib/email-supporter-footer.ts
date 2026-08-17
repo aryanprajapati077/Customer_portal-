@@ -10,7 +10,7 @@ export const BUFFINDIA_LOGO_EMAIL = "/report-assets/buffindia-logo-brand.png"
 export const EMAIL_BRAND_FOOTER = "Buffindia — India's first cigarette waste management infrastructure."
 
 /**
- * HTML block with the Buffindia logo — replaces former IIMA / Kotak BizLabs footer.
+ * HTML block with the Buffindia logo for email footers.
  * Uses absolute PNG URL so all major email clients can load it.
  */
 export function emailSupporterFooterHtml(): string {

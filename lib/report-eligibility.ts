@@ -3,6 +3,7 @@ import {
   expectedCollectionsForMonth,
   isDueForMonth,
 } from "@/lib/pending-collections"
+import { normalizeServiceStatus } from "@/lib/service-status"
 
 export function isCompletedCollectionStatus(status?: string | null): boolean {
   return String(status || "Completed").trim().toLowerCase() === "completed"
@@ -46,15 +47,34 @@ export async function customerMissingCompletedCollectionForMonth(
   return (rows[0]?.n || 0) < expected
 }
 
+export function getServiceStatusBlockReason(serviceStatus?: string | null): string | null {
+  const code = normalizeServiceStatus(serviceStatus)
+  if (code === "ACTIVE") return null
+  if (code === "INACTIVE") return "Inactive service"
+  if (code === "PAUSED_RENEWAL") return "Service paused – renewal pending"
+  if (code === "PAUSED_PAYMENT") return "Service paused – payment pending"
+  if (code === "RENEWAL_DUE") return "Renewal due – service not active"
+  return "Service not active"
+}
+
 export async function getReportSendBlockReason(
   customerId: string,
   periodYm: string,
   customer?: {
+    status?: string | null
+    serviceStatus?: string | null
     collectionFrequency?: string | null
     serviceStartDate?: Date | string | null
     joinDate?: Date | string | null
   },
 ): Promise<string | null> {
+  if (String(customer?.status || "Active").trim().toLowerCase() !== "active") {
+    return "Inactive client"
+  }
+
+  const serviceBlock = getServiceStatusBlockReason(customer?.serviceStatus)
+  if (serviceBlock) return serviceBlock
+
   if (await customerHasOpenCollectionForMonth(customerId, periodYm)) {
     return "Pending collection for this month"
   }

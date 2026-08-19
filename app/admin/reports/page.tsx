@@ -413,7 +413,7 @@ export default function AdminReportsPage() {
       return
     }
 
-    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nClients with a pending or incomplete collection for this month will be skipped.\n\nTo: each eligible client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
+    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nInactive or paused service clients will be skipped.\nClients with a pending or incomplete collection for this month will also be skipped.\n\nTo: each eligible client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
     if (!personal && !confirm(confirmMsg)) return
 
     setSending(true)
@@ -647,7 +647,8 @@ export default function AdminReportsPage() {
             </CardTitle>
             <CardDescription>
               To = Primary POC · CC = all Collection POCs. Attachments: PDF + Excel. Send to all skips
-              clients with pending or incomplete collections for the selected month.
+              inactive or paused service clients, and clients with pending or incomplete collections for the
+              selected month.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -170,18 +170,19 @@ export async function POST(request: NextRequest) {
 
       const customers = customerId
         ? await sql`
-            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
+            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "serviceStatus", "joinDate",
                    "serviceStartDate", "collectionFrequency",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE id = ${customerId}
           `
         : await sql`
-            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "joinDate",
+            SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "serviceStatus", "joinDate",
                    "serviceStartDate", "collectionFrequency",
                    "primaryPocEmail", "collectionPocs"
             FROM "Customer"
             WHERE status = 'Active'
+              AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
             ORDER BY "companyName" ASC
           `
 
@@ -196,6 +197,7 @@ export async function POST(request: NextRequest) {
         contactPerson: string | null
         primaryPocName?: string | null
         status: string
+        serviceStatus?: string | null
         joinDate?: string | Date | null
         serviceStartDate?: string | Date | null
         collectionFrequency?: string | null
@@ -213,10 +215,6 @@ export async function POST(request: NextRequest) {
 
       const toSend: CustomerRow[] = []
       for (const row of rows) {
-        if (!customerId && row.status !== "Active") {
-          results.push({ id: row.id, email: row.email, status: "skipped", error: "Inactive" })
-          continue
-        }
         const pendingReason = await getReportSendBlockReason(row.id, period, row)
         if (pendingReason) {
           results.push({ id: row.id, email: row.email, status: "skipped", error: pendingReason })

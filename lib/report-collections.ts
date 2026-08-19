@@ -7,6 +7,8 @@ export type CollectionWeightRow = {
   notes?: string | null
 }
 
+const COMPLETED_STATUS_SQL = `AND LOWER(COALESCE(status, 'completed')) = 'completed'`
+
 /** Fetch collections for one or many customers, optionally bounded by date range. */
 export async function fetchReportCollections(
   customerIds: string[],
@@ -15,132 +17,37 @@ export async function fetchReportCollections(
   const startIso = options?.startIso
   const endIso = options?.endIso
   const completedOnly = options?.completedOnly !== false
-  const statusFilter = completedOnly
-    ? sql`AND LOWER(COALESCE(status, 'completed')) = 'completed'`
-    : sql``
+  const withMeta = Boolean(options?.withMeta)
+  const columns = withMeta ? "weight, date, status, notes" : "weight, date"
+  const order = withMeta ? "ASC" : "DESC"
+
+  const values: unknown[] = []
+  let i = 1
+  let text = `SELECT ${columns} FROM "Collection" WHERE `
 
   if (customerIds.length === 1) {
-    const customerId = customerIds[0]!
-    if (options?.withMeta) {
-      if (startIso && endIso) {
-        return sql`
-          SELECT weight, date, status, notes
-          FROM "Collection"
-          WHERE "customerId" = ${customerId}
-            AND date >= ${startIso}
-            AND date <= ${endIso}
-            ${statusFilter}
-          ORDER BY date ASC
-        `
-      }
-      if (endIso) {
-        return sql`
-          SELECT weight, date, status, notes
-          FROM "Collection"
-          WHERE "customerId" = ${customerId}
-            AND date <= ${endIso}
-            ${statusFilter}
-          ORDER BY date ASC
-        `
-      }
-      return sql`
-        SELECT weight, date, status, notes
-        FROM "Collection"
-        WHERE "customerId" = ${customerId}
-          ${statusFilter}
-        ORDER BY date ASC
-      `
-    }
-
-    if (startIso && endIso) {
-      return sql`
-        SELECT weight, date
-        FROM "Collection"
-        WHERE "customerId" = ${customerId}
-          AND date >= ${startIso}
-          AND date <= ${endIso}
-          ${statusFilter}
-        ORDER BY date DESC
-      `
-    }
-    if (endIso) {
-      return sql`
-        SELECT weight, date
-        FROM "Collection"
-        WHERE "customerId" = ${customerId}
-          AND date <= ${endIso}
-          ${statusFilter}
-        ORDER BY date DESC
-      `
-    }
-    return sql`
-      SELECT weight, date
-      FROM "Collection"
-      WHERE "customerId" = ${customerId}
-        ${statusFilter}
-      ORDER BY date DESC
-    `
-  }
-
-  if (options?.withMeta) {
-    if (startIso && endIso) {
-      return sql`
-        SELECT weight, date, status, notes
-        FROM "Collection"
-        WHERE "customerId" = ANY(${customerIds}::text[])
-          AND date >= ${startIso}
-          AND date <= ${endIso}
-          ${statusFilter}
-        ORDER BY date ASC
-      `
-    }
-    if (endIso) {
-      return sql`
-        SELECT weight, date, status, notes
-        FROM "Collection"
-        WHERE "customerId" = ANY(${customerIds}::text[])
-          AND date <= ${endIso}
-          ${statusFilter}
-        ORDER BY date ASC
-      `
-    }
-    return sql`
-      SELECT weight, date, status, notes
-      FROM "Collection"
-      WHERE "customerId" = ANY(${customerIds}::text[])
-        ${statusFilter}
-      ORDER BY date ASC
-    `
+    text += `"customerId" = $${i++}`
+    values.push(customerIds[0]!)
+  } else {
+    text += `"customerId" = ANY($${i++}::text[])`
+    values.push(customerIds)
   }
 
   if (startIso && endIso) {
-    return sql`
-      SELECT weight, date
-      FROM "Collection"
-      WHERE "customerId" = ANY(${customerIds}::text[])
-        AND date >= ${startIso}
-        AND date <= ${endIso}
-        ${statusFilter}
-      ORDER BY date DESC
-    `
+    text += ` AND date >= $${i++} AND date <= $${i++}`
+    values.push(startIso, endIso)
+  } else if (endIso) {
+    text += ` AND date <= $${i++}`
+    values.push(endIso)
   }
-  if (endIso) {
-    return sql`
-      SELECT weight, date
-      FROM "Collection"
-      WHERE "customerId" = ANY(${customerIds}::text[])
-        AND date <= ${endIso}
-        ${statusFilter}
-      ORDER BY date DESC
-    `
+
+  if (completedOnly) {
+    text += ` ${COMPLETED_STATUS_SQL}`
   }
-  return sql`
-    SELECT weight, date
-    FROM "Collection"
-    WHERE "customerId" = ANY(${customerIds}::text[])
-      ${statusFilter}
-    ORDER BY date DESC
-  `
+
+  text += ` ORDER BY date ${order}`
+
+  return sql.query<CollectionWeightRow>(text, values)
 }
 
 export function serviceStartIso(

@@ -195,17 +195,16 @@ export async function generateImpactReportExcel(
   // Month-wise aggregation
   const byMonth = new Map<
     string,
-    { count: number; wasteKg: number; statuses: string[]; remarks: string[] }
+    { count: number; wasteKg: number; statuses: string[] }
   >()
   for (const c of collections) {
     const d = new Date(c.date as string | Date)
     if (Number.isNaN(d.getTime())) continue
     const key = monthKey(d)
-    const cur = byMonth.get(key) || { count: 0, wasteKg: 0, statuses: [], remarks: [] }
+    const cur = byMonth.get(key) || { count: 0, wasteKg: 0, statuses: [] }
     cur.count += 1
     cur.wasteKg += Number(c.weight) || 0
     if (c.status) cur.statuses.push(String(c.status))
-    if (c.notes?.trim()) cur.remarks.push(String(c.notes).trim())
     byMonth.set(key, cur)
   }
 
@@ -242,7 +241,6 @@ export async function generateImpactReportExcel(
     { width: 22 },
     { width: 24 },
     { width: 18 },
-    { width: 22 },
   ]
 
   // ── 1. CUSTOMER DETAILS ──
@@ -314,7 +312,7 @@ export async function generateImpactReportExcel(
 
   // ── 3. MONTH-WISE IMPACT DETAILS ──
   const monthStart = summaryHeader + summaryRows.length + 2
-  sheet.mergeCells(`A${monthStart}:I${monthStart}`)
+  sheet.mergeCells(`A${monthStart}:H${monthStart}`)
   styleHeader(sheet.getCell(`A${monthStart}`), "FFFFF2CC")
   sheet.getCell(`A${monthStart}`).value = "3. MONTH-WISE IMPACT DETAILS (FROM SERVICE START)"
   sheet.getRow(monthStart).height = 22
@@ -329,7 +327,6 @@ export async function generateImpactReportExcel(
     "Water Protected (L)",
     "Cigarette Butts Collected",
     "Collection Status",
-    "Remarks",
   ]
   monthHeaders.forEach((h, i) => {
     const cell = sheet.getCell(monthHeaderRow, i + 1)
@@ -352,7 +349,7 @@ export async function generateImpactReportExcel(
 
   limitedKeys.forEach((key, i) => {
     const row = monthHeaderRow + 1 + i
-    const data = byMonth.get(key) || { count: 0, wasteKg: 0, statuses: [], remarks: [] }
+    const data = byMonth.get(key) || { count: 0, wasteKg: 0, statuses: [] }
     const waste = +data.wasteKg.toFixed(2)
     const recycled = waste
     const micro = +(waste * 0.8).toFixed(2)
@@ -374,7 +371,6 @@ export async function generateImpactReportExcel(
       water,
       butts,
       status,
-      data.remarks.join("; ") || "",
     ]
     values.forEach((v, col) => {
       const cell = sheet.getCell(row, col + 1)
@@ -403,7 +399,6 @@ export async function generateImpactReportExcel(
     +totals.micro.toFixed(2),
     totals.water,
     totals.butts,
-    "",
     "",
   ]
   totalValues.forEach((v, col) => {

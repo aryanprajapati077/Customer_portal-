@@ -7,6 +7,10 @@ export type EmailDeliveryStatus =
   | "bounced"
   | "complained"
   | "delivered"
+  | "opened"
+  | "clicked"
+  | "received"
+  | "delayed"
 
 export async function ensureEmailDeliveryLogTable() {
   await sql.query(`
@@ -41,6 +45,39 @@ export async function ensureEmailDeliveryLogTable() {
   await sql.query(`
     CREATE INDEX IF NOT EXISTS "EmailDeliveryLog_resendId_idx"
     ON "EmailDeliveryLog" ("resendId")
+  `)
+  await sql.query(`
+    ALTER TABLE "EmailDeliveryLog"
+      ADD COLUMN IF NOT EXISTS "openedCount" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "clickedCount" INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "openedAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "clickedAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "deliveredAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "subject" TEXT,
+      ADD COLUMN IF NOT EXISTS "lastEvent" TEXT
+  `)
+  await sql.query(`
+    CREATE TABLE IF NOT EXISTS "EmailDeliveryEvent" (
+      id TEXT PRIMARY KEY,
+      "resendId" TEXT,
+      email TEXT,
+      type TEXT NOT NULL,
+      status TEXT,
+      error TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+  await sql.query(`
+    CREATE INDEX IF NOT EXISTS "EmailDeliveryEvent_resendId_idx"
+    ON "EmailDeliveryEvent" ("resendId")
+  `)
+  await sql.query(`
+    CREATE INDEX IF NOT EXISTS "EmailDeliveryEvent_type_idx"
+    ON "EmailDeliveryEvent" (type)
+  `)
+  await sql.query(`
+    CREATE INDEX IF NOT EXISTS "EmailDeliveryEvent_createdAt_idx"
+    ON "EmailDeliveryEvent" ("createdAt")
   `)
 }
 
@@ -87,14 +124,35 @@ export async function markEmailDeliveryByResendId(
   error?: string | null,
 ) {
   await ensureEmailDeliveryLogTable()
-  if (!resendId) return
-  await sql`
+  if (!resendId) return 0
+  const eventName = `email.${status}`
+  const rows = await sql`
     UPDATE "EmailDeliveryLog"
-    SET status = ${status},
-        error = COALESCE(${error || null}, error),
-        "updatedAt" = CURRENT_TIMESTAMP
+    SET
+      status = CASE
+        WHEN status IN ('bounced', 'failed', 'complained')
+          AND ${status} NOT IN ('bounced', 'failed', 'complained') THEN status
+        WHEN ${status} IN ('bounced', 'failed', 'complained') THEN ${status}
+        WHEN ${status} = 'clicked' THEN 'clicked'
+        WHEN ${status} = 'opened' AND status <> 'clicked' THEN 'opened'
+        WHEN ${status} = 'delivered' AND status IN ('queued', 'sent', 'delayed', 'received') THEN 'delivered'
+        WHEN ${status} = 'sent' AND status IN ('queued') THEN 'sent'
+        WHEN ${status} = 'received' THEN 'received'
+        WHEN ${status} = 'delayed' AND status IN ('queued', 'sent') THEN 'delayed'
+        ELSE status
+      END,
+      error = COALESCE(${error || null}, error),
+      "updatedAt" = CURRENT_TIMESTAMP,
+      "lastEvent" = ${eventName},
+      "deliveredAt" = CASE WHEN ${eventName} = 'email.delivered' THEN COALESCE("deliveredAt", CURRENT_TIMESTAMP) ELSE "deliveredAt" END,
+      "openedAt" = CASE WHEN ${eventName} = 'email.opened' THEN COALESCE("openedAt", CURRENT_TIMESTAMP) ELSE "openedAt" END,
+      "clickedAt" = CASE WHEN ${eventName} = 'email.clicked' THEN COALESCE("clickedAt", CURRENT_TIMESTAMP) ELSE "clickedAt" END,
+      "openedCount" = CASE WHEN ${eventName} = 'email.opened' THEN COALESCE("openedCount", 0) + 1 ELSE "openedCount" END,
+      "clickedCount" = CASE WHEN ${eventName} = 'email.clicked' THEN COALESCE("clickedCount", 0) + 1 ELSE "clickedCount" END
     WHERE "resendId" = ${resendId}
+    RETURNING id
   `
+  return rows.length
 }
 
 export async function markEmailDeliveryByAddress(
@@ -106,16 +164,23 @@ export async function markEmailDeliveryByAddress(
   const normalized = String(email || "")
     .toLowerCase()
     .trim()
-  if (!normalized) return
-  await sql`
+  if (!normalized) return 0
+  const rows = await sql`
     UPDATE "EmailDeliveryLog"
     SET status = ${status},
         error = COALESCE(${error || null}, error),
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE lower(email) = ${normalized}
-      AND "resolvedAt" IS NULL
-      AND status IN ('queued', 'sent', 'delivered', 'failed')
+        "updatedAt" = CURRENT_TIMESTAMP,
+        "lastEvent" = ${`email.${status}`}
+    WHERE id = (
+      SELECT id FROM "EmailDeliveryLog"
+      WHERE lower(email) = ${normalized}
+        AND "resolvedAt" IS NULL
+      ORDER BY "createdAt" DESC
+      LIMIT 1
+    )
+    RETURNING id
   `
+  return rows.length
 }
 
 export async function listProblemEmailDeliveries(options?: {

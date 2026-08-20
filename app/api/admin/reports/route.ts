@@ -1,32 +1,30 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { resend, getResendFrom } from "@/lib/resend"
-import { generateImpactReportPdf } from "@/lib/generate-impact-report-pdf"
-import { generateImpactReportExcel } from "@/lib/generate-impact-report-excel"
+import { resend } from "@/lib/resend"
 import {
   syncMonthlyReportsForAllActiveCustomers,
   syncMonthlyReportsForCustomer,
   ensureMonthlyReportForPeriod,
   getCurrentMonthKey,
 } from "@/lib/monthly-reports"
-import {
-  buildEsgReportEmailHtml,
-  buildEsgReportEmailText,
-  buildEsgReportSubject,
-} from "@/lib/email-templates"
-import { getEsgEmailCopy } from "@/lib/email-template-store"
 import { formatReportingPeriod } from "@/lib/esg-metrics"
 import { resolveReportRecipients } from "@/lib/report-recipients"
 import { logEmailDelivery } from "@/lib/email-delivery-log"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { isEmailEnabled } from "@/lib/email-settings"
-import {
-  getAlreadySentReportCustomerIds,
-  getCollectionStatsByCustomer,
-  getReportSendBlockReasonSync,
-} from "@/lib/report-eligibility"
+import { getReportSendBlockReasonSync, getCollectionStatsByCustomer } from "@/lib/report-eligibility"
 import { queueEmail } from "@/lib/email-queue"
+import {
+  drainReportSendJobs,
+  enqueueBulkReportSend,
+  getActiveReportSendJob,
+  getLatestReportSendJob,
+} from "@/lib/report-send-job"
+import {
+  sendEsgReportEmail,
+  type ReportCustomerRow,
+} from "@/lib/send-esg-report-email"
 
 export const maxDuration = 300
 
@@ -37,107 +35,6 @@ function parsePeriodMonth(period?: string | null): Date | undefined {
   const year = Number(match[1])
   const month = Number(match[2]) - 1
   return new Date(year, month + 1, 0, 23, 59, 59, 999)
-}
-
-type ReportCustomerRow = {
-  id: string
-  email: string
-  companyName: string
-  contactPerson: string | null
-  primaryPocName?: string | null
-  status: string
-  serviceStatus?: string | null
-  joinDate?: string | Date | null
-  serviceStartDate?: string | Date | null
-  collectionFrequency?: string | null
-  primaryPocEmail?: string | null
-  collectionPocs?: string | null
-}
-
-async function sendEsgReportEmail(options: {
-  row: ReportCustomerRow
-  period: string
-  periodLabel: string
-  emailCopy: Awaited<ReturnType<typeof getEsgEmailCopy>>
-  mailer: NonNullable<typeof resend>
-}) {
-  const { row, period, periodLabel, emailCopy, mailer } = options
-  await ensureMonthlyReportForPeriod(row.id, period)
-  const [{ pdfBuffer, filename: pdfFilename, reportData }, excel] = await Promise.all([
-    generateImpactReportPdf(row.id, { period }),
-    generateImpactReportExcel(row.id, { period }),
-  ])
-  const recipients = resolveReportRecipients(row)
-  if (!recipients.to) throw new Error("No email")
-
-  const sendResult = await mailer.emails.send({
-    from: getResendFrom(),
-    to: recipients.to,
-    ...(recipients.cc.length ? { cc: recipients.cc } : {}),
-    subject: buildEsgReportSubject(
-      { period: periodLabel, companyName: row.companyName },
-      emailCopy,
-    ),
-    html: buildEsgReportEmailHtml(
-      {
-        companyName: row.companyName,
-        contactName: row.primaryPocName || row.contactPerson,
-        period: periodLabel,
-        customerId: reportData.customerId,
-      },
-      emailCopy,
-    ),
-    text: buildEsgReportEmailText(
-      {
-        companyName: row.companyName,
-        contactName: row.primaryPocName || row.contactPerson,
-        period: periodLabel,
-        customerId: reportData.customerId,
-      },
-      emailCopy,
-    ),
-    attachments: [
-      { filename: pdfFilename, content: pdfBuffer },
-      { filename: excel.filename, content: excel.buffer },
-    ],
-  })
-  const resendId =
-    (sendResult as { data?: { id?: string }; id?: string })?.data?.id ||
-    (sendResult as { id?: string })?.id ||
-    null
-  await logEmailDelivery({
-    customerId: row.id,
-    email: recipients.to,
-    emailRole: "to",
-    kind: "esg_report",
-    status: "sent",
-    resendId,
-    period,
-    companyName: row.companyName,
-  })
-  for (const cc of recipients.cc) {
-    await logEmailDelivery({
-      customerId: row.id,
-      email: cc,
-      emailRole: "cc",
-      kind: "esg_report",
-      status: "sent",
-      resendId,
-      period,
-      companyName: row.companyName,
-    })
-  }
-  const notifId = `notif_report_${row.id}_${Date.now()}`
-  await sql`
-    INSERT INTO "Notification" (id, "customerId", title, body)
-    VALUES (
-      ${notifId},
-      ${row.id},
-      ${`Your ${periodLabel} ESG Report is ready`},
-      ${"We emailed your latest ESG impact report (PDF + Excel). You can also download it from Reports & Documents in your dashboard."}
-    )
-  `
-  return recipients.to
 }
 
 async function requireReportsAdmin(request: NextRequest) {
@@ -156,7 +53,7 @@ export async function GET(request: NextRequest) {
     const auth = await requireReportsAdmin(request)
     if (!auth.ok) return auth.response
 
-    const [reports, stats] = await Promise.all([
+    const [reports, stats, sendJob] = await Promise.all([
       sql`
         SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
                c."companyName", c.email, c.status,
@@ -180,12 +77,14 @@ export async function GET(request: NextRequest) {
             WHERE type = 'monthly'
               AND date >= date_trunc('month', CURRENT_DATE)) AS reports_this_month
       `,
+      getActiveReportSendJob(),
     ])
 
     return NextResponse.json({
       success: true,
       reports,
       stats: stats[0] || {},
+      sendJob,
     })
   } catch (error) {
     console.error("Error fetching admin reports:", error)
@@ -261,13 +160,10 @@ export async function POST(request: NextRequest) {
           { status: 403 },
         )
       }
-      const mailer = resend
-
       const period = body?.period ? String(body.period) : getCurrentMonthKey()
       const customerId = body?.customerId ? String(body.customerId).trim() : null
       const asOfDate = parsePeriodMonth(period)
       const periodLabel = formatReportingPeriod(asOfDate)
-      const emailCopy = await getEsgEmailCopy()
 
       if (!/^\d{4}-\d{2}$/.test(period)) {
         return NextResponse.json(
@@ -299,76 +195,39 @@ export async function POST(request: NextRequest) {
       }
 
       const rows = customers as ReportCustomerRow[]
-      const results: {
-        id: string
-        email: string
-        status: "sent" | "failed" | "skipped" | "queued"
-        error?: string
-      }[] = []
 
-      const [collectionStats, alreadySent] = await Promise.all([
-        getCollectionStatsByCustomer(period),
-        customerId ? Promise.resolve(new Set<string>()) : getAlreadySentReportCustomerIds(period),
-      ])
-
-      const toSend: ReportCustomerRow[] = []
-      for (const row of rows) {
+      if (customerId) {
+        const row = rows[0]
+        const collectionStats = await getCollectionStatsByCustomer(period)
         const pendingReason = getReportSendBlockReasonSync(period, row, collectionStats.get(row.id))
         if (pendingReason) {
-          results.push({ id: row.id, email: row.email, status: "skipped", error: pendingReason })
-          continue
-        }
-        if (!resolveReportRecipients(row).to) {
-          results.push({ id: row.id, email: row.email, status: "skipped", error: "No email" })
-          continue
-        }
-        if (!customerId && alreadySent.has(row.id)) {
-          results.push({
-            id: row.id,
-            email: row.email,
-            status: "skipped",
-            error: "Already sent for this month",
-          })
-          continue
-        }
-        toSend.push(row)
-      }
-
-      if (customerId && toSend.length === 0) {
-        const skipped = results.find((r) => r.id === customerId && r.status === "skipped")
-        return NextResponse.json({
-          success: false,
-          error: skipped?.error || "Report cannot be sent for this client.",
-          period,
-          periodLabel,
-          sent: 0,
-          failed: 0,
-          skipped: results.filter((r) => r.status === "skipped").length,
-          results,
-        })
-      }
-
-      // Single-customer send: queue generate + Resend, return immediately
-      if (customerId && toSend.length === 1) {
-        const row = toSend[0]
-        const recipients = resolveReportRecipients(row)
-        if (!recipients.to) {
-          results.push({ id: row.id, email: row.email, status: "skipped", error: "No email" })
           return NextResponse.json({
-            success: true,
+            success: false,
+            error: pendingReason,
             period,
             periodLabel,
             sent: 0,
-            queued: 0,
             failed: 0,
-            skipped: results.filter((r) => r.status === "skipped").length,
-            results,
+            skipped: 1,
+            results: [{ id: row.id, email: row.email, status: "skipped", error: pendingReason }],
+          })
+        }
+        const recipients = resolveReportRecipients(row)
+        if (!recipients.to) {
+          return NextResponse.json({
+            success: false,
+            error: "No email",
+            period,
+            periodLabel,
+            sent: 0,
+            failed: 0,
+            skipped: 1,
           })
         }
 
         queueEmail("esg-report", async () => {
           try {
-            await sendEsgReportEmail({ row, period, periodLabel, emailCopy, mailer })
+            await sendEsgReportEmail({ row, period, periodLabel })
           } catch (err) {
             const message = err instanceof Error ? err.message : "Send failed"
             await logEmailDelivery({
@@ -395,7 +254,6 @@ export async function POST(request: NextRequest) {
           companyName: row.companyName,
         })
 
-        results.push({ id: row.id, email: recipients.to, status: "queued" })
         return NextResponse.json({
           success: true,
           period,
@@ -403,67 +261,33 @@ export async function POST(request: NextRequest) {
           sent: 0,
           queued: 1,
           failed: 0,
-          skipped: results.filter((r) => r.status === "skipped").length,
-          results,
+          skipped: 0,
+          results: [{ id: row.id, email: recipients.to, status: "queued" }],
         })
       }
 
-      // Bulk: return immediately and send remaining in the background (resumable).
-      const CONCURRENCY = 3
-      for (const row of toSend) {
-        const recipients = resolveReportRecipients(row)
-        results.push({ id: row.id, email: recipients.to || row.email, status: "queued" })
-        await logEmailDelivery({
-          customerId: row.id,
-          email: recipients.to || row.email,
-          emailRole: "to",
-          kind: "esg_report",
-          status: "queued",
-          period,
-          companyName: row.companyName,
-        })
-      }
-
-      queueEmail("esg-reports-bulk", async () => {
-        for (let i = 0; i < toSend.length; i += CONCURRENCY) {
-          const batch = toSend.slice(i, i + CONCURRENCY)
-          await Promise.allSettled(
-            batch.map(async (row) => {
-              const recipients = resolveReportRecipients(row)
-              try {
-                await sendEsgReportEmail({ row, period, periodLabel, emailCopy, mailer })
-              } catch (err) {
-                const message = err instanceof Error ? err.message : "Send failed"
-                await logEmailDelivery({
-                  customerId: row.id,
-                  email: recipients.to || row.email,
-                  emailRole: "to",
-                  kind: "esg_report",
-                  status: "failed",
-                  error: message,
-                  period,
-                  companyName: row.companyName,
-                })
-              }
-            }),
-          )
-        }
-      })
-
-      const skipped = results.filter((r) => r.status === "skipped").length
-      const alreadySentCount = results.filter((r) => r.error === "Already sent for this month").length
+      const queued = await enqueueBulkReportSend(period, rows)
+      queueEmail("esg-reports-job", () => drainReportSendJobs(240_000))
 
       return NextResponse.json({
         success: true,
         period,
         periodLabel,
-        sent: alreadySentCount,
-        queued: toSend.length,
-        failed: 0,
-        skipped,
-        alreadySent: alreadySentCount,
-        results,
+        sent: queued.job.sent,
+        queued: queued.queued,
+        failed: queued.job.failed,
+        skipped: queued.skipped,
+        alreadySent: 0,
+        reused: queued.reused,
+        job: queued.job,
+        results: [],
       })
+    }
+
+    if (action === "send-job-status") {
+      const period = body?.period ? String(body.period) : ""
+      const job = period ? await getLatestReportSendJob(period) : await getActiveReportSendJob()
+      return NextResponse.json({ success: true, job })
     }
 
     return NextResponse.json({ success: false, error: "Unknown action" }, { status: 400 })

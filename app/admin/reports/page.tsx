@@ -68,6 +68,16 @@ type Stats = {
   reports_this_month: number
 }
 
+type SendJob = {
+  id: string
+  period: string
+  status: string
+  total: number
+  sent: number
+  failed: number
+  skipped: number
+}
+
 type CustomerOption = {
   id: string
   companyName: string
@@ -118,6 +128,7 @@ export default function AdminReportsPage() {
     periodLabel?: string
     results?: { id: string; email: string; status: string; error?: string }[]
   } | null>(null)
+  const [sendJob, setSendJob] = useState<SendJob | null>(null)
   const [genMessage, setGenMessage] = useState<string | null>(null)
   const [emailCopy, setEmailCopy] = useState<EsgEmailCopy>(DEFAULT_ESG_EMAIL_COPY)
   const [savingCopy, setSavingCopy] = useState(false)
@@ -179,6 +190,7 @@ export default function AdminReportsPage() {
       if (reportsData?.success) {
         setReports(reportsData.reports || [])
         setStats(reportsData.stats || null)
+        if (reportsData.sendJob) setSendJob(reportsData.sendJob)
       }
       if (customersData?.success) {
         setCustomers(customersData.customers || [])
@@ -201,6 +213,24 @@ export default function AdminReportsPage() {
   useEffect(() => {
     load()
   }, [])
+
+  useEffect(() => {
+    if (!sendJob || (sendJob.status !== "queued" && sendJob.status !== "running")) return
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch("/api/admin/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "send-job-status", period: sendJob.period }),
+        })
+        const data = await res.json()
+        if (data?.job) setSendJob(data.job)
+      } catch {
+        /* ignore poll errors */
+      }
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [sendJob?.id, sendJob?.status, sendJob?.period])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -413,7 +443,7 @@ export default function AdminReportsPage() {
       return
     }
 
-    const confirmMsg = `Send ${targetPeriod} ESG report emails to remaining active clients?\n\nAlready-sent clients for this month are skipped.\nInactive or paused service clients are skipped.\nClients with pending or incomplete collections are skipped.\n\nThe page will return immediately; remaining emails continue in the background. Click Send again later if some are still pending.\n\nTo: Primary POC · CC: Collection POCs · Attachments: PDF + Excel`
+    const confirmMsg = `Send ${targetPeriod} ESG report emails to remaining active clients?\n\nAlready-sent clients are skipped automatically.\nInactive/paused clients and pending collections are skipped.\n\nThis will keep running in the background until every eligible client is sent — you do not need to wait on this page.`
     if (!personal && !confirm(confirmMsg)) return
 
     setSending(true)
@@ -443,9 +473,12 @@ export default function AdminReportsPage() {
         })
         if (personal) {
           alert(data.message || `Report email queued for ${targetCustomer}.`)
-        } else {
+        } else if (data.job) {
+          setSendJob(data.job)
           alert(
-            `Queued ${queued} remaining emails for ${targetPeriod}.\nAlready sent: ${alreadySent}\nSkipped: ${data.skipped || 0}\n\nEmails continue in the background. Click Send to all again later if some are still pending.`,
+            data.reused
+              ? `A send for ${targetPeriod} is already running (${data.job.sent}/${data.job.total} sent). It will continue automatically.`
+              : `Queued ${queued} remaining emails for ${targetPeriod}.\nSkipped: ${data.skipped || 0}\n\nSending continues automatically until complete.`,
           )
         }
         setSendCustomerId(targetCustomer)
@@ -651,9 +684,9 @@ export default function AdminReportsPage() {
               Email Reports
             </CardTitle>
             <CardDescription>
-              To = Primary POC · CC = Collection POCs. Send to all returns immediately, skips already-sent
-              clients for that month, and continues remaining emails in the background. Click Send again to
-              resume if the run is interrupted. Skips inactive/paused service and pending collections.
+              To = Primary POC · CC = Collection POCs. Send to all queues remaining eligible clients and
+              finishes automatically in the background (even if you leave this page). Already-sent clients,
+              inactive/paused service, and pending collections are skipped.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -690,6 +723,27 @@ export default function AdminReportsPage() {
                 </>
               )}
             </Button>
+
+            {sendJob && (
+              <div className="space-y-2 rounded-xl border border-[#C8E6D4] bg-[#E8F5E9] p-4">
+                <p className="text-sm font-semibold text-[#1B7339]">
+                  Bulk send {sendJob.period} — {sendJob.status === "completed" ? "complete" : "in progress"}
+                </p>
+                <p className="text-sm text-[#1B7339]">
+                  {sendJob.sent} sent · {sendJob.failed} failed · {sendJob.skipped} skipped · {sendJob.total} queued
+                </p>
+                {sendJob.total > 0 && (
+                  <div className="h-2 overflow-hidden rounded-full bg-white/80">
+                    <div
+                      className="h-full bg-[#1B7339] transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.round(((sendJob.sent + sendJob.failed) / sendJob.total) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {lastResult && (
               <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-4">

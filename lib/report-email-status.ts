@@ -4,7 +4,13 @@ import { ensureReportSendTables } from "@/lib/report-send-job"
 import { getCollectionStatsByCustomer, getReportSendBlockReasonSync } from "@/lib/report-eligibility"
 import { resolveReportRecipients } from "@/lib/report-recipients"
 
-export type ReportEmailStatusKind = "sent" | "pending" | "queued" | "failed" | "not_eligible"
+export type ReportEmailStatusKind =
+  | "sent"
+  | "opened"
+  | "pending"
+  | "queued"
+  | "failed"
+  | "not_eligible"
 
 export type ReportEmailStatusRow = {
   customerId: string
@@ -14,11 +20,14 @@ export type ReportEmailStatusRow = {
   emailStatus: string | null
   reason: string | null
   sentAt: string | null
+  openedAt: string | null
+  openedCount: number
 }
 
 export type ReportEmailStatusSummary = {
   total: number
   sent: number
+  opened: number
   pending: number
   queued: number
   failed: number
@@ -49,6 +58,8 @@ type DeliveryLogRow = {
   error: string | null
   updatedAt: string
   deliveredAt: string | null
+  openedAt: string | null
+  openedCount: number | null
 }
 
 type SendItemRow = {
@@ -90,7 +101,14 @@ function deriveStatus(
   hasEmail: boolean,
 ): { status: ReportEmailStatusKind; reason: string | null } {
   const deliveryStatus = delivery?.status || null
+  const opened =
+    deliveryStatus === "opened" ||
+    deliveryStatus === "clicked" ||
+    (delivery?.openedCount || 0) > 0
 
+  if (opened) {
+    return { status: "opened", reason: null }
+  }
   if (deliveryStatus && SENT_STATUSES.has(deliveryStatus)) {
     return { status: "sent", reason: null }
   }
@@ -135,7 +153,7 @@ export async function getReportEmailStatus(
   const [collectionStats, deliveryRows, sendItemRows] = await Promise.all([
     getCollectionStatsByCustomer(period),
     sql`
-      SELECT "customerId", status, email, error, "updatedAt", "deliveredAt"
+      SELECT "customerId", status, email, error, "updatedAt", "deliveredAt", "openedAt", "openedCount"
       FROM "EmailDeliveryLog"
       WHERE kind = 'esg_report'
         AND period = ${period}
@@ -185,12 +203,15 @@ export async function getReportEmailStatus(
       emailStatus: delivery?.status || null,
       reason,
       sentAt: delivery?.deliveredAt || delivery?.updatedAt || null,
+      openedAt: delivery?.openedAt || null,
+      openedCount: delivery?.openedCount || 0,
     }
   })
 
   const summary: ReportEmailStatusSummary = {
     total: rows.length,
     sent: 0,
+    opened: 0,
     pending: 0,
     queued: 0,
     failed: 0,

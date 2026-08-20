@@ -233,8 +233,8 @@ export default function AdminEmailStatusPage() {
       <p className="rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] px-4 py-3 text-sm text-[#3A3A3A]">
         Resend webhook URL:{" "}
         <code className="rounded bg-white px-1.5 py-0.5 text-[12px]">https://impact.buffindia.com/api/webhooks/resend</code>
-        {" "}· Enable sent, delivered, opened, clicked, bounced, complained, failed, received.
-        Open/click counts need tracking enabled in Resend.
+        {" "}· Enable <strong>sent, delivered, opened, clicked</strong>, bounced, complained, failed, received.
+        Opens only appear when the recipient opens the email in their inbox (Gmail/Outlook) with images allowed — not from the admin preview or Send button.
       </p>
 
       <Card className="glass border-border/50">

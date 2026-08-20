@@ -118,41 +118,149 @@ export async function logEmailDelivery(input: {
   return id
 }
 
+function engagementEventName(status: EmailDeliveryStatus) {
+  return `email.${status}`
+}
+
+const ENGAGEMENT_UPDATE_SQL = `
+  UPDATE "EmailDeliveryLog"
+  SET
+    status = CASE
+      WHEN status IN ('bounced', 'failed', 'complained')
+        AND $1::text NOT IN ('bounced', 'failed', 'complained') THEN status
+      WHEN $1::text IN ('bounced', 'failed', 'complained') THEN $1::text
+      WHEN $1::text = 'clicked' THEN 'clicked'
+      WHEN $1::text = 'opened' AND status <> 'clicked' THEN 'opened'
+      WHEN $1::text = 'delivered' AND status IN ('queued', 'sent', 'delayed', 'received') THEN 'delivered'
+      WHEN $1::text = 'sent' AND status IN ('queued') THEN 'sent'
+      WHEN $1::text = 'received' THEN 'received'
+      WHEN $1::text = 'delayed' AND status IN ('queued', 'sent') THEN 'delayed'
+      ELSE status
+    END,
+    error = COALESCE($2, error),
+    "updatedAt" = CURRENT_TIMESTAMP,
+    "lastEvent" = $3,
+    "deliveredAt" = CASE WHEN $3 = 'email.delivered' THEN COALESCE("deliveredAt", CURRENT_TIMESTAMP) ELSE "deliveredAt" END,
+    "openedAt" = CASE WHEN $3 = 'email.opened' THEN COALESCE("openedAt", CURRENT_TIMESTAMP) ELSE "openedAt" END,
+    "clickedAt" = CASE WHEN $3 = 'email.clicked' THEN COALESCE("clickedAt", CURRENT_TIMESTAMP) ELSE "clickedAt" END,
+    "openedCount" = CASE WHEN $3 = 'email.opened' THEN COALESCE("openedCount", 0) + 1 ELSE "openedCount" END,
+    "clickedCount" = CASE WHEN $3 = 'email.clicked' THEN COALESCE("clickedCount", 0) + 1 ELSE "clickedCount" END
+`
+
+async function runEngagementUpdate(
+  status: EmailDeliveryStatus,
+  error: string | null | undefined,
+  whereSql: string,
+  whereParams: unknown[],
+) {
+  const eventName = engagementEventName(status)
+  const rows = await sql.query<{ id: string }>(
+    `${ENGAGEMENT_UPDATE_SQL} WHERE ${whereSql} RETURNING id`,
+    [status, error || null, eventName, ...whereParams],
+  )
+  return rows.length
+}
+
 export async function markEmailDeliveryByResendId(
   resendId: string,
   status: EmailDeliveryStatus,
   error?: string | null,
+  email?: string | null,
 ) {
   await ensureEmailDeliveryLogTable()
   if (!resendId) return 0
-  const eventName = `email.${status}`
-  const rows = await sql`
-    UPDATE "EmailDeliveryLog"
-    SET
-      status = CASE
-        WHEN status IN ('bounced', 'failed', 'complained')
-          AND ${status} NOT IN ('bounced', 'failed', 'complained') THEN status
-        WHEN ${status} IN ('bounced', 'failed', 'complained') THEN ${status}
-        WHEN ${status} = 'clicked' THEN 'clicked'
-        WHEN ${status} = 'opened' AND status <> 'clicked' THEN 'opened'
-        WHEN ${status} = 'delivered' AND status IN ('queued', 'sent', 'delayed', 'received') THEN 'delivered'
-        WHEN ${status} = 'sent' AND status IN ('queued') THEN 'sent'
-        WHEN ${status} = 'received' THEN 'received'
-        WHEN ${status} = 'delayed' AND status IN ('queued', 'sent') THEN 'delayed'
-        ELSE status
-      END,
-      error = COALESCE(${error || null}, error),
-      "updatedAt" = CURRENT_TIMESTAMP,
-      "lastEvent" = ${eventName},
-      "deliveredAt" = CASE WHEN ${eventName} = 'email.delivered' THEN COALESCE("deliveredAt", CURRENT_TIMESTAMP) ELSE "deliveredAt" END,
-      "openedAt" = CASE WHEN ${eventName} = 'email.opened' THEN COALESCE("openedAt", CURRENT_TIMESTAMP) ELSE "openedAt" END,
-      "clickedAt" = CASE WHEN ${eventName} = 'email.clicked' THEN COALESCE("clickedAt", CURRENT_TIMESTAMP) ELSE "clickedAt" END,
-      "openedCount" = CASE WHEN ${eventName} = 'email.opened' THEN COALESCE("openedCount", 0) + 1 ELSE "openedCount" END,
-      "clickedCount" = CASE WHEN ${eventName} = 'email.clicked' THEN COALESCE("clickedCount", 0) + 1 ELSE "clickedCount" END
-    WHERE "resendId" = ${resendId}
-    RETURNING id
-  `
-  return rows.length
+  const normalized = email ? String(email).toLowerCase().trim() : ""
+  if (normalized) {
+    const matched = await runEngagementUpdate(
+      status,
+      error,
+      `"resendId" = $4 AND lower(email) = $5`,
+      [resendId, normalized],
+    )
+    if (matched) return matched
+  }
+  return runEngagementUpdate(status, error, `"resendId" = $4`, [resendId])
+}
+
+/** Match the latest outbound log for an address when Resend id matching fails. */
+export async function markLatestEngagementByEmail(
+  email: string,
+  status: EmailDeliveryStatus,
+  error?: string | null,
+  kind?: string | null,
+) {
+  await ensureEmailDeliveryLogTable()
+  const normalized = String(email || "")
+    .toLowerCase()
+    .trim()
+  if (!normalized) return 0
+
+  if (kind) {
+    return runEngagementUpdate(
+      status,
+      error,
+      `id = (
+        SELECT id
+        FROM "EmailDeliveryLog"
+        WHERE lower(email) = $4
+          AND status NOT IN ('bounced', 'failed', 'complained')
+          AND kind = $5
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      )`,
+      [normalized, kind],
+    )
+  }
+
+  return runEngagementUpdate(
+    status,
+    error,
+    `id = (
+      SELECT id
+      FROM "EmailDeliveryLog"
+      WHERE lower(email) = $4
+        AND status NOT IN ('bounced', 'failed', 'complained')
+      ORDER BY "createdAt" DESC
+      LIMIT 1
+    )`,
+    [normalized],
+  )
+}
+
+export async function markEmailDeliveryForWebhook(input: {
+  resendId: string | null
+  email: string | null
+  status: EmailDeliveryStatus
+  error?: string | null
+  kind?: string | null
+}) {
+  const { resendId, email, status, error, kind } = input
+  let updated = 0
+
+  if (resendId) {
+    updated = await markEmailDeliveryByResendId(resendId, status, error, email)
+  }
+
+  const problem = status === "bounced" || status === "failed" || status === "complained"
+  const engagement =
+    status === "opened" ||
+    status === "clicked" ||
+    status === "delivered" ||
+    status === "sent" ||
+    status === "delayed"
+
+  if (!updated && problem && email) {
+    updated = await markEmailDeliveryByAddress(email, status, error)
+  }
+
+  if (!updated && engagement && email) {
+    updated = await markLatestEngagementByEmail(email, status, error, kind)
+    if (!updated && kind) {
+      updated = await markLatestEngagementByEmail(email, status, error)
+    }
+  }
+
+  return updated
 }
 
 export async function markEmailDeliveryByAddress(

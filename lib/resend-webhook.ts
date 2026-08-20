@@ -3,8 +3,7 @@ import { sql } from "@/lib/db"
 import {
   ensureEmailDeliveryLogTable,
   logEmailDelivery,
-  markEmailDeliveryByAddress,
-  markEmailDeliveryByResendId,
+  markEmailDeliveryForWebhook,
   type EmailDeliveryStatus,
 } from "@/lib/email-delivery-log"
 
@@ -89,15 +88,13 @@ export async function applyResendWebhookEvent(input: {
   `
   if (!inserted[0]) return { duplicate: true as const, status }
 
-  let updated = 0
-  if (input.resendId) {
-    updated = await markEmailDeliveryByResendId(input.resendId, status, input.error)
-  }
-
-  const problem = status === "bounced" || status === "failed" || status === "complained"
-  if (!updated && problem && input.email) {
-    updated = await markEmailDeliveryByAddress(input.email, status, input.error)
-  }
+  const updated = await markEmailDeliveryForWebhook({
+    resendId: input.resendId,
+    email: input.email,
+    status,
+    error: input.error,
+    kind: status === "received" ? "inbound" : "esg_report",
+  })
 
   if (!updated && input.email) {
     const customer = await sql`

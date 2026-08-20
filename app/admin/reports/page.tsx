@@ -107,15 +107,18 @@ type ReportEmailStatusRow = {
   customerId: string
   companyName: string
   emailTo: string | null
-  status: "sent" | "pending" | "queued" | "failed" | "not_eligible"
+  status: "sent" | "opened" | "pending" | "queued" | "failed" | "not_eligible"
   emailStatus: string | null
   reason: string | null
   sentAt: string | null
+  openedAt: string | null
+  openedCount: number
 }
 
 type ReportEmailStatusSummary = {
   total: number
   sent: number
+  opened: number
   pending: number
   queued: number
   failed: number
@@ -181,7 +184,7 @@ export default function AdminReportsPage() {
 
   const [statusPeriod, setStatusPeriod] = useState(currentMonthInput())
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "sent" | "pending" | "queued" | "failed" | "not_eligible"
+    "all" | "sent" | "opened" | "pending" | "queued" | "failed" | "not_eligible"
   >("all")
   const [statusQ, setStatusQ] = useState("")
   const [statusRows, setStatusRows] = useState<ReportEmailStatusRow[]>([])
@@ -290,6 +293,7 @@ export default function AdminReportsPage() {
   }, [sendJob?.id, sendJob?.status, sendJob?.period, statusPeriod, statusFilter, statusQ])
 
   const statusBadgeClass = (status: ReportEmailStatusRow["status"]) => {
+    if (status === "opened") return "border-blue-200 bg-blue-50 text-blue-800"
     if (status === "sent") return "border-secondary/30 bg-secondary/10 text-secondary"
     if (status === "pending") return "border-amber-200 bg-amber-50 text-amber-800"
     if (status === "queued") return "border-blue-200 bg-blue-50 text-blue-800"
@@ -298,6 +302,7 @@ export default function AdminReportsPage() {
   }
 
   const statusLabel = (status: ReportEmailStatusRow["status"]) => {
+    if (status === "opened") return "Opened"
     if (status === "sent") return "Received"
     if (status === "pending") return "Pending"
     if (status === "queued") return "Queued"
@@ -909,7 +914,7 @@ export default function AdminReportsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {statusSummary && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
               <button
                 type="button"
                 onClick={() => setStatusFilter("all")}
@@ -929,6 +934,16 @@ export default function AdminReportsPage() {
               >
                 <p className="text-xs text-muted-foreground">Received</p>
                 <p className="text-2xl font-bold text-secondary">{statusSummary.sent}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("opened")}
+                className={`rounded-xl border p-3 text-left transition ${
+                  statusFilter === "opened" ? "border-blue-300 bg-blue-50" : "border-border/50"
+                }`}
+              >
+                <p className="text-xs text-muted-foreground">Opened</p>
+                <p className="text-2xl font-bold text-blue-700">{statusSummary.opened}</p>
               </button>
               <button
                 type="button"
@@ -990,7 +1005,14 @@ export default function AdminReportsPage() {
               value={statusFilter}
               onValueChange={(v) =>
                 setStatusFilter(
-                  v as "all" | "sent" | "pending" | "queued" | "failed" | "not_eligible",
+                  v as
+                    | "all"
+                    | "sent"
+                    | "opened"
+                    | "pending"
+                    | "queued"
+                    | "failed"
+                    | "not_eligible",
                 )
               }
             >
@@ -1000,6 +1022,7 @@ export default function AdminReportsPage() {
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="sent">Received</SelectItem>
+                <SelectItem value="opened">Opened</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="queued">Queued</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
@@ -1043,22 +1066,32 @@ export default function AdminReportsPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">
                         {row.reason ||
-                          (row.emailStatus && row.status === "sent"
-                            ? `Email ${row.emailStatus}`
-                            : row.status === "pending"
-                              ? "Eligible — not sent yet"
-                              : "—")}
+                          (row.status === "opened"
+                            ? `Opened ${row.openedCount || 1} time(s)`
+                            : row.emailStatus && row.status === "sent"
+                              ? `Email ${row.emailStatus}`
+                              : row.status === "pending"
+                                ? "Eligible — not sent yet"
+                                : "—")}
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {row.sentAt
-                          ? new Date(row.sentAt).toLocaleString("en-IN", {
+                        {row.openedAt
+                          ? new Date(row.openedAt).toLocaleString("en-IN", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
                             })
-                          : "—"}
+                          : row.sentAt
+                            ? new Date(row.sentAt).toLocaleString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "—"}
                       </td>
                     </tr>
                   ))}

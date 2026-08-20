@@ -91,10 +91,14 @@ export async function sendEsgReportEmail(options: {
       { filename: excel.filename, content: excel.buffer },
     ],
   })
-  const resendId =
-    (sendResult as { data?: { id?: string }; id?: string })?.data?.id ||
-    (sendResult as { id?: string })?.id ||
-    null
+  const sendError = (sendResult as { error?: { message?: string } | null })?.error
+  if (sendError) {
+    throw new Error(sendError.message || "Resend send failed")
+  }
+  const resendId = (sendResult as { data?: { id?: string } })?.data?.id || null
+  if (!resendId) {
+    console.warn("[esg-report] Resend send succeeded but no email id was returned")
+  }
   await logEmailDelivery({
     customerId: row.id,
     email: recipients.to,

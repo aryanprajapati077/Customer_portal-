@@ -20,6 +20,7 @@ import {
   enqueueBulkReportSend,
   getActiveReportSendJob,
   getLatestReportSendJob,
+  processReportSendBatch,
 } from "@/lib/report-send-job"
 import {
   sendEsgReportEmail,
@@ -286,7 +287,11 @@ export async function POST(request: NextRequest) {
 
     if (action === "send-job-status") {
       const period = body?.period ? String(body.period) : ""
-      const job = period ? await getLatestReportSendJob(period) : await getActiveReportSendJob()
+      let job = period ? await getLatestReportSendJob(period) : await getActiveReportSendJob()
+      if (job && (job.status === "queued" || job.status === "running")) {
+        await processReportSendBatch(8)
+        job = (await getLatestReportSendJob(job.period)) || job
+      }
       return NextResponse.json({ success: true, job })
     }
 

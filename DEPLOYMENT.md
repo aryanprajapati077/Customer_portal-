@@ -48,6 +48,7 @@ Add these for **Production**, **Preview**, and **Development**:
 | `ADMIN_EMAIL` | Email for admin OTP reset |
 | `RESEND_API_KEY` | From [resend.com](https://resend.com) |
 | `RESEND_FROM` | `Buffindia <noreply@buffindia.com>` (domain must be verified in Resend) |
+| `RESEND_WEBHOOK_SECRET` | Signing secret from Resend → Webhooks (`whsec_…`) |
 
 **Never commit `.env` to Git.**
 

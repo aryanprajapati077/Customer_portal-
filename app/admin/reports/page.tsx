@@ -413,7 +413,7 @@ export default function AdminReportsPage() {
       return
     }
 
-    const confirmMsg = `Send ${targetPeriod} ESG report emails to all active clients?\n\nInactive or paused service clients will be skipped.\nClients with a pending or incomplete collection for this month will also be skipped.\n\nTo: each eligible client's Primary POC\nCC: their Collection POCs\nAttachments: PDF + Excel`
+    const confirmMsg = `Send ${targetPeriod} ESG report emails to remaining active clients?\n\nAlready-sent clients for this month are skipped.\nInactive or paused service clients are skipped.\nClients with pending or incomplete collections are skipped.\n\nThe page will return immediately; remaining emails continue in the background. Click Send again later if some are still pending.\n\nTo: Primary POC · CC: Collection POCs · Attachments: PDF + Excel`
     if (!personal && !confirm(confirmMsg)) return
 
     setSending(true)
@@ -432,9 +432,10 @@ export default function AdminReportsPage() {
       const data = await res.json()
       if (data?.success) {
         const queued = Number(data.queued || 0)
-        const sent = Number(data.sent || 0) + queued
+        const alreadySent = Number(data.alreadySent || 0)
+        const sent = Number(data.sent || 0)
         setLastResult({
-          sent,
+          sent: sent || alreadySent,
           failed: data.failed,
           skipped: data.skipped,
           periodLabel: data.periodLabel,
@@ -442,6 +443,10 @@ export default function AdminReportsPage() {
         })
         if (personal) {
           alert(data.message || `Report email queued for ${targetCustomer}.`)
+        } else {
+          alert(
+            `Queued ${queued} remaining emails for ${targetPeriod}.\nAlready sent: ${alreadySent}\nSkipped: ${data.skipped || 0}\n\nEmails continue in the background. Click Send to all again later if some are still pending.`,
+          )
         }
         setSendCustomerId(targetCustomer)
         setPeriod(targetPeriod)
@@ -646,9 +651,9 @@ export default function AdminReportsPage() {
               Email Reports
             </CardTitle>
             <CardDescription>
-              To = Primary POC · CC = all Collection POCs. Attachments: PDF + Excel. Send to all skips
-              inactive or paused service clients, and clients with pending or incomplete collections for the
-              selected month.
+              To = Primary POC · CC = Collection POCs. Send to all returns immediately, skips already-sent
+              clients for that month, and continues remaining emails in the background. Click Send again to
+              resume if the run is interrupted. Skips inactive/paused service and pending collections.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -57,16 +57,78 @@ export function getServiceStatusBlockReason(serviceStatus?: string | null): stri
   return "Service not active"
 }
 
+type ReportEligibilityCustomer = {
+  status?: string | null
+  serviceStatus?: string | null
+  collectionFrequency?: string | null
+  serviceStartDate?: Date | string | null
+  joinDate?: Date | string | null
+}
+
+export async function getAlreadySentReportCustomerIds(periodYm: string): Promise<Set<string>> {
+  const rows = await sql<{ customerId: string }>`
+    SELECT DISTINCT "customerId"
+    FROM "EmailDeliveryLog"
+    WHERE kind = 'esg_report'
+      AND period = ${periodYm}
+      AND status IN ('sent', 'delivered')
+      AND "customerId" IS NOT NULL
+  `
+  return new Set(rows.map((r) => r.customerId).filter(Boolean))
+}
+
+export async function getCollectionStatsByCustomer(
+  periodYm: string,
+): Promise<Map<string, { open: number; completed: number }>> {
+  const rows = await sql<{ customerId: string; open_n: number; done_n: number }>`
+    SELECT
+      "customerId",
+      COUNT(*) FILTER (WHERE LOWER(COALESCE(status, 'completed')) <> 'completed')::int AS open_n,
+      COUNT(*) FILTER (WHERE LOWER(COALESCE(status, 'completed')) = 'completed')::int AS done_n
+    FROM "Collection"
+    WHERE to_char(date, 'YYYY-MM') = ${periodYm}
+    GROUP BY "customerId"
+  `
+  const map = new Map<string, { open: number; completed: number }>()
+  for (const row of rows) {
+    map.set(row.customerId, { open: row.open_n || 0, completed: row.done_n || 0 })
+  }
+  return map
+}
+
+export function getReportSendBlockReasonSync(
+  periodYm: string,
+  customer: ReportEligibilityCustomer,
+  stats?: { open: number; completed: number },
+): string | null {
+  if (String(customer?.status || "Active").trim().toLowerCase() !== "active") {
+    return "Inactive client"
+  }
+
+  const serviceBlock = getServiceStatusBlockReason(customer?.serviceStatus)
+  if (serviceBlock) return serviceBlock
+
+  if ((stats?.open || 0) > 0) {
+    return "Pending collection for this month"
+  }
+
+  const serviceStart = customer?.serviceStartDate || customer?.joinDate
+  if (!serviceStart) return null
+  const start = new Date(serviceStart)
+  if (Number.isNaN(start.getTime())) return null
+  if (!isDueForMonth(customer?.collectionFrequency, start, periodYm)) return null
+  const expected = expectedCollectionsForMonth(customer?.collectionFrequency)
+  if ((stats?.completed || 0) < expected) {
+    return "Collection not completed for this month"
+  }
+
+  return null
+}
+
 export async function getReportSendBlockReason(
   customerId: string,
   periodYm: string,
-  customer?: {
-    status?: string | null
-    serviceStatus?: string | null
-    collectionFrequency?: string | null
-    serviceStartDate?: Date | string | null
-    joinDate?: Date | string | null
-  },
+  customer?: ReportEligibilityCustomer,
 ): Promise<string | null> {
   if (String(customer?.status || "Active").trim().toLowerCase() !== "active") {
     return "Inactive client"

@@ -54,22 +54,53 @@ export async function GET(request: NextRequest) {
     const auth = await requireReportsAdmin(request)
     if (!auth.ok) return auth.response
 
-    const [reports, stats, sendJob] = await Promise.all([
-      sql`
-        SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
-               c."companyName", c.email, c.status,
-               COALESCE((
-                 SELECT SUM(col.weight)::float
-                 FROM "Collection" col
-                 WHERE col."customerId" = r."customerId"
-                   AND date_trunc('month', col.date) = date_trunc('month', r.date)
-                   AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
-               ), 0) AS "collectionKg"
-        FROM "Report" r
-        JOIN "Customer" c ON c.id = r."customerId"
-        ORDER BY r.date DESC, r.id DESC
-        LIMIT 100
-      `,
+    const periodParam = request.nextUrl.searchParams.get("period")?.trim() || ""
+    const periodFilter = /^\d{4}-\d{2}$/.test(periodParam) ? periodParam : null
+    const limit = Math.min(
+      500,
+      Math.max(30, Number(request.nextUrl.searchParams.get("limit")) || 200),
+    )
+
+    const [reports, reportsTotal, stats, sendJob] = await Promise.all([
+      periodFilter
+        ? sql`
+            SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
+                   c."companyName", c.email, c.status,
+                   COALESCE((
+                     SELECT SUM(col.weight)::float
+                     FROM "Collection" col
+                     WHERE col."customerId" = r."customerId"
+                       AND date_trunc('month', col.date) = date_trunc('month', r.date)
+                       AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
+                   ), 0) AS "collectionKg"
+            FROM "Report" r
+            JOIN "Customer" c ON c.id = r."customerId"
+            WHERE to_char(r.date, 'YYYY-MM') = ${periodFilter}
+            ORDER BY r.date DESC, r.id DESC
+            LIMIT ${limit}
+          `
+        : sql`
+            SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
+                   c."companyName", c.email, c.status,
+                   COALESCE((
+                     SELECT SUM(col.weight)::float
+                     FROM "Collection" col
+                     WHERE col."customerId" = r."customerId"
+                       AND date_trunc('month', col.date) = date_trunc('month', r.date)
+                       AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
+                   ), 0) AS "collectionKg"
+            FROM "Report" r
+            JOIN "Customer" c ON c.id = r."customerId"
+            ORDER BY r.date DESC, r.id DESC
+            LIMIT ${limit}
+          `,
+      periodFilter
+        ? sql<{ n: number }>`
+            SELECT COUNT(*)::int AS n
+            FROM "Report" r
+            WHERE to_char(r.date, 'YYYY-MM') = ${periodFilter}
+          `
+        : sql<{ n: number }>`SELECT COUNT(*)::int AS n FROM "Report"`,
       sql`
         SELECT
           (SELECT COUNT(*)::int FROM "Customer" WHERE status = 'Active') AS active_customers,
@@ -84,6 +115,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       reports,
+      reportsTotal: reportsTotal[0]?.n || 0,
+      period: periodFilter,
+      limit,
       stats: stats[0] || {},
       sendJob,
     })

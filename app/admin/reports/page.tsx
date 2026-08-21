@@ -136,6 +136,9 @@ export default function AdminReportsPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+  const [recentMonth, setRecentMonth] = useState("")
+  const [recentVisible, setRecentVisible] = useState(30)
+  const [reportsTotal, setReportsTotal] = useState(0)
 
   const [genCustomerId, setGenCustomerId] = useState("")
   const [genPeriod, setGenPeriod] = useState(currentMonthInput())
@@ -225,23 +228,34 @@ export default function AdminReportsPage() {
     }
   }
 
+  const loadReports = async (month = recentMonth) => {
+    const params = new URLSearchParams({ limit: "500" })
+    if (month) params.set("period", month)
+    const res = await fetch(`/api/admin/reports?${params}`)
+    const data = await res.json()
+    if (data?.success) {
+      setReports(data.reports || [])
+      setReportsTotal(Number(data.reportsTotal) || (data.reports || []).length)
+      if (data.sendJob) setSendJob(data.sendJob)
+      if (data.stats) setStats(data.stats)
+    }
+    return data
+  }
+
   const load = async () => {
     setLoading(true)
     try {
-      const [reportsRes, customersRes, templateRes, deliveriesRes] = await Promise.all([
-        fetch("/api/admin/reports"),
+      const [reportsData, customersRes, templateRes, deliveriesRes] = await Promise.all([
+        loadReports(recentMonth),
         fetch("/api/admin/customers?fields=options"),
         fetch("/api/admin/email-templates"),
         fetch("/api/admin/email-deliveries"),
       ])
-      const reportsData = await reportsRes.json()
       const customersData = await customersRes.json()
       const templateData = await templateRes.json()
       const deliveriesData = await deliveriesRes.json().catch(() => null)
       if (reportsData?.success) {
-        setReports(reportsData.reports || [])
         setStats(reportsData.stats || null)
-        if (reportsData.sendJob) setSendJob(reportsData.sendJob)
       }
       if (customersData?.success) {
         setCustomers(customersData.customers || [])
@@ -264,6 +278,20 @@ export default function AdminReportsPage() {
   useEffect(() => {
     load()
   }, [])
+
+  useEffect(() => {
+    setRecentVisible(30)
+  }, [recentMonth, q])
+
+  const handleRecentMonthChange = async (month: string) => {
+    setRecentMonth(month)
+    setLoading(true)
+    try {
+      await loadReports(month)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     void loadEmailStatus(statusPeriod, statusFilter, statusQ)
@@ -1104,21 +1132,50 @@ export default function AdminReportsPage() {
 
       <Card className="glass border-border/50">
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <CardTitle>Recent Reports</CardTitle>
               <CardDescription>
                 Latest generated reports, newest first
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search company, ID, email..."
-                className="pl-9"
-              />
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end lg:w-auto">
+              <div className="space-y-1">
+                <Label className="text-xs">Month</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="month"
+                    value={recentMonth}
+                    onChange={(e) => void handleRecentMonthChange(e.target.value)}
+                    className="w-[170px]"
+                  />
+                  {recentMonth ? (
+                    <Button variant="outline" onClick={() => void handleRecentMonthChange("")}>
+                      All
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search company, ID, email..."
+                  className="pl-9"
+                />
+                {q ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 h-7 -translate-y-1/2 px-2 text-xs"
+                    onClick={() => setQ("")}
+                  >
+                    Clear
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -1129,11 +1186,20 @@ export default function AdminReportsPage() {
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              No reports yet. Generate for a Customer ID + month above.
+              {q || recentMonth
+                ? "No reports match this filter."
+                : "No reports yet. Generate for a Customer ID + month above."}
             </p>
           ) : (
             <div className="space-y-3">
-              {filtered.slice(0, 30).map((r) => {
+              <p className="text-xs text-muted-foreground">
+                Showing {Math.min(recentVisible, filtered.length)} of {filtered.length} loaded
+                {recentMonth
+                  ? ` · ${reportsTotal} total for ${recentMonth}`
+                  : ` · ${reportsTotal} total in database`}
+                {q ? ` · search “${q}”` : ""}
+              </p>
+              {filtered.slice(0, recentVisible).map((r) => {
                 const kg = Number(r.collectionKg) || 0
                 return (
                   <div
@@ -1249,6 +1315,13 @@ export default function AdminReportsPage() {
                   </div>
                 )
               })}
+              {filtered.length > recentVisible ? (
+                <div className="flex justify-center pt-2">
+                  <Button variant="outline" onClick={() => setRecentVisible((n) => n + 30)}>
+                    Show more ({filtered.length - recentVisible} remaining)
+                  </Button>
+                </div>
+              ) : null}
             </div>
           )}
         </CardContent>

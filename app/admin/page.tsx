@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { sql } from "@/lib/db"
+import { AdminAttentionStrip } from "@/components/admin/admin-ui"
 import {
   Users,
   Package,
@@ -19,6 +20,8 @@ export default async function AdminOverviewPage() {
   let unread = 0
   let monthlyReports = 0
   let totalWaste = 0
+  let openSupportTickets = 0
+  let failedEmails = 0
 
   try {
     const [statsRow] = (await sql`
@@ -28,7 +31,8 @@ export default async function AdminOverviewPage() {
         (SELECT COUNT(*)::int FROM "Collection") AS collections,
         (SELECT COUNT(*)::int FROM "Notification" WHERE "readAt" IS NULL) AS unread,
         (SELECT COUNT(*)::int FROM "Report" WHERE type = 'monthly') AS monthly,
-        (SELECT COALESCE(SUM("totalWasteCollected"), 0)::float FROM "Customer") AS waste
+        (SELECT COALESCE(SUM("totalWasteCollected"), 0)::float FROM "Customer") AS waste,
+        (SELECT COUNT(*)::int FROM "SupportTicket" WHERE status = 'open') AS open_tickets
     `) as {
       customers: number
       active: number
@@ -36,6 +40,7 @@ export default async function AdminOverviewPage() {
       unread: number
       monthly: number
       waste: number
+      open_tickets: number
     }[]
 
     customers = statsRow?.customers ?? 0
@@ -44,6 +49,18 @@ export default async function AdminOverviewPage() {
     unread = statsRow?.unread ?? 0
     monthlyReports = statsRow?.monthly ?? 0
     totalWaste = statsRow?.waste ?? 0
+    openSupportTickets = statsRow?.open_tickets ?? 0
+
+    try {
+      const [failedRow] = (await sql`
+        SELECT COUNT(*)::int AS failed_emails
+        FROM "EmailDeliveryLog"
+        WHERE status IN ('failed', 'bounced', 'complained')
+      `) as { failed_emails: number }[]
+      failedEmails = failedRow?.failed_emails ?? 0
+    } catch {
+      failedEmails = 0
+    }
   } catch (error) {
     console.error("[admin] Database connection failed:", error)
   }
@@ -62,11 +79,37 @@ export default async function AdminOverviewPage() {
     },
   ]
 
+  const attentionItems = [
+    ...(unread > 0
+      ? [{ label: "Unread notifications", value: unread, href: "/admin/notifications", tone: "warn" as const }]
+      : []),
+    ...(openSupportTickets > 0
+      ? [
+          {
+            label: "Open support tickets",
+            value: openSupportTickets,
+            href: "/admin/support",
+            tone: "warn" as const,
+          },
+        ]
+      : []),
+    ...(failedEmails > 0
+      ? [
+          {
+            label: "Failed / bounced emails",
+            value: failedEmails,
+            href: "/admin/reports",
+            tone: "danger" as const,
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div className="space-y-7">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
+          <p className="admin-eyebrow mb-3">
             <Sparkles className="h-3.5 w-3.5" />
             Command Center
           </p>
@@ -105,12 +148,18 @@ export default async function AdminOverviewPage() {
         </div>
       </div>
 
+      {attentionItems.length > 0 ? (
+        <div className="space-y-2">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            Needs attention
+          </h2>
+          <AdminAttentionStrip items={attentionItems} />
+        </div>
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((item) => (
-          <div
-            key={item.label}
-            className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-          >
+          <div key={item.label} className="admin-stat-card">
             <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#7A7A7A]">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B7339]">
                 <item.icon className="h-3.5 w-3.5" />

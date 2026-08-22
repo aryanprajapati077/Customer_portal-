@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition, type ReactNode } from "react"
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Plus, Search, Users, Download, Table2, Mail, Trash2 } from "lucide-react"
+import { Loader2, Plus, Search, Users, Download, Table2, Mail, Trash2, Building2, UserCheck, MailWarning } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/admin-list-card"
 import {
   CreateCustomerForm,
   EMPTY_CREATE_CUSTOMER_FORM,
@@ -303,13 +304,13 @@ function EditableCustomerSheet({
     "h-9 w-full rounded-md border border-[#D8D8D8] bg-white px-2.5 text-[13px] text-[#141414] outline-none focus:border-[#1B7339]"
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-1 rounded-full border border-[#E2EBE4] bg-[#F7FBF7] p-1">
+    <div className="space-y-4">
+      <div className="flex gap-1 rounded-full border border-[#ebe9e4] bg-[#fafaf8] p-1">
         <button
           type="button"
           onClick={() => setSheetTab("details")}
-          className={`flex-1 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
-            sheetTab === "details" ? "bg-white text-[#1B7339] shadow-sm" : "text-[#6B6B6B]"
+          className={`flex-1 rounded-full px-3 py-2 text-[12px] font-semibold transition ${
+            sheetTab === "details" ? "bg-white text-[#1b7339] shadow-sm ring-1 ring-[#ebe9e4]" : "text-[#6b6b6b] hover:text-[#141414]"
           }`}
         >
           Details
@@ -317,8 +318,8 @@ function EditableCustomerSheet({
         <button
           type="button"
           onClick={() => setSheetTab("pocs")}
-          className={`flex-1 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
-            sheetTab === "pocs" ? "bg-white text-[#1B7339] shadow-sm" : "text-[#6B6B6B]"
+          className={`flex-1 rounded-full px-3 py-2 text-[12px] font-semibold transition ${
+            sheetTab === "pocs" ? "bg-white text-[#1b7339] shadow-sm ring-1 ring-[#ebe9e4]" : "text-[#6b6b6b] hover:text-[#141414]"
           }`}
         >
           Update POCs
@@ -326,6 +327,7 @@ function EditableCustomerSheet({
       </div>
 
       {sheetTab === "details" ? (
+      <div className="overflow-hidden rounded-xl border border-[#ebe9e4]">
       <table className="w-full border-collapse text-[13px]">
         <tbody>
           {row("Customer ID", <span className="px-1 font-semibold text-[#1B7339]">{customer.id}</span>)}
@@ -499,6 +501,7 @@ function EditableCustomerSheet({
           )}
         </tbody>
       </table>
+      </div>
       ) : (
         <div className="space-y-4">
           <div className="rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] p-3">
@@ -656,6 +659,15 @@ export default function AdminCustomersPage() {
   }, [rows.length, createOpen])
 
   const filtered = rows
+
+  const stats = useMemo(() => {
+    const active = rows.filter((r) => String(r.status).toLowerCase() === "active").length
+    return {
+      loaded: rows.length,
+      active,
+      inactive: rows.length - active,
+    }
+  }, [rows])
 
   const sendWelcomeToCustomer = async (customer: CustomerRow, forceResend = false) => {
     const alreadySent = Boolean(customer.welcomeEmailSentAt)
@@ -885,101 +897,142 @@ export default function AdminCustomersPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DCE8DC] bg-[#E8F5E9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B7339]">
-            <Table2 className="h-3.5 w-3.5" />
-            Spreadsheet view
-          </p>
-          <h1 className="admin-page-title">Customers</h1>
-          <p className="mt-1 text-[14px] text-[#6B6B6B]">
-            Enter all clients first, then send welcome emails in one click.
-          </p>
+    <div className="space-y-6">
+      <AdminPageHeader
+        icon={<Users className="h-5 w-5" />}
+        title="Customers"
+        description="Enter all clients first, then send welcome emails in one click. Click any row to open the full customer sheet."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              className="rounded-full border-[#dce8dc] text-[#1b7339] hover:bg-[#e8f5e9]"
+              onClick={sendWelcomeToAll}
+              disabled={welcomeSending || rows.length === 0}
+            >
+              {welcomeSending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-2 h-4 w-4" />
+              )}
+              Welcome emails
+              {welcomePending != null ? ` (${welcomePending})` : ""}
+            </Button>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={exportExcel}
+              disabled={exporting || rows.length === 0}
+            >
+              {exporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Export Excel
+            </Button>
+            <Dialog
+              open={createOpen}
+              onOpenChange={(open) => {
+                setCreateOpen(open)
+                if (!open) {
+                  setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
+                  setCreateError(null)
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button className="gap-2 rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
+                  <Plus className="h-4 w-4" />
+                  Create Customer
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto border-[#ebe9e4] sm:max-w-[720px]">
+                <DialogHeader>
+                  <DialogTitle className="admin-page-title text-xl">Create New Customer</DialogTitle>
+                  <DialogDescription>
+                    Required fields marked *. Customer ID is auto-assigned.
+                  </DialogDescription>
+                </DialogHeader>
+                <CreateCustomerForm
+                  form={createForm}
+                  setForm={setCreateForm}
+                  nextId={nextCustomerId}
+                  error={createError}
+                  loading={createLoading}
+                  onSubmit={handleCreateUser}
+                  onCancel={() => setCreateOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </>
+        }
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="admin-stat-card">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">Loaded</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">{stats.loaded}</p>
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Rows in spreadsheet view</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            className="rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9]"
-            onClick={sendWelcomeToAll}
-            disabled={welcomeSending || rows.length === 0}
-          >
-            {welcomeSending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Mail className="mr-2 h-4 w-4" />
-            )}
-            Send welcome emails
-            {welcomePending != null ? ` (${welcomePending})` : ""}
-          </Button>
-          <Button
-            variant="outline"
-            className="rounded-full"
-            onClick={exportExcel}
-            disabled={exporting || rows.length === 0}
-          >
-            {exporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Export as Excel
-          </Button>
-          <Dialog
-            open={createOpen}
-            onOpenChange={(open) => {
-              setCreateOpen(open)
-              if (!open) {
-                setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
-                setCreateError(null)
-              }
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button className="gap-2 rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
-                <Plus className="h-4 w-4" />
-                Create Customer
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[720px]">
-              <DialogHeader>
-                <DialogTitle>Create New Customer</DialogTitle>
-                <DialogDescription>
-                  Required fields marked *. Customer ID auto-assigned.
-                </DialogDescription>
-              </DialogHeader>
-              <CreateCustomerForm
-                form={createForm}
-                setForm={setCreateForm}
-                nextId={nextCustomerId}
-                error={createError}
-                loading={createLoading}
-                onSubmit={handleCreateUser}
-                onCancel={() => setCreateOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+        <div className="admin-stat-card">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <UserCheck className="h-3.5 w-3.5 text-[#1b7339]" />
+            Active
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#1b7339]">{stats.active}</p>
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Among loaded clients</p>
+        </div>
+        <div className="admin-stat-card">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">Inactive</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">{stats.inactive}</p>
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Among loaded clients</p>
+        </div>
+        <div className="admin-stat-card">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <MailWarning className="h-3.5 w-3.5 text-amber-600" />
+            Welcome pending
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-amber-700">
+            {welcomePending ?? "—"}
+          </p>
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Not yet emailed portal login</p>
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]" />
-        <Input
-          value={q}
-          onChange={(e) => startTransition(() => setQ(e.target.value))}
-          placeholder="Filter sheet by ID, brand, GSTIN, city..."
-          className="pl-9"
-        />
+      <div className="flex flex-col gap-3 rounded-[14px] border border-[#ebe9e4] bg-white p-4 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1 sm:max-w-xl">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8a8a]" />
+          <Input
+            value={q}
+            onChange={(e) => startTransition(() => setQ(e.target.value))}
+            placeholder="Search by ID, brand, GSTIN, city, email..."
+            className="h-11 rounded-xl border-[#e8e6e1] pl-9"
+          />
+          {q ? (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-[11px] font-semibold text-[#6b6b6b] hover:bg-[#f5f5f3]"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+        <p className="text-[12px] text-[#6b6b6b]">
+          <Table2 className="mr-1 inline h-3.5 w-3.5" />
+          {filtered.length} row{filtered.length === 1 ? "" : "s"}
+          {isPending ? " · filtering…" : ""}
+        </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-[#C8E6D4] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-        <div className="flex items-center justify-between border-b border-[#DCE8DC] bg-[#E8F5E9] px-3 py-2">
-          <p className="text-[12px] font-semibold text-[#1B7339]">
-            <Users className="mr-1.5 inline h-3.5 w-3.5" />
-            {filtered.length} row{filtered.length === 1 ? "" : "s"}
-            {isPending ? " · filtering…" : ""}
+      <div className="admin-table-wrap overflow-hidden rounded-[14px] border border-[#ebe9e4] bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#ebe9e4] bg-[#fafaf8] px-4 py-3">
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-[#141414]">
+            <Building2 className="h-4 w-4 text-[#1b7339]" />
+            Client spreadsheet
           </p>
-          <p className="text-[11px] text-[#6B6B6B]">Click any row to open full sheet</p>
+          <p className="text-[11px] text-[#6b6b6b]">Click a row to edit</p>
         </div>
 
         {loading ? (
@@ -992,11 +1045,11 @@ export default function AdminCustomersPage() {
           <div className="max-h-[min(70vh,720px)] overflow-auto">
             <table className="w-max min-w-full border-collapse text-left text-[12px]">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#C8E6D4]">
+                <tr className="border-b border-[#ebe9e4] bg-[#fafaf8]">
                   {SHEET_COLUMNS.map((col) => (
                     <th
                       key={col.key}
-                      className="whitespace-nowrap border-b border-r border-[#A5D6A7] px-2.5 py-2 font-semibold text-[#1B4332]"
+                      className="whitespace-nowrap border-r border-[#f0eeea] px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#777]"
                       style={{ minWidth: col.width }}
                     >
                       {col.label}
@@ -1009,14 +1062,14 @@ export default function AdminCustomersPage() {
                   <tr
                     key={r.id}
                     onClick={() => setSelected(r)}
-                    className={`cursor-pointer border-b border-[#EAEAEA] transition-colors hover:bg-[#F1F8E9] ${
-                      idx % 2 === 0 ? "bg-white" : "bg-[#FAFCFA]"
-                    }`}
+                    className={`cursor-pointer border-b border-[#f0eeea] transition-colors hover:bg-[#f3faf4] ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#fcfcfb]"
+                    } ${selected?.id === r.id ? "!bg-[#eef7ef]" : ""}`}
                   >
                     {SHEET_COLUMNS.map((col) => (
                       <td
                         key={col.key}
-                        className="max-w-[220px] truncate border-r border-[#F0F0F0] px-2.5 py-1.5 text-[#141414]"
+                        className="max-w-[220px] truncate border-r border-[#f7f6f2] px-3 py-2 text-[#141414]"
                         title={cellValue(r, col.key)}
                       >
                         {col.key === "id" ? (
@@ -1026,8 +1079,8 @@ export default function AdminCustomersPage() {
                             variant="outline"
                             className={
                               String(r.status).toLowerCase() === "active"
-                                ? "border-[#C8E6D4] bg-[#E8F5E9] text-[#1B7339]"
-                                : ""
+                                ? "border-[#c8e6d4] bg-[#e8f5e9] text-[#1b7339]"
+                                : "border-[#ebe9e4] bg-[#fafaf8] text-[#6b6b6b]"
                             }
                           >
                             {cellValue(r, col.key)}
@@ -1044,7 +1097,7 @@ export default function AdminCustomersPage() {
           </div>
         )}
         {!loading && hasMore && (
-          <div className="flex justify-center py-4">
+          <div className="flex justify-center border-t border-[#ebe9e4] py-4">
             <Button onClick={loadMore} disabled={loadingMore} variant="outline" className="rounded-full">
               {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {loadingMore ? "Loading..." : "Load more"}
@@ -1054,31 +1107,62 @@ export default function AdminCustomersPage() {
       </div>
 
       <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent className="w-full overflow-y-auto border-l border-[#ebe9e4] p-0 sm:max-w-xl">
           {selected && (
             <>
-              <SheetHeader>
-                <SheetTitle className="font-[family-name:var(--font-display)] text-2xl">
-                  {selected.id} · {selected.companyName}
-                </SheetTitle>
-                <SheetDescription>Edit customer sheet — save to update database</SheetDescription>
-              </SheetHeader>
-              <div className="mt-4 space-y-3 pb-8">
-                {selected.logoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selected.logoUrl}
-                    alt="Customer logo"
-                    className="h-16 w-auto max-w-[200px] rounded-lg border border-[#E5E5E5] bg-white object-contain p-2"
-                  />
-                )}
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] px-3 py-2.5">
+              <div className="border-b border-[#ebe9e4] bg-gradient-to-br from-[#f3faf4] to-white px-6 pb-5 pt-6">
+                <SheetHeader className="space-y-3 text-left">
+                  <div className="flex items-start gap-4">
+                    {selected.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selected.logoUrl}
+                        alt=""
+                        className="h-14 w-14 shrink-0 rounded-xl border border-[#ebe9e4] bg-white object-contain p-1.5"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[#dce8dc] bg-white text-lg font-bold text-[#1b7339]">
+                        {selected.companyName.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <SheetTitle className="font-[family-name:var(--font-display)] text-xl leading-tight">
+                        {selected.companyName}
+                      </SheetTitle>
+                      <p className="mt-1 text-sm font-semibold text-[#1b7339]">{selected.id}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            String(selected.status).toLowerCase() === "active"
+                              ? "border-[#c8e6d4] bg-[#e8f5e9] text-[#1b7339]"
+                              : ""
+                          }
+                        >
+                          {selected.status}
+                        </Badge>
+                        {selected.serviceStatus ? (
+                          <Badge variant="outline" className="border-[#ebe9e4] bg-white">
+                            {selected.serviceStatus}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <SheetDescription className="text-[13px]">
+                    Edit customer details and POCs — save to update the database.
+                  </SheetDescription>
+                </SheetHeader>
+              </div>
+
+              <div className="space-y-4 px-6 py-5 pb-10">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#dce8dc] bg-[#f7fbf7] px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-[12px] font-semibold text-[#1B7339]">Portal welcome email</p>
                     <p className="text-[11px] text-[#6B6B6B]">
                       {selected.welcomeEmailSentAt
                         ? `Sent ${new Date(selected.welcomeEmailSentAt).toLocaleString("en-IN")}`
-                        : "Not sent yet"}
+                        : "Not sent yet — send after all clients are entered"}
                     </p>
                   </div>
                   <Button

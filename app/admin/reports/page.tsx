@@ -18,7 +18,6 @@ import {
   Loader2,
   FileText,
   Mail,
-  Sparkles,
   Send,
   RefreshCw,
   Users,
@@ -31,8 +30,12 @@ import {
   Trash2,
   FileSpreadsheet,
   MailCheck,
+  FileBarChart,
 } from "lucide-react"
 import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
+import { AdminPageHeader } from "@/components/admin/admin-list-card"
+import { EmailStatusStackChart } from "@/components/admin/admin-charts"
+import { AdminDataMeta, AdminLoadMore, AdminRefreshButton } from "@/components/admin/admin-ui"
 import {
   Dialog,
   DialogContent,
@@ -192,25 +195,47 @@ export default function AdminReportsPage() {
   const [statusQ, setStatusQ] = useState("")
   const [statusRows, setStatusRows] = useState<ReportEmailStatusRow[]>([])
   const [statusSummary, setStatusSummary] = useState<ReportEmailStatusSummary | null>(null)
+  const [statusRowsTotal, setStatusRowsTotal] = useState(0)
   const [statusLoading, setStatusLoading] = useState(false)
+  const [statusLoadingMore, setStatusLoadingMore] = useState(false)
+  const STATUS_PAGE_SIZE = 50
 
   const loadEmailStatus = async (
     month = statusPeriod,
     filter = statusFilter,
     search = statusQ,
+    { reset = true }: { reset?: boolean } = {},
   ) => {
-    setStatusLoading(true)
+    const offset = reset ? 0 : statusRows.length
+    if (reset) setStatusLoading(true)
+    else setStatusLoadingMore(true)
     try {
-      const params = new URLSearchParams({ period: month, status: filter, q: search })
+      const params = new URLSearchParams({
+        period: month,
+        status: filter,
+        q: search,
+        limit: String(STATUS_PAGE_SIZE),
+        offset: String(offset),
+      })
       const res = await fetch(`/api/admin/reports/email-status?${params}`)
       const data = await res.json()
       if (data?.success) {
-        setStatusRows(data.rows || [])
+        const nextRows = data.rows || []
+        if (reset) setStatusRows(nextRows)
+        else setStatusRows((prev) => [...prev, ...nextRows])
         setStatusSummary(data.summary || null)
+        setStatusRowsTotal(Number(data.rowsTotal) || nextRows.length)
       }
     } finally {
-      setStatusLoading(false)
+      if (reset) setStatusLoading(false)
+      else setStatusLoadingMore(false)
     }
+  }
+
+  const loadMoreEmailStatus = () => {
+    if (statusLoading || statusLoadingMore) return
+    if (statusRows.length >= statusRowsTotal) return
+    void loadEmailStatus(statusPeriod, statusFilter, statusQ, { reset: false })
   }
 
   const loadDeliveries = async (status = deliveryFilter, search = deliveryQ) => {
@@ -669,70 +694,55 @@ export default function AdminReportsPage() {
   )
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            Reports & Email Hub
-          </div>
-          <h1 className="admin-page-title">Monthly ESG Reports</h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-            Generate by Customer ID + month, email personally or in bulk — each send includes PDF and
-            Excel attachments.
+    <div className="space-y-6">
+      <AdminPageHeader
+        icon={<FileBarChart className="h-5 w-5" />}
+        title="Reports & Email"
+        description="Generate monthly ESG reports, send PDF + Excel by email, and track delivery status per client."
+        actions={
+          <AdminRefreshButton loading={loading} onClick={load} />
+        }
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="admin-stat-card">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <Users className="h-3.5 w-3.5 text-[#1b7339]" />
+            Active clients
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">
+            {stats?.active_customers ?? "—"}
           </p>
         </div>
-        <Button variant="outline" onClick={load} disabled={loading} className="bg-transparent">
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="glass border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4 text-primary" /> Active Clients
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.active_customers ?? "—"}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileText className="h-4 w-4 text-secondary" /> Monthly Reports
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.monthly_reports ?? "—"}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4 text-accent" /> This Month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.reports_this_month ?? "—"}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Mail className="h-4 w-4 text-primary" /> Attachments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Every email includes PDF + Excel</p>
-          </CardContent>
-        </Card>
+        <div className="admin-stat-card">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <FileText className="h-3.5 w-3.5 text-[#1b7339]" />
+            Monthly reports
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">
+            {stats?.monthly_reports ?? "—"}
+          </p>
+        </div>
+        <div className="admin-stat-card">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <Calendar className="h-3.5 w-3.5 text-[#1b7339]" />
+            This month
+          </p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-[#1b7339]">
+            {stats?.reports_this_month ?? "—"}
+          </p>
+        </div>
+        <div className="admin-stat-card border-[#dce8dc] bg-gradient-to-br from-[#f3faf4] to-white">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
+            <Mail className="h-3.5 w-3.5 text-[#1b7339]" />
+            Attachments
+          </p>
+          <p className="mt-1 text-[13px] font-medium text-[#141414]">PDF + Excel on every send</p>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="glass border-border/50">
+        <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -785,7 +795,7 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass border-primary/20">
+        <Card className="overflow-hidden rounded-[14px] border-[#dce8dc] bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Send className="h-5 w-5 text-primary" />
@@ -903,8 +913,8 @@ export default function AdminReportsPage() {
         </Card>
       </div>
 
-      <Card className="glass border-border/50">
-        <CardHeader>
+      <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">
+        <CardHeader className="border-b border-[#ebe9e4] bg-[#fafaf8]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -1016,6 +1026,8 @@ export default function AdminReportsPage() {
             </div>
           )}
 
+          {statusSummary ? <EmailStatusStackChart summary={statusSummary} /> : null}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1068,9 +1080,11 @@ export default function AdminReportsPage() {
               No clients match this filter for {statusPeriod}.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-border/50">
+            <>
+            <AdminDataMeta shown={statusRows.length} total={statusRowsTotal} noun="client" />
+            <div className="overflow-x-auto rounded-xl border border-[#ebe9e4]">
               <table className="min-w-full text-sm">
-                <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <thead className="bg-[#fafaf8] text-left text-[10px] font-bold uppercase tracking-[0.08em] text-[#777]">
                   <tr>
                     <th className="px-4 py-3">Client</th>
                     <th className="px-4 py-3">To email</th>
@@ -1126,12 +1140,20 @@ export default function AdminReportsPage() {
                 </tbody>
               </table>
             </div>
+            {statusRows.length < statusRowsTotal ? (
+              <AdminLoadMore
+                loading={statusLoadingMore}
+                pageSize={STATUS_PAGE_SIZE}
+                onClick={loadMoreEmailStatus}
+              />
+            ) : null}
+            </>
           )}
         </CardContent>
       </Card>
 
-      <Card className="glass border-border/50">
-        <CardHeader>
+      <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">
+        <CardHeader className="border-b border-[#ebe9e4] bg-[#fafaf8]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <CardTitle>Recent Reports</CardTitle>
@@ -1509,8 +1531,8 @@ export default function AdminReportsPage() {
         </CardContent>
       </Card>
 
-      <Card className="glass border-border/50">
-        <CardHeader>
+      <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">
+        <CardHeader className="border-b border-[#ebe9e4] bg-[#fafaf8]">
           <CardTitle>Edit Report Email Text</CardTitle>
           <CardDescription>
             Change storytelling copy. Use placeholders: {"{{period}}"}, {"{{company}}"}, {"{{name}}"},{" "}

@@ -27,17 +27,17 @@ export function AdminListCard({
   className,
 }: AdminListCardProps) {
   return (
-    <Card className={cn("glass border-border/50 overflow-hidden", className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card className={cn("overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm", className)}>
+      <CardHeader className="border-b border-[#f0eeea] bg-[#fafaf8]/80 pb-4">
+        <CardTitle className="text-[15px] font-semibold tracking-tight">{title}</CardTitle>
         {(description != null || count != null) && (
-          <CardDescription>
+          <CardDescription className="text-[12px]">
             {count != null ? `${count} rows` : description}
             {count != null && description ? ` · ${description}` : null}
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -75,8 +75,8 @@ export function AdminListRow({ onClick, children, className }: AdminListRowProps
           : undefined
       }
       className={cn(
-        "rounded-2xl border border-border/50 bg-muted/20 p-4 transition-all duration-300",
-        onClick && "cursor-pointer hover:bg-muted/30 hover:shadow-md",
+        "rounded-xl border border-[#ebe9e4] bg-[#fafaf8] p-4 transition-all duration-200",
+        onClick && "cursor-pointer hover:border-[#c8e6d4] hover:bg-white hover:shadow-md",
         className,
       )}
     >
@@ -95,13 +95,15 @@ type AdminPageHeaderProps = {
 
 export function AdminPageHeader({ icon, title, description, search, actions }: AdminPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="admin-page-title flex items-center gap-2">
-          {icon}
-          {title}
+    <div className="flex flex-col gap-4 border-b border-[#ebe9e4] pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="space-y-2">
+        <h1 className="admin-page-title flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dce8dc] bg-gradient-to-br from-[#f3faf4] to-white text-[#1b7339] shadow-sm [&>svg]:h-5 [&>svg]:w-5">
+            {icon}
+          </span>
+          <span>{title}</span>
         </h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="admin-page-desc max-w-2xl">{description}</p>
       </div>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         {search}
@@ -129,7 +131,7 @@ export function AdminSearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-10 w-full rounded-xl border border-[#e8e6e1] bg-white px-3 py-2 pl-9 text-sm shadow-sm ring-offset-background placeholder:text-[#9a9a9a] focus-visible:border-[#9fd4ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b7339]/15"
       />
     </div>
   )

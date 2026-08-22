@@ -136,8 +136,15 @@ function deriveStatus(
 
 export async function getReportEmailStatus(
   period: string,
-  options?: { status?: string; q?: string },
-): Promise<{ period: string; summary: ReportEmailStatusSummary; rows: ReportEmailStatusRow[] }> {
+  options?: { status?: string; q?: string; limit?: number; offset?: number },
+): Promise<{
+  period: string
+  summary: ReportEmailStatusSummary
+  rows: ReportEmailStatusRow[]
+  rowsTotal: number
+  limit: number
+  offset: number
+}> {
   await ensureEmailDeliveryLogTable()
   await ensureReportSendTables()
 
@@ -237,5 +244,10 @@ export async function getReportEmailStatus(
     })
   }
 
-  return { period, summary, rows: filtered }
+  const rowsTotal = filtered.length
+  const limit = Math.max(1, Math.min(500, options?.limit ?? 50))
+  const offset = Math.max(0, options?.offset ?? 0)
+  const page = filtered.slice(offset, offset + limit)
+
+  return { period, summary, rows: page, rowsTotal, limit, offset }
 }

@@ -17,7 +17,7 @@ export function AdminAuthShell({
   children: React.ReactNode
 }) {
   return (
-    <div className="landing-root min-h-screen bg-white text-[#141414]">
+    <div className="admin-auth landing-root min-h-screen bg-white text-[#141414]">
       <div className="grid min-h-screen lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0 }}

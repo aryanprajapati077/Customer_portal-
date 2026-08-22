@@ -1,39 +1,154 @@
-/* Admin console — Inspire UI surface overrides */
+/* BuffIndia Admin — light, accessible console theme */
 .admin-root {
   --admin-green: #1b7339;
+  --admin-green-dark: #145a2c;
   --admin-green-soft: #e8f5e9;
-  --admin-border: #e5e5e5;
+  --admin-green-muted: #f3faf4;
+  --admin-green-glow: rgba(27, 115, 57, 0.14);
+  --admin-border: #e6e4df;
+  --admin-border-strong: #d8d5cf;
+  --admin-text: #141414;
+  --admin-text-secondary: #4a4a4a;
   --admin-muted: #6b6b6b;
+  --admin-canvas: #f7f6f2;
+  --admin-sidebar: #ffffff;
+  --admin-sidebar-hover: #f5f5f3;
+  --admin-shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.04);
+  --admin-shadow-md: 0 10px 30px rgba(20, 20, 20, 0.06);
+  --admin-radius: 14px;
+  --admin-radius-sm: 10px;
+  --admin-focus: 0 0 0 3px var(--admin-green-glow);
 }
 
+.admin-root {
+  color: var(--admin-text);
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Skip link */
+.admin-root .admin-skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 100;
+  border-radius: 999px;
+  background: var(--admin-green);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-root .admin-skip-link:focus {
+  top: 1rem;
+  outline: none;
+}
+
+/* Canvas */
+.admin-root .admin-canvas {
+  background:
+    radial-gradient(ellipse 70% 45% at 100% 0%, rgba(27, 115, 57, 0.04), transparent 55%),
+    var(--admin-canvas);
+}
+
+.admin-root .admin-content {
+  max-width: 1440px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.admin-root .admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Typography */
 .admin-root .admin-page-title {
-  font-family: var(--font-display), ui-serif, Georgia, "Times New Roman", serif !important;
-  font-size: clamp(1.8rem, 3vw, 2.4rem) !important;
+  font-family: var(--font-display), ui-serif, Georgia, serif !important;
+  font-size: clamp(1.65rem, 2.5vw, 2.15rem) !important;
   line-height: 1.15 !important;
-  letter-spacing: -0.02em !important;
+  letter-spacing: -0.022em !important;
   font-weight: 600 !important;
-  font-style: normal !important;
-  color: #141414 !important;
+  color: var(--admin-text) !important;
 }
 
 .admin-root .admin-page-title em {
   font-style: normal !important;
-  color: inherit !important;
 }
 
+.admin-root .admin-page-desc,
+.admin-root .admin-page .text-muted-foreground {
+  color: var(--admin-muted) !important;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.admin-root .admin-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid #dce8dc;
+  background: linear-gradient(180deg, #f8fcf9 0%, var(--admin-green-soft) 100%);
+  padding: 0.35rem 0.8rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-green);
+}
+
+/* Sidebar */
+.admin-root .admin-sidebar {
+  background: var(--admin-sidebar);
+  border-right: 1px solid var(--admin-border);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.8);
+}
+
+.admin-root .admin-nav-label {
+  padding: 0.75rem 0.65rem 0.3rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a9a9a;
+}
+
+.admin-root .admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d8d5cf transparent;
+}
+
+.admin-root .admin-sidebar-scroll::-webkit-scrollbar {
+  display: block;
+  width: 5px;
+}
+
+.admin-root .admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #d8d5cf;
+  border-radius: 999px;
+}
+
+/* Cards & surfaces */
 .admin-root .glass,
 .admin-root [data-slot="card"],
 .admin-root .rounded-lg.border.bg-card {
   background: #fff !important;
   border: 1px solid var(--admin-border) !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-root [data-slot="card-header"] {
+  border-bottom: 1px solid #f0eeea;
 }
 
 .admin-root [class*="bg-muted/"] {
-  background-color: #f7fbf7 !important;
+  background-color: var(--admin-green-muted) !important;
 }
 
 .admin-root [class*="border-border/"] {
@@ -49,21 +164,170 @@
   color: var(--admin-green);
 }
 
-/* Mobile-friendly tables and OTP inputs */
-.admin-root .admin-table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
+.admin-root .admin-stat-card {
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  padding: 1rem;
+  box-shadow: var(--admin-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+.admin-root .admin-stat-card:hover {
+  box-shadow: var(--admin-shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Labels & form fields — readable, tappable */
+.admin-root label,
+.admin-root [data-slot="label"] {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--admin-text-secondary) !important;
+  line-height: 1.4;
+}
+
+.admin-root input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.admin-root textarea,
+.admin-root [data-slot="select-trigger"],
+.admin-root select {
+  min-height: 2.75rem;
+  border-radius: var(--admin-radius-sm) !important;
+  border-color: var(--admin-border) !important;
+  background: #fff !important;
+  font-size: 14px !important;
+}
+
+.admin-root input:focus-visible,
+.admin-root textarea:focus-visible,
+.admin-root [data-slot="select-trigger"]:focus-visible,
+.admin-root button:focus-visible,
+.admin-root a:focus-visible {
+  outline: none !important;
+  box-shadow: var(--admin-focus) !important;
+  border-color: #9fd4ad !important;
+}
+
+.admin-root [data-slot="select-content"] {
+  border-radius: 12px !important;
+  border-color: var(--admin-border) !important;
+  box-shadow: var(--admin-shadow-md) !important;
+}
+
+/* Buttons — clear targets */
+.admin-root button,
+.admin-root [data-slot="button"] {
+  border-radius: var(--admin-radius-sm);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.admin-root button:not([class*="h-"]):not([class*="size-"]),
+.admin-root [data-slot="button"]:not([class*="h-"]) {
+  min-height: 2.5rem;
+}
+
+.admin-root .bg-\[\#1B7339\],
+.admin-root button.bg-\[\#1B7339\] {
+  background: var(--admin-green) !important;
+  color: #fff !important;
+}
+
+.admin-root .bg-\[\#1B7339\]:hover,
+.admin-root button.bg-\[\#1B7339\]:hover {
+  background: var(--admin-green-dark) !important;
+}
+
+/* Badges */
+.admin-root [data-slot="badge"] {
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Tables */
+.admin-root .admin-table-wrap,
+.admin-root .overflow-x-auto.rounded-xl.border {
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+}
+
+.admin-root table thead {
+  background: #fafaf8;
+}
+
+.admin-root table th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #777;
+}
+
+.admin-root table tbody tr:hover {
+  background: #fafcf9;
+}
+
+/* Sheets & dialogs */
+.admin-root [data-slot="sheet-content"],
+.admin-root [data-slot="dialog-content"] {
+  border-radius: 16px !important;
+}
+
+/* Links */
+.admin-root a {
+  transition: color 0.15s ease;
+}
+
+/* OTP */
 .admin-root .admin-otp-group {
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 @media (max-width: 380px) {
   .admin-root .admin-otp-slot {
-    height: 2.5rem !important;
-    width: 2.25rem !important;
-    font-size: 0.875rem !important;
+    height: 2.75rem !important;
+    width: 2.5rem !important;
+    font-size: 0.9rem !important;
   }
+}
+
+/* Auth pages share admin tokens */
+.admin-auth {
+  --admin-green: #1b7339;
+  background: #fff;
+  color: #141414;
+}
+
+.admin-auth input {
+  min-height: 2.75rem;
+  border-radius: 10px;
+}
+
+.admin-auth input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(27, 115, 57, 0.14);
+  border-color: #9fd4ad;
+}
+
+.admin-root .admin-nav-search:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus);
+  border-color: #9fd4ad;
+}
+
+.admin-root .admin-footer a {
+  text-decoration: none;
+}
+
+.admin-root .admin-footer a:hover {
+  text-decoration: underline;
+}
+
+.admin-auth button[type="submit"] {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  font-weight: 600;
 }

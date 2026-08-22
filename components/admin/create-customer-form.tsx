@@ -85,6 +85,26 @@ function Req({ children }: { children: React.ReactNode }) {
   )
 }
 
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="space-y-4 rounded-xl border border-[#ebe9e4] bg-[#fafaf8] p-4">
+      <div>
+        <h3 className="text-sm font-semibold text-[#141414]">{title}</h3>
+        {description ? <p className="mt-0.5 text-xs text-[#6b6b6b]">{description}</p> : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export function CreateCustomerForm({
   form,
   setForm,
@@ -165,17 +185,18 @@ export function CreateCustomerForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       {error && (
-        <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Customer ID</Label>
-        <Input value={nextId || "BI01"} readOnly className="bg-[#F7FBF7] font-semibold text-[#1B7339]" />
-        <p className="text-[11px] text-[#6B6B6B]">Auto-generated (starts BI01, increments by 1)</p>
-      </div>
+      <FormSection title="Customer ID" description="Auto-generated when you save.">
+        <Input value={nextId || "BI01"} readOnly className="max-w-xs bg-white font-semibold text-[#1B7339]" />
+      </FormSection>
 
+      <FormSection title="Company" description="Brand and legal details shown on reports.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Req>Customer Brand Name</Req>
@@ -240,7 +261,9 @@ export function CreateCustomerForm({
           )}
         </div>
       </div>
+      </FormSection>
 
+      <FormSection title="Location" description="State and city for collections routing.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Req>State</Req>
@@ -280,7 +303,9 @@ export function CreateCustomerForm({
           </Select>
         </div>
       </div>
+      </FormSection>
 
+      <FormSection title="LSU & operations" description="Field team assignment for this client.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Req>LSU Name</Req>
@@ -335,9 +360,9 @@ export function CreateCustomerForm({
           onChange={(e) => setForm((p) => ({ ...p, operationsIncharge: e.target.value }))}
         />
       </div>
+      </FormSection>
 
-      <div className="space-y-3 rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] p-4">
-        <p className="text-sm font-semibold text-[#141414]">Primary POC</p>
+      <FormSection title="Primary POC" description="Portal login uses the primary POC email.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Req>Primary POC name</Req>
@@ -379,11 +404,10 @@ export function CreateCustomerForm({
           sent yet — use <strong>Send welcome emails</strong> on the Customers page after all clients
           are entered.
         </p>
-      </div>
+      </FormSection>
 
-      <div className="space-y-3 rounded-xl border border-[#E2EBE4] p-4">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-[#141414]">Collection POC details</p>
+      <FormSection title="Collection POCs" description="CC recipients on ESG report emails.">
+        <div className="flex items-center justify-end gap-2">
           <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addPoc}>
             <Plus className="mr-1 h-3.5 w-3.5" />
             Add more
@@ -447,8 +471,9 @@ export function CreateCustomerForm({
             </div>
           </div>
         ))}
-      </div>
+      </FormSection>
 
+      <FormSection title="Service & kiosks" description="Collection schedule and installed units.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Req>Service Start Date</Req>
@@ -527,8 +552,9 @@ export function CreateCustomerForm({
           />
         </div>
       </div>
+      </FormSection>
 
-      <div className="space-y-3 rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] p-4">
+      <FormSection title="KraftReborn credits" description="Required so the customer can redeem in the shop.">
         <div className="space-y-2">
           <Req>KR Amount (₹)</Req>
           <Input
@@ -539,16 +565,13 @@ export function CreateCustomerForm({
             value={form.kraftrebornCredits}
             onChange={(e) => setForm((p) => ({ ...p, kraftrebornCredits: e.target.value }))}
             placeholder="e.g. 30000"
+            className="max-w-xs"
           />
-          <p className="text-[11px] text-[#6B6B6B]">
-            KraftReborn credit balance in rupees. Required so the customer can redeem products in the
-            shop.
-          </p>
         </div>
-      </div>
+      </FormSection>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="flex justify-end gap-2 border-t border-[#ebe9e4] pt-4">
+        <Button type="button" variant="outline" className="rounded-full" onClick={onCancel}>
           Cancel
         </Button>
         <Button
@@ -562,7 +585,7 @@ export function CreateCustomerForm({
             !form.collectionFrequency ||
             form.kraftrebornCredits === ""
           }
-          className="bg-[#1B7339] hover:bg-[#145a2c]"
+          className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Customer

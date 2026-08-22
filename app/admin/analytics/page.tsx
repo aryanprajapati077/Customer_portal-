@@ -20,6 +20,7 @@ import {
   AdminListRow,
   AdminPageHeader,
 } from "@/components/admin/admin-list-card"
+import { LoginTrendChart } from "@/components/admin/admin-charts"
 import {
   AdminDetailSheet,
   AdminSheetField,
@@ -71,11 +72,6 @@ function fmt(dt: string | null | undefined) {
   })
 }
 
-function shortDate(isoDate: string) {
-  const d = new Date(`${isoDate}T12:00:00`)
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-}
-
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -111,8 +107,6 @@ export default function AdminAnalyticsPage() {
         (r.path || "").toLowerCase().includes(s),
     )
   }, [data?.recentSessions, q])
-
-  const maxDaily = Math.max(1, ...(data?.dailyLogins.map((d) => d.count) || [1]))
 
   const stats = [
     {
@@ -171,62 +165,41 @@ export default function AdminAnalyticsPage() {
         {stats.map((s) => {
           const Icon = s.icon
           return (
-            <Card key={s.label} className="glass border-border/50">
-              <CardContent className="flex items-start gap-3 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E8F5E9] text-[#1B7339]">
+            <div key={s.label} className="admin-stat-card">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f5e9] text-[#1b7339]">
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
                     {s.label}
                   </p>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-[11px] text-muted-foreground">{s.desc}</p>
+                  <p className="text-2xl font-bold tracking-tight text-[#141414]">{s.value}</p>
+                  <p className="text-[11px] text-[#6b6b6b]">{s.desc}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )
         })}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="glass border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Logins — last 14 days</CardTitle>
-            <CardDescription>Daily sessions and unique clients</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading && !data ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="flex h-44 items-end gap-1.5">
-                {(data?.dailyLogins || []).map((d) => {
-                  const barPx = d.count <= 0 ? 0 : Math.max(8, Math.round((d.count / maxDaily) * 140))
-                  return (
-                    <div key={d.date} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                      <span className="text-[9px] font-medium text-[#1B7339]">{d.count || ""}</span>
-                      <div
-                        className="w-full rounded-t-md bg-[#1B7339]/85 transition-all"
-                        style={{ height: `${barPx}px` }}
-                        title={`${d.count} logins · ${d.uniqueCustomers} unique`}
-                      />
-                      <span className="text-[9px] text-muted-foreground">{shortDate(d.date)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="overflow-hidden rounded-[14px] border border-[#ebe9e4] bg-white shadow-sm">
+          <div className="border-b border-[#ebe9e4] bg-[#fafaf8] px-5 py-4">
+            <h2 className="text-base font-semibold text-[#141414]">Logins — last 14 days</h2>
+            <p className="mt-0.5 text-[13px] text-[#6b6b6b]">Daily sessions vs unique clients</p>
+          </div>
+          <div className="p-5">
+            <LoginTrendChart days={data?.dailyLogins || []} loading={loading && !data} />
+          </div>
+        </div>
 
-        <Card className="glass border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top pages (7 days)</CardTitle>
-            <CardDescription>Most visited portal paths</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="overflow-hidden rounded-[14px] border border-[#ebe9e4] bg-white shadow-sm">
+          <div className="border-b border-[#ebe9e4] bg-[#fafaf8] px-5 py-4">
+            <h2 className="text-base font-semibold text-[#141414]">Top pages (7 days)</h2>
+            <p className="mt-0.5 text-[13px] text-[#6b6b6b]">Most visited portal paths</p>
+          </div>
+          <div className="space-y-2 p-5">
             {(data?.topPages || []).length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 No page views yet — appear after clients browse the portal.
@@ -244,8 +217,8 @@ export default function AdminAnalyticsPage() {
                 </div>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <AdminListCard

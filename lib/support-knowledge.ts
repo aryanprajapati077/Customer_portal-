@@ -66,7 +66,7 @@ export const SUPPORT_TOPICS: SupportTopic[] = [
     icon: "🛍️",
     keywords: ["shop", "cart", "checkout", "product", "buy", "logo", "upload logo", "custom"],
     answer:
-      "Browse products at Kraft Reborn Shop → Add to cart (choose quantity) → Checkout. Enable 'Use KR Credits' at checkout. If products support logo customisation, you can upload your company logo during checkout. Orders start as Pending until fulfilled.",
+      "Browse products at Kraft Reborn Shop → Add to cart (choose quantity) → Checkout. Enable 'Use KR Credits' at checkout. You can add your company logo on every product at checkout — upload a file or use your saved profile logo. Orders start as Pending until fulfilled.",
     links: [
       { label: "Shop", href: "/dashboard/shop" },
       { label: "Cart", href: "/dashboard/shop/cart" },

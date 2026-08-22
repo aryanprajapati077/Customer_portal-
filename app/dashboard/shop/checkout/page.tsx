@@ -36,9 +36,13 @@ export default function CheckoutPage() {
   } | null>(null)
   const pendingNavRef = useRef<string | null>(null)
 
-  const hasLogoEligibleItems = lines.some((l) => l.product.allowsLogo)
-  const credits = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
-  const canPayWithCredits = credits >= subtotal && subtotal > 0
+  const profileLogoUrl = customer?.logoUrl?.trim() || null
+  const hasLogoSource = Boolean(logoPreview || profileLogoUrl)
+
+  useEffect(() => {
+    if (!customer?.id) return
+    void refreshCustomerData()
+  }, [customer?.id, refreshCustomerData])
 
   // Empty cart → back to cart, but never after a successful place-order
   // (clearCart would otherwise race and land on cart instead of KraftReborn).
@@ -47,12 +51,16 @@ export default function CheckoutPage() {
     if (lines.length === 0) router.replace("/dashboard/shop/cart")
   }, [lines.length, router, submitting])
 
-  useEffect(() => {
-    if (!hasLogoEligibleItems) {
-      setWantLogo(false)
-      setLogoPreview(null)
-    }
-  }, [hasLogoEligibleItems])
+  const credits = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
+  const canPayWithCredits = credits >= subtotal && subtotal > 0
+
+  const useProfileLogo = () => {
+    if (!profileLogoUrl) return
+    setLogoPreview(profileLogoUrl)
+    setLogoFileName("Saved company logo")
+    setWantLogo(true)
+    setError(null)
+  }
 
   const handleLogoFile = (file: File | null) => {
     if (!file) return
@@ -64,6 +72,8 @@ export default function CheckoutPage() {
     reader.onload = () => {
       setLogoPreview(reader.result as string)
       setLogoFileName(file.name)
+      setWantLogo(true)
+      setError(null)
     }
     reader.readAsDataURL(file)
   }
@@ -81,8 +91,8 @@ export default function CheckoutPage() {
       return
     }
 
-    if (wantLogo && hasLogoEligibleItems && !logoPreview) {
-      setError("Please upload your logo for customisation.")
+    if (wantLogo && !hasLogoSource) {
+      setError("Please upload your logo or use your saved company logo.")
       return
     }
 
@@ -90,20 +100,21 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
+      const logoIsDataUrl = Boolean(logoPreview?.startsWith("data:"))
       const res = await fetch("/api/customer/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: customer.id,
           useKrCredits: true,
-          logoRequested: wantLogo && hasLogoEligibleItems,
-          logoBase64: wantLogo && logoPreview ? logoPreview : null,
+          logoRequested: wantLogo,
+          logoBase64: wantLogo && logoIsDataUrl ? logoPreview : null,
           items: lines.map((l) => ({
             productId: l.productId || null,
             name: l.product.name,
             price: l.product.price,
             quantity: l.quantity,
-            allowsLogo: l.product.allowsLogo,
+            allowsLogo: true,
             color: l.color || null,
           })),
         }),
@@ -211,7 +222,7 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
-          {hasLogoEligibleItems && (
+          {lines.length > 0 && (
             <section className="relative overflow-hidden rounded-[1.5rem] border border-[#E8DCC8] bg-gradient-to-br from-[#FFF9F0] via-white to-[#F4F9F4] shadow-[0_8px_30px_rgba(27,115,57,0.06)]">
               <div
                 aria-hidden
@@ -236,7 +247,7 @@ export default function CheckoutPage() {
                         Custom logo on product
                       </h2>
                       <p className="mt-1 text-[13px] leading-relaxed text-[#6B6B6B]">
-                        Make your order uniquely yours — we&apos;ll print your logo on eligible KraftReborn items.
+                        Add your company logo to every item in this order — included for all KraftReborn products.
                       </p>
                     </div>
                   </div>
@@ -261,17 +272,28 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {lines
-                    .filter((l) => l.product.allowsLogo)
-                    .map((l) => (
-                      <span
-                        key={l.productId}
-                        className="inline-flex items-center rounded-full border border-[#E5DCC8] bg-white/80 px-2.5 py-1 text-[11px] font-medium text-[#5A5A5A]"
-                      >
-                        {l.product.name}
-                      </span>
-                    ))}
+                  {lines.map((l) => (
+                    <span
+                      key={`${l.productId}-${l.color || ""}`}
+                      className="inline-flex items-center rounded-full border border-[#E5DCC8] bg-white/80 px-2.5 py-1 text-[11px] font-medium text-[#5A5A5A]"
+                    >
+                      {l.product.name}
+                    </span>
+                  ))}
                 </div>
+
+                {profileLogoUrl && !logoPreview ? (
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full border-[#dce8dc] text-[#1b7339] hover:bg-[#e8f5e9]"
+                      onClick={useProfileLogo}
+                    >
+                      Use saved company logo
+                    </Button>
+                  </div>
+                ) : null}
 
                 {wantLogo ? (
                   <div className="mt-5 space-y-4">
@@ -468,7 +490,7 @@ export default function CheckoutPage() {
                   <div key={line.productId} className="flex justify-between gap-2 text-sm">
                     <span className="text-stone-600">
                       {line.product.name} × {line.quantity}
-                      {line.product.allowsLogo && wantLogo ? " (+ logo)" : ""}
+                      {wantLogo ? " (+ logo)" : ""}
                     </span>
                     <span className="font-medium shrink-0">{formatInr(line.lineTotal)}</span>
                   </div>

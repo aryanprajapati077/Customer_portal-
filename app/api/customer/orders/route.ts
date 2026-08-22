@@ -148,10 +148,24 @@ export async function POST(request: NextRequest) {
     let order
     let orderCreated = false
     try {
-      if (logoRequested && logoBase64) {
-        const saved = await saveBase64Image(logoBase64, "logos", "order-logo")
-        logoUrl = saved.url
+      if (logoRequested) {
+        if (logoBase64) {
+          const saved = await saveBase64Image(logoBase64, "logos", "order-logo")
+          logoUrl = saved.url
+        } else if (customer.logoUrl) {
+          logoUrl = customer.logoUrl
+        } else {
+          return NextResponse.json(
+            { success: false, error: "Please upload your logo or add one to your customer profile." },
+            { status: 400 },
+          )
+        }
       }
+
+      const orderItems = resolvedItems.map((item) => ({
+        ...item,
+        allowsLogo: logoRequested ? true : item.allowsLogo,
+      }))
 
       const orderNumber = formatOrderNumber(customerId)
       order = await prisma.shopOrder.create({
@@ -170,7 +184,7 @@ export async function POST(request: NextRequest) {
           shippingAddress: customer.address,
           notes,
           items: {
-            create: resolvedItems,
+            create: orderItems,
           },
         },
         include: { items: true },
@@ -205,7 +219,7 @@ export async function POST(request: NextRequest) {
             companyName: customer.companyName,
             orderNumber,
             subtotal,
-            items: resolvedItems.map((i) => ({
+            items: orderItems.map((i) => ({
               productName: i.productName,
               quantity: i.quantity,
               price: i.price,

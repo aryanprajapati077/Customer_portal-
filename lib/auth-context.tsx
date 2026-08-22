@@ -37,6 +37,7 @@ export interface Customer {
   noOfWallMountKiosk?: number
   gstin?: string | null
   serviceStatus?: string | null
+  logoUrl?: string | null
 }
 
 interface AuthContextType {

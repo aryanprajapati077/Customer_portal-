@@ -103,9 +103,7 @@ export default function ProductDetailPage() {
               <Badge variant="outline" className="bg-[#E8F5E9] text-[#1B7339] border-[#C8E6D4] text-[11px] font-medium">
                 {product.buttsRescued} butts rescued
               </Badge>
-              {product.allowsLogo && (
-                <Badge className="bg-[#1B7339] text-[11px] font-medium">Custom logo available</Badge>
-              )}
+              <Badge className="bg-[#1B7339] text-[11px] font-medium">Custom logo at checkout</Badge>
             </div>
             <h1 className="font-[family-name:var(--font-display)] text-[1.65rem] md:text-[2rem] font-bold leading-[1.2] tracking-tight text-[#141414]">
               {product.name}

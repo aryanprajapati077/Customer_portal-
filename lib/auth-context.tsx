@@ -46,6 +46,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   refreshCustomerData: () => Promise<void>
+  syncCustomer: (profile: Customer) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -55,9 +56,39 @@ function clearLocalCustomer() {
   localStorage.removeItem("buffindia_customer_auth")
 }
 
+const PROFILE_REFRESH_MS = 30_000
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const syncCustomer = useCallback((profile: Customer) => {
+    setCustomer(profile)
+    localStorage.setItem("buffindia_customer", JSON.stringify(profile))
+  }, [])
+
+  const refreshCustomerData = useCallback(async () => {
+    if (!customer?.id) return
+
+    try {
+      const response = await fetch(
+        `/api/customer/profile?customerId=${encodeURIComponent(customer.id)}`,
+        { credentials: "include", cache: "no-store" },
+      )
+      if (response.status === 401) {
+        setCustomer(null)
+        clearLocalCustomer()
+        return
+      }
+      const data = await response.json()
+      if (data.success && data.customer) {
+        setCustomer((prev) => ({ ...(prev || {}), ...data.customer }))
+        localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
+      }
+    } catch (error) {
+      console.error("Error refreshing customer data:", error)
+    }
+  }, [customer?.id])
 
   useEffect(() => {
     let cancelled = false
@@ -85,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Revalidate cookie session against server (clears stale localStorage after logout/expiry)
     void fetch(`/api/customer/profile?customerId=${encodeURIComponent(parsed.id)}`, {
       credentials: "include",
+      cache: "no-store",
     })
       .then(async (response) => {
         if (cancelled) return
@@ -108,6 +140,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!customer?.id || isLoading) return
+
+    const refresh = () => void refreshCustomerData()
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh()
+    }
+
+    window.addEventListener("focus", refresh)
+    document.addEventListener("visibilitychange", onVisibility)
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") refresh()
+    }, PROFILE_REFRESH_MS)
+
+    return () => {
+      window.removeEventListener("focus", refresh)
+      document.removeEventListener("visibilitychange", onVisibility)
+      window.clearInterval(interval)
+    }
+  }, [customer?.id, isLoading, refreshCustomerData])
 
   const login = async (email: string, password: string) => {
     try {
@@ -137,30 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearLocalCustomer()
   }
 
-  const refreshCustomerData = useCallback(async () => {
-    if (!customer?.id) return
-
-    try {
-      const response = await fetch(`/api/customer/profile?customerId=${encodeURIComponent(customer.id)}`, {
-        credentials: "include",
-      })
-      if (response.status === 401) {
-        setCustomer(null)
-        clearLocalCustomer()
-        return
-      }
-      const data = await response.json()
-      if (data.success && data.customer) {
-        setCustomer((prev) => ({ ...(prev || {}), ...data.customer }))
-        localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
-      }
-    } catch (error) {
-      console.error("Error refreshing customer data:", error)
-    }
-  }, [customer?.id])
-
   return (
-    <AuthContext.Provider value={{ customer, isLoading, login, logout, refreshCustomerData }}>
+    <AuthContext.Provider
+      value={{ customer, isLoading, login, logout, refreshCustomerData, syncCustomer }}
+    >
       {children}
     </AuthContext.Provider>
   )

@@ -36,7 +36,7 @@ export type CollectionWithLocation = CollectionLike & {
 const LOCATION_KEY = "buffindia_group_location"
 
 export function usePortalData() {
-  const { customer, isLoading } = useAuth()
+  const { customer, isLoading, syncCustomer } = useAuth()
   const router = useRouter()
   const [customerView, setCustomerView] = useState<Customer | null>(customer)
   const [groupLocations, setGroupLocations] = useState<GroupLocationOption[]>([])
@@ -99,7 +99,7 @@ export function usePortalData() {
         fetch(`/api/customer/collections?customerId=${customer.id}${locQs}`),
         fetch(`/api/customer/certificates?customerId=${customer.id}${locQs}`),
         fetch(`/api/customer/reports?customerId=${customer.id}${locQs}`),
-        fetch(`/api/customer/profile?customerId=${customer.id}`),
+        fetch(`/api/customer/profile?customerId=${customer.id}`, { cache: "no-store" }),
       ])
       const [collectionsData, certificatesData, reportsData, profileData] = await Promise.all([
         collectionsRes.json(),
@@ -112,17 +112,17 @@ export function usePortalData() {
       if (reportsData.success) setReports(reportsData.reports || [])
       if (profileData.success && profileData.customer) {
         setCustomerView(profileData.customer)
+        syncCustomer(profileData.customer)
         if (Array.isArray(profileData.customer.groupLocations)) {
           setGroupLocations(profileData.customer.groupLocations)
         }
-        localStorage.setItem("buffindia_customer", JSON.stringify(profileData.customer))
       }
       setLastRefresh(new Date())
     } catch (error) {
       console.error("Error fetching portal data:", error)
     }
     setDataLoading(false)
-  }, [customer?.id, selectedLocationId])
+  }, [customer?.id, selectedLocationId, syncCustomer])
 
   useEffect(() => {
     if (customer?.id) fetchCustomerData()

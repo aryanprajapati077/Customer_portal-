@@ -42,20 +42,27 @@ export async function GET(request: NextRequest) {
     const contactPerson =
       String(customerData.contactPerson || customerData.primaryPocName || "").trim() || null
 
-    return NextResponse.json({
-      success: true,
-      customer: {
-        ...customerData,
-        contactPerson,
-        primaryPocName: customerData.primaryPocName ?? contactPerson,
-        disposalUnitInstalled: customerData.disposalUnitInstalled ?? 0,
-        totalWasteCollected: customerData.totalWasteCollected || 0,
-        kraftrebornCredits: customerData.kraftrebornCredits || 0,
-        isGroup,
-        parentCustomerId: customerData.parentCustomerId ?? null,
-        groupLocations,
+    return NextResponse.json(
+      {
+        success: true,
+        customer: {
+          ...customerData,
+          contactPerson,
+          primaryPocName: customerData.primaryPocName ?? contactPerson,
+          disposalUnitInstalled: customerData.disposalUnitInstalled ?? 0,
+          totalWasteCollected: customerData.totalWasteCollected || 0,
+          kraftrebornCredits: customerData.kraftrebornCredits || 0,
+          isGroup,
+          parentCustomerId: customerData.parentCustomerId ?? null,
+          groupLocations,
+        },
       },
-    })
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      },
+    )
   } catch (error) {
     console.error("Error fetching customer profile:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

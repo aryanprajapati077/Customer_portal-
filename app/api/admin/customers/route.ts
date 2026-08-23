@@ -424,7 +424,7 @@ export async function PATCH(request: NextRequest) {
       values.push(Number.isFinite(v) ? v : 0)
     }
     if (hasAbsCredits) {
-      const v = Number(body.kraftrebornCredits)
+      const v = Math.max(0, Math.floor(Number(body.kraftrebornCredits)))
       updates.push(`"kraftrebornCredits" = $${i++}`)
       values.push(Number.isFinite(v) ? v : 0)
     }
@@ -435,7 +435,7 @@ export async function PATCH(request: NextRequest) {
       }
       const delta = Math.floor(v)
       creditsDelta = delta
-      updates.push(`"kraftrebornCredits" = COALESCE("kraftrebornCredits", 0) + $${i++}`)
+      updates.push(`"kraftrebornCredits" = GREATEST(0, COALESCE("kraftrebornCredits", 0) + $${i++})`)
       values.push(delta)
     }
     if (body?.status !== undefined) {
@@ -587,7 +587,9 @@ export async function PATCH(request: NextRequest) {
         contactPerson?: string | null
       }
       const prev = Number(before.kraftrebornCredits) || 0
-      const next = hasDeltaCredits ? prev + (creditsDelta ?? 0) : Number(body.kraftrebornCredits)
+      const next = hasDeltaCredits
+        ? Math.max(0, prev + (creditsDelta ?? 0))
+        : Math.max(0, Math.floor(Number(body.kraftrebornCredits)))
       const added = next - prev
       if (Number.isFinite(added) && added > 0) {
         const to = String(before.primaryPocEmail || before.email || "")

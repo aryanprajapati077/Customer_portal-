@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Coins, Loader2, Plus, RefreshCw } from "lucide-react"
+import { Coins, Loader2, Plus, RefreshCw, Pencil } from "lucide-react"
 import {
   AdminListCard,
   AdminListRow,
@@ -35,9 +35,11 @@ export default function AdminKrCreditsPage() {
   const [q, setQ] = useState("")
   const [customerId, setCustomerId] = useState("")
   const [amount, setAmount] = useState("")
+  const [creditMode, setCreditMode] = useState<"add" | "set">("add")
   const [adding, setAdding] = useState(false)
   const [selected, setSelected] = useState<CustomerRow | null>(null)
   const [sheetAmount, setSheetAmount] = useState("")
+  const [sheetMode, setSheetMode] = useState<"add" | "set">("add")
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -73,11 +75,20 @@ export default function AdminKrCreditsPage() {
 
   const draftCustomer = customers.find((c) => c.id === customerId)
 
-  const applyCredits = async (id: string, delta: number, closeSheet?: boolean) => {
+  const applyCredits = async (
+    id: string,
+    opts: { delta?: number; absolute?: number },
+    closeSheet?: boolean,
+  ) => {
+    const body =
+      opts.absolute !== undefined
+        ? { id, kraftrebornCredits: opts.absolute }
+        : { id, kraftrebornCreditsDelta: opts.delta }
+
     const res = await fetch("/api/admin/customers", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, kraftrebornCreditsDelta: delta }),
+      body: JSON.stringify(body),
     })
     const data = await res.json()
     if (data?.success && data.customer) {
@@ -94,7 +105,7 @@ export default function AdminKrCreditsPage() {
       if (closeSheet) setSheetAmount("")
       return true
     }
-    alert(data?.error || "Failed to add KR credits")
+    alert(data?.error || "Failed to update KR credits")
     return false
   }
 
@@ -103,7 +114,26 @@ export default function AdminKrCreditsPage() {
     if (!customerId || !Number.isFinite(delta) || delta <= 0) return
     setAdding(true)
     try {
-      const ok = await applyCredits(customerId, delta)
+      const ok = await applyCredits(customerId, { delta })
+      if (ok) setAmount("")
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const setCredits = async () => {
+    const next = Math.max(0, Math.floor(Number(amount)))
+    if (!customerId || !Number.isFinite(next)) return
+    const current = Math.floor(Number(draftCustomer?.kraftrebornCredits) || 0)
+    if (
+      next < current &&
+      !confirm(`Change balance from ₹${current} to ₹${next}? The client will have less redeemable amount.`)
+    ) {
+      return
+    }
+    setAdding(true)
+    try {
+      const ok = await applyCredits(customerId, { absolute: next })
       if (ok) setAmount("")
     } finally {
       setAdding(false)
@@ -116,7 +146,26 @@ export default function AdminKrCreditsPage() {
     if (!Number.isFinite(delta) || delta <= 0) return
     setAdding(true)
     try {
-      await applyCredits(selected.id, delta, true)
+      await applyCredits(selected.id, { delta }, true)
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const setCreditsFromSheet = async () => {
+    if (!selected) return
+    const next = Math.max(0, Math.floor(Number(sheetAmount)))
+    if (!Number.isFinite(next)) return
+    const current = Math.floor(Number(selected.kraftrebornCredits) || 0)
+    if (
+      next < current &&
+      !confirm(`Change balance from ₹${current} to ₹${next}? The client will have less redeemable amount.`)
+    ) {
+      return
+    }
+    setAdding(true)
+    try {
+      await applyCredits(selected.id, { absolute: next }, true)
     } finally {
       setAdding(false)
     }
@@ -140,19 +189,58 @@ export default function AdminKrCreditsPage() {
       <Card className="glass border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Plus className="h-4 w-4" />
-            Give extra KR amount
+            {creditMode === "add" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+            {creditMode === "add" ? "Give extra KR amount" : "Change KR balance"}
           </CardTitle>
-          <CardDescription>Add redeemable balance for the KraftReborn shop</CardDescription>
+          <CardDescription>
+            {creditMode === "add"
+              ? "Add redeemable balance for the KraftReborn shop"
+              : "Set the client’s exact redeemable balance (increase or decrease)"}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={creditMode === "add" ? "default" : "outline"}
+              className={creditMode === "add" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+              onClick={() => {
+                setCreditMode("add")
+                setAmount("")
+              }}
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add credits
+            </Button>
+            <Button
+              type="button"
+              variant={creditMode === "set" ? "default" : "outline"}
+              className={creditMode === "set" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+              onClick={() => {
+                setCreditMode("set")
+                setAmount(
+                  draftCustomer ? String(Math.floor(Number(draftCustomer.kraftrebornCredits) || 0)) : "",
+                )
+              }}
+            >
+              <Pencil className="mr-1.5 h-3.5 w-3.5" />
+              Set balance
+            </Button>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Customer</Label>
               <CustomerSearchSelect
                 customers={customers}
                 value={customerId}
-                onChange={setCustomerId}
+                onChange={(id) => {
+                  setCustomerId(id)
+                  if (creditMode === "set") {
+                    const row = customers.find((c) => c.id === id)
+                    setAmount(row ? String(Math.floor(Number(row.kraftrebornCredits) || 0)) : "")
+                  }
+                }}
               />
               {draftCustomer && (
                 <p className="pt-1 text-[11px] text-muted-foreground">
@@ -161,29 +249,45 @@ export default function AdminKrCreditsPage() {
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Amount to add (₹)</Label>
+              <Label className="text-xs text-muted-foreground">
+                {creditMode === "add" ? "Amount to add (₹)" : "New balance (₹)"}
+              </Label>
               <Input
                 type="number"
-                min={1}
+                min={0}
                 step={1}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="e.g. 500"
+                placeholder={creditMode === "add" ? "e.g. 500" : "e.g. 24950"}
               />
+              {creditMode === "set" && draftCustomer && amount !== "" ? (
+                <p className="pt-1 text-[11px] text-muted-foreground">
+                  {(() => {
+                    const current = Math.floor(Number(draftCustomer.kraftrebornCredits) || 0)
+                    const next = Math.max(0, Math.floor(Number(amount) || 0))
+                    const diff = next - current
+                    if (diff === 0) return "No change from current balance"
+                    if (diff > 0) return `Increases by ₹${diff}`
+                    return `Decreases by ₹${Math.abs(diff)}`
+                  })()}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
-              onClick={addCredits}
+              onClick={creditMode === "add" ? addCredits : setCredits}
               disabled={adding || !amount || !customerId}
               className="rounded-lg bg-[#1B7339] hover:bg-[#145a2c]"
             >
               {adding ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
+              ) : creditMode === "add" ? (
                 <Plus className="mr-2 h-4 w-4" />
+              ) : (
+                <Pencil className="mr-2 h-4 w-4" />
               )}
-              Add credits
+              {creditMode === "add" ? "Add credits" : "Set balance"}
             </Button>
             <Button variant="outline" onClick={load} disabled={loading} className="rounded-lg">
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -230,6 +334,7 @@ export default function AdminKrCreditsPage() {
           if (!open) {
             setSelected(null)
             setSheetAmount("")
+            setSheetMode("add")
           }
         }}
         title={selected ? `${selected.companyName}` : ""}
@@ -251,26 +356,60 @@ export default function AdminKrCreditsPage() {
               />
             </AdminSheetSection>
 
-            <AdminSheetSection title="Add extra KR amount">
+            <AdminSheetSection title="Update KR balance">
+              <div className="flex flex-wrap gap-2 pb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={sheetMode === "add" ? "default" : "outline"}
+                  className={sheetMode === "add" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+                  onClick={() => {
+                    setSheetMode("add")
+                    setSheetAmount("")
+                  }}
+                >
+                  Add
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={sheetMode === "set" ? "default" : "outline"}
+                  className={sheetMode === "set" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+                  onClick={() => {
+                    setSheetMode("set")
+                    setSheetAmount(String(Math.floor(Number(selected.kraftrebornCredits) || 0)))
+                  }}
+                >
+                  Set balance
+                </Button>
+              </div>
               <div className="flex gap-2">
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   step={1}
                   value={sheetAmount}
                   onChange={(e) => setSheetAmount(e.target.value)}
-                  placeholder="Amount in ₹"
+                  placeholder={sheetMode === "add" ? "Amount to add (₹)" : "New balance (₹)"}
                 />
                 <Button
-                  onClick={addCreditsFromSheet}
+                  onClick={sheetMode === "add" ? addCreditsFromSheet : setCreditsFromSheet}
                   disabled={adding || !sheetAmount}
                   className="shrink-0 rounded-lg bg-[#1B7339] hover:bg-[#145a2c]"
                 >
-                  {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                  {adding ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : sheetMode === "add" ? (
+                    "Add"
+                  ) : (
+                    "Set"
+                  )}
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Client receives an email when extra credits are added.
+                {sheetMode === "add"
+                  ? "Client receives an email when extra credits are added."
+                  : "Set the exact balance. Email is sent only when the balance increases."}
               </p>
             </AdminSheetSection>
 

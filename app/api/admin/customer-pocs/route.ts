@@ -3,22 +3,23 @@ import { sql } from "@/lib/db"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 
-type CollectionPoc = {
-  name?: string
-  email?: string
-  number?: string
-  designation?: string
+import {
+  defaultEmailEnabled,
+  defaultPocStatus,
+  parseCollectionPocForms,
+  type CollectionPocRecord,
+} from "@/lib/poc-config"
+
+type CollectionPoc = CollectionPocRecord & {
+  emailEnabled?: boolean
+  status?: string
 }
 
 function parseCollectionPocs(raw: unknown): CollectionPoc[] {
   if (!raw) return []
-  try {
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((p) => p && typeof p === "object") as CollectionPoc[]
-  } catch {
-    return []
-  }
+  if (typeof raw === "string") return parseCollectionPocForms(raw)
+  if (Array.isArray(raw)) return parseCollectionPocForms(JSON.stringify(raw))
+  return []
 }
 
 export async function GET(request: NextRequest) {
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
         id, "companyName", city, state, status,
         email, phone, "contactPerson",
         "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+        "primaryPocEmailEnabled", "primaryPocStatus",
         "collectionPocs", "serviceStartDate", "joinDate"
       FROM "Customer"
       WHERE COALESCE("isGroup", false) = false
@@ -60,6 +62,8 @@ export async function GET(request: NextRequest) {
           primaryPocEmail: String(r.primaryPocEmail || ""),
           primaryPocNumber: String(r.primaryPocNumber || ""),
           primaryPocDesignation: String(r.primaryPocDesignation || ""),
+          primaryPocEmailEnabled: defaultEmailEnabled(r.primaryPocEmailEnabled as boolean | null),
+          primaryPocStatus: defaultPocStatus(r.primaryPocStatus as string | null),
           collectionPocs,
           serviceStartDate: r.serviceStartDate
             ? new Date(r.serviceStartDate as string | Date).toISOString().slice(0, 10)

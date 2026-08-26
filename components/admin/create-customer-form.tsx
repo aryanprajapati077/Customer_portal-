@@ -17,13 +17,14 @@ import {
   INDIA_STATES,
 } from "@/lib/india-locations"
 import { Loader2, Plus, Trash2 } from "lucide-react"
+import {
+  emptyCollectionPocForm,
+  type CollectionPocForm,
+  type PocStatus,
+} from "@/lib/poc-config"
+import { PocEmailStatusControls } from "@/components/admin/poc-email-status-controls"
 
-export type CollectionPocForm = {
-  name: string
-  email: string
-  number: string
-  designation: string
-}
+export type { CollectionPocForm } from "@/lib/poc-config"
 
 export type CreateCustomerFormState = {
   brandName: string
@@ -37,6 +38,8 @@ export type CreateCustomerFormState = {
   primaryPocEmail: string
   primaryPocNumber: string
   primaryPocDesignation: string
+  primaryPocEmailEnabled: boolean
+  primaryPocStatus: PocStatus
   collectionPocs: CollectionPocForm[]
   serviceStartDate: string
   noOfKiosk: string
@@ -63,7 +66,9 @@ export const EMPTY_CREATE_CUSTOMER_FORM: CreateCustomerFormState = {
   primaryPocEmail: "",
   primaryPocNumber: "",
   primaryPocDesignation: "",
-  collectionPocs: [{ name: "", email: "", number: "", designation: "" }],
+  primaryPocEmailEnabled: true,
+  primaryPocStatus: "Active",
+  collectionPocs: [emptyCollectionPocForm()],
   serviceStartDate: "",
   noOfKiosk: "",
   noOfBasicKiosk: "0",
@@ -170,7 +175,7 @@ export function CreateCustomerForm({
   const addPoc = () => {
     setForm((p) => ({
       ...p,
-      collectionPocs: [...p.collectionPocs, { name: "", email: "", number: "", designation: "" }],
+      collectionPocs: [...p.collectionPocs, emptyCollectionPocForm()],
     }))
   }
 
@@ -398,6 +403,12 @@ export function CreateCustomerForm({
               onChange={(e) => setForm((p) => ({ ...p, primaryPocDesignation: e.target.value }))}
             />
           </div>
+          <PocEmailStatusControls
+            emailEnabled={form.primaryPocEmailEnabled}
+            status={form.primaryPocStatus}
+            onEmailEnabledChange={(value) => setForm((p) => ({ ...p, primaryPocEmailEnabled: value }))}
+            onStatusChange={(value) => setForm((p) => ({ ...p, primaryPocStatus: value }))}
+          />
         </div>
         <p className="text-[11px] text-[#6B6B6B]">
           Portal username = Primary POC Email. Password is generated on create; welcome email is not
@@ -468,6 +479,12 @@ export function CreateCustomerForm({
                   onChange={(e) => updatePoc(index, { designation: e.target.value })}
                 />
               </div>
+              <PocEmailStatusControls
+                emailEnabled={poc.emailEnabled}
+                status={poc.status}
+                onEmailEnabledChange={(value) => updatePoc(index, { emailEnabled: value })}
+                onStatusChange={(value) => updatePoc(index, { status: value })}
+              />
             </div>
           </div>
         ))}

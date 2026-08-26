@@ -37,24 +37,18 @@ import {
 } from "@/components/admin/create-customer-form"
 import { Label } from "@/components/ui/label"
 import { COLLECTION_FREQUENCY_OPTIONS } from "@/lib/india-locations"
+import {
+  defaultEmailEnabled,
+  defaultPocStatus,
+  emptyCollectionPocForm,
+  parseCollectionPocForms,
+  type PocStatus,
+} from "@/lib/poc-config"
+import { PocEmailStatusControls } from "@/components/admin/poc-email-status-controls"
 import ExcelJS from "exceljs"
 
-function parseCollectionPocs(raw?: string | null): CollectionPocForm[] {
-  if (!raw?.trim()) return [{ name: "", email: "", number: "", designation: "" }]
-  try {
-    const parsed = JSON.parse(raw) as CollectionPocForm[]
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return [{ name: "", email: "", number: "", designation: "" }]
-    }
-    return parsed.map((p) => ({
-      name: String(p?.name || ""),
-      email: String(p?.email || ""),
-      number: String(p?.number || ""),
-      designation: String(p?.designation || ""),
-    }))
-  } catch {
-    return [{ name: "", email: "", number: "", designation: "" }]
-  }
+function parseCollectionPocs(raw?: string | null) {
+  return parseCollectionPocForms(raw)
 }
 
 type CustomerRow = {
@@ -79,6 +73,8 @@ type CustomerRow = {
   primaryPocEmail?: string | null
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   collectionPocs?: string | null
   collectionFrequency?: string | null
   noOfKiosk?: number
@@ -159,6 +155,8 @@ function EditableCustomerSheet({
     primaryPocEmail: customer.primaryPocEmail || "",
     primaryPocNumber: customer.primaryPocNumber || "",
     primaryPocDesignation: customer.primaryPocDesignation || "",
+    primaryPocEmailEnabled: defaultEmailEnabled(customer.primaryPocEmailEnabled),
+    primaryPocStatus: defaultPocStatus(customer.primaryPocStatus),
     collectionFrequency: customer.collectionFrequency || "Monthly",
     serviceStartDate: toDateInput(customer.serviceStartDate),
     noOfKiosk: String(customer.noOfKiosk ?? 0),
@@ -196,6 +194,8 @@ function EditableCustomerSheet({
       primaryPocEmail: customer.primaryPocEmail || "",
       primaryPocNumber: customer.primaryPocNumber || "",
       primaryPocDesignation: customer.primaryPocDesignation || "",
+      primaryPocEmailEnabled: defaultEmailEnabled(customer.primaryPocEmailEnabled),
+      primaryPocStatus: defaultPocStatus(customer.primaryPocStatus),
       collectionFrequency: customer.collectionFrequency || "Monthly",
       serviceStartDate: toDateInput(customer.serviceStartDate),
       noOfKiosk: String(customer.noOfKiosk ?? 0),
@@ -234,6 +234,8 @@ function EditableCustomerSheet({
           email: p.email.trim().toLowerCase(),
           number: p.number.trim(),
           designation: p.designation.trim(),
+          emailEnabled: p.emailEnabled,
+          status: p.status,
         }))
         .filter((p) => p.name || p.email || p.number)
 
@@ -251,6 +253,8 @@ function EditableCustomerSheet({
         primaryPocEmail: draft.primaryPocEmail.trim().toLowerCase(),
         primaryPocNumber: draft.primaryPocNumber.trim(),
         primaryPocDesignation: draft.primaryPocDesignation.trim(),
+        primaryPocEmailEnabled: draft.primaryPocEmailEnabled,
+        primaryPocStatus: draft.primaryPocStatus,
         collectionFrequency: draft.collectionFrequency,
         collectionPocs: cleanedPocs,
         serviceStartDate: draft.serviceStartDate || null,
@@ -525,6 +529,16 @@ function EditableCustomerSheet({
                 <Label className="text-[11px] text-[#6B6B6B]">Designation</Label>
                 <Input className={inputClass} value={draft.primaryPocDesignation} onChange={(e) => set("primaryPocDesignation", e.target.value)} />
               </div>
+              <PocEmailStatusControls
+                emailEnabled={draft.primaryPocEmailEnabled}
+                status={draft.primaryPocStatus}
+                onEmailEnabledChange={(value) =>
+                  setDraft((d) => ({ ...d, primaryPocEmailEnabled: value }))
+                }
+                onStatusChange={(value) =>
+                  setDraft((d) => ({ ...d, primaryPocStatus: value as PocStatus }))
+                }
+              />
             </div>
           </div>
 
@@ -538,16 +552,19 @@ function EditableCustomerSheet({
                 size="sm"
                 variant="outline"
                 className="rounded-full"
-                onClick={() =>
-                  setCollectionPocs((p) => [...p, { name: "", email: "", number: "", designation: "" }])
-                }
+                onClick={() => setCollectionPocs((p) => [...p, emptyCollectionPocForm()])}
               >
                 <Plus className="mr-1 h-3.5 w-3.5" />
                 Add POC
               </Button>
             </div>
             {collectionPocs.map((poc, index) => (
-              <div key={index} className="space-y-3 rounded-xl border border-[#EAEAEA] bg-white p-3">
+              <div
+                key={index}
+                className={`space-y-3 rounded-xl border bg-white p-3 ${
+                  poc.status === "Inactive" ? "border-[#EAEAEA] opacity-70" : "border-[#EAEAEA]"
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <p className="text-[12px] font-semibold text-[#141414]">Collection POC {index + 1}</p>
                   {collectionPocs.length > 1 && (
@@ -579,6 +596,12 @@ function EditableCustomerSheet({
                     <Label className="text-[11px] text-[#6B6B6B]">Designation</Label>
                     <Input className={inputClass} value={poc.designation} onChange={(e) => updatePoc(index, { designation: e.target.value })} />
                   </div>
+                  <PocEmailStatusControls
+                    emailEnabled={poc.emailEnabled}
+                    status={poc.status}
+                    onEmailEnabledChange={(value) => updatePoc(index, { emailEnabled: value })}
+                    onStatusChange={(value) => updatePoc(index, { status: value })}
+                  />
                 </div>
               </div>
             ))}
@@ -788,6 +811,8 @@ export default function AdminCustomersPage() {
           primaryPocEmail: createForm.primaryPocEmail.trim(),
           primaryPocNumber: createForm.primaryPocNumber.trim(),
           primaryPocDesignation: createForm.primaryPocDesignation.trim() || undefined,
+          primaryPocEmailEnabled: createForm.primaryPocEmailEnabled,
+          primaryPocStatus: createForm.primaryPocStatus,
           collectionPocs: createForm.collectionPocs,
           serviceStartDate: createForm.serviceStartDate,
           noOfKiosk: Number(createForm.noOfKiosk),

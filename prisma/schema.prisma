@@ -26,7 +26,9 @@ model Customer {
   primaryPocEmail       String?
   primaryPocNumber      String?
   primaryPocDesignation String?
-  collectionPocs        String? // JSON: [{name,email,number,designation}]
+  collectionPocs        String? // JSON: [{name,email,number,designation,emailEnabled,status}]
+  primaryPocEmailEnabled Boolean? @default(true)
+  primaryPocStatus      String?  @default("Active")
   serviceStartDate      DateTime?
   noOfKiosk             Int      @default(0)
   noOfBasicKiosk        Int      @default(0)

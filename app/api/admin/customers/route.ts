@@ -8,13 +8,11 @@ import {
 } from "@/lib/india-locations"
 import { generatePortalPassword } from "@/lib/welcome-email"
 import { saveBase64Image } from "@/lib/upload"
-
-type CollectionPoc = {
-  name: string
-  email: string
-  number: string
-  designation?: string
-}
+import {
+  defaultEmailEnabled,
+  defaultPocStatus,
+  normalizeCollectionPocs,
+} from "@/lib/poc-config"
 
 async function ensureCustomerColumns() {
   // Run once per server process — avoid ALTER TABLE on every list request
@@ -34,6 +32,8 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "primaryPocEmail" TEXT,
       ADD COLUMN IF NOT EXISTS "primaryPocNumber" TEXT,
       ADD COLUMN IF NOT EXISTS "primaryPocDesignation" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocEmailEnabled" BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS "primaryPocStatus" TEXT DEFAULT 'Active',
       ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT,
       ADD COLUMN IF NOT EXISTS "serviceStartDate" TIMESTAMP(3),
       ADD COLUMN IF NOT EXISTS "noOfKiosk" INTEGER DEFAULT 0,
@@ -91,18 +91,6 @@ async function findLoginEmailConflict(email: string, excludeId: string): Promise
   return hit.companyName ? `${hit.id} (${hit.companyName})` : hit.id
 }
 
-function normalizeCollectionPocs(raw: unknown): CollectionPoc[] {
-  if (!Array.isArray(raw)) return []
-  return raw
-    .map((p) => ({
-      name: String(p?.name || "").trim(),
-      email: String(p?.email || "").trim().toLowerCase(),
-      number: String(p?.number || "").trim(),
-      designation: String(p?.designation || "").trim() || undefined,
-    }))
-    .filter((p) => p.name || p.email || p.number)
-}
-
 export async function GET(request: NextRequest) {
   try {
     const nextIdOnly = request.nextUrl.searchParams.get("nextId") === "1"
@@ -147,6 +135,7 @@ export async function GET(request: NextRequest) {
                  "lsuName", "lsuTechnicianName", "operationsIncharge",
                  "contactPerson", phone, address, status,
                  "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+                 "primaryPocEmailEnabled", "primaryPocStatus",
                  "collectionPocs", "collectionFrequency",
                  "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
                  "serviceStartDate",
@@ -170,6 +159,7 @@ export async function GET(request: NextRequest) {
                  "lsuName", "lsuTechnicianName", "operationsIncharge",
                  "contactPerson", phone, address, status,
                  "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+                 "primaryPocEmailEnabled", "primaryPocStatus",
                  "collectionPocs", "collectionFrequency",
                  "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
                  "serviceStartDate",
@@ -525,6 +515,14 @@ export async function PATCH(request: NextRequest) {
       values.push(String(body.primaryPocNumber || "").trim() || null)
     }
     if (body?.primaryPocDesignation !== undefined) setText("primaryPocDesignation", body.primaryPocDesignation)
+    if (body?.primaryPocEmailEnabled !== undefined) {
+      updates.push(`"primaryPocEmailEnabled" = $${i++}`)
+      values.push(defaultEmailEnabled(body.primaryPocEmailEnabled))
+    }
+    if (body?.primaryPocStatus !== undefined) {
+      updates.push(`"primaryPocStatus" = $${i++}`)
+      values.push(defaultPocStatus(String(body.primaryPocStatus)))
+    }
     if (body?.collectionPocs !== undefined) {
       const pocs = normalizeCollectionPocs(body.collectionPocs)
       updates.push(`"collectionPocs" = $${i++}`)

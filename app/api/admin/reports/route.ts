@@ -211,14 +211,14 @@ export async function POST(request: NextRequest) {
         ? await sql`
             SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "serviceStatus", "joinDate",
                    "serviceStartDate", "collectionFrequency",
-                   "primaryPocEmail", "collectionPocs"
+                   "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
             FROM "Customer"
             WHERE id = ${customerId}
           `
         : await sql`
             SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "serviceStatus", "joinDate",
                    "serviceStartDate", "collectionFrequency",
-                   "primaryPocEmail", "collectionPocs"
+                   "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
             FROM "Customer"
             WHERE status = 'Active'
               AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'

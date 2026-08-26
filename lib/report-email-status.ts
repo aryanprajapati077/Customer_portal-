@@ -151,7 +151,7 @@ export async function getReportEmailStatus(
   const customers = (await sql`
     SELECT id, email, "companyName", status, "serviceStatus", "joinDate",
            "serviceStartDate", "collectionFrequency",
-           "primaryPocEmail", "collectionPocs"
+           "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
     FROM "Customer"
     WHERE status = 'Active'
     ORDER BY "companyName" ASC

@@ -25,6 +25,8 @@ export type ReportCustomerRow = {
   serviceStartDate?: string | Date | null
   collectionFrequency?: string | null
   primaryPocEmail?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   collectionPocs?: string | null
 }
 
@@ -32,7 +34,7 @@ export async function loadReportCustomer(customerId: string): Promise<ReportCust
   const rows = await sql`
     SELECT id, email, "companyName", "contactPerson", "primaryPocName", status, "serviceStatus", "joinDate",
            "serviceStartDate", "collectionFrequency",
-           "primaryPocEmail", "collectionPocs"
+           "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
     FROM "Customer"
     WHERE id = ${customerId}
     LIMIT 1

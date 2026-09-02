@@ -4,6 +4,7 @@ import {
   isDueForMonth,
 } from "@/lib/pending-collections"
 import { normalizeServiceStatus } from "@/lib/service-status"
+import { getGroupLocations } from "@/lib/group-customer-access"
 
 export function isCompletedCollectionStatus(status?: string | null): boolean {
   return String(status || "Completed").trim().toLowerCase() === "completed"
@@ -93,6 +94,25 @@ export async function getCollectionStatsByCustomer(
   for (const row of rows) {
     map.set(row.customerId, { open: row.open_n || 0, completed: row.done_n || 0 })
   }
+
+  // Roll up child location stats onto group parent IDs for report send eligibility.
+  const groups = await sql<{ id: string }>`
+    SELECT id FROM "Customer" WHERE COALESCE("isGroup", false) = true
+  `
+  for (const group of groups) {
+    const children = await getGroupLocations(group.id)
+    if (children.length === 0) continue
+    let open = 0
+    let completed = 0
+    for (const child of children) {
+      const stats = map.get(child.id)
+      if (!stats) continue
+      open += stats.open
+      completed += stats.completed
+    }
+    map.set(group.id, { open, completed })
+  }
+
   return map
 }
 

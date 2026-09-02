@@ -60,3 +60,30 @@ export function serviceStartIso(
   if (Number.isNaN(d.getTime())) return undefined
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).toISOString()
 }
+
+/** Earliest service/join date across multiple customers (for group aggregate reports). */
+export async function earliestServiceStartIso(customerIds: string[]): Promise<string | undefined> {
+  if (customerIds.length === 0) return undefined
+  const rows = await sql.query<{ serviceStartDate?: string | Date | null; joinDate?: string | Date | null }>(
+    `SELECT "serviceStartDate", "joinDate" FROM "Customer" WHERE id = ANY($1::text[])`,
+    [customerIds],
+  )
+  let earliest: Date | null = null
+  for (const row of rows) {
+    const raw = row.serviceStartDate || row.joinDate
+    if (!raw) continue
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) continue
+    if (!earliest || d < earliest) earliest = d
+  }
+  if (!earliest) return undefined
+  return new Date(
+    earliest.getFullYear(),
+    earliest.getMonth(),
+    earliest.getDate(),
+    0,
+    0,
+    0,
+    0,
+  ).toISOString()
+}

@@ -46,6 +46,28 @@ export async function isGroupCustomer(customerId: string): Promise<boolean> {
   return Boolean((rows[0] as { isGroup?: boolean } | undefined)?.isGroup)
 }
 
+/** Customer IDs whose collections belong in a group-level report (child locations). */
+export async function resolveReportScopeCustomerIds(customerId: string): Promise<string[]> {
+  await ensureGroupColumns()
+  const isGroup = await isGroupCustomer(customerId)
+  if (!isGroup) return [customerId]
+
+  const children = await getGroupLocations(customerId)
+  if (children.length === 0) return [customerId]
+  return children.map((c) => c.id)
+}
+
+/** Resolve scope for report generation; honours explicit scope when provided. */
+export async function resolveReportScope(
+  customerId: string,
+  scopeCustomerIds?: string[],
+): Promise<string[]> {
+  if (scopeCustomerIds && scopeCustomerIds.length > 0) {
+    return scopeCustomerIds
+  }
+  return resolveReportScopeCustomerIds(customerId)
+}
+
 /** Resolve which customer IDs a session may read (single, group aggregate, or one location). */
 export async function resolveReadableCustomerIds(
   sessionCustomerId: string,

@@ -69,7 +69,11 @@ export async function GET(request: NextRequest) {
                    COALESCE((
                      SELECT SUM(col.weight)::float
                      FROM "Collection" col
-                     WHERE col."customerId" = r."customerId"
+                     INNER JOIN "Customer" scope_c ON scope_c.id = col."customerId"
+                     WHERE (
+                       scope_c.id = r."customerId"
+                       OR scope_c."parentCustomerId" = r."customerId"
+                     )
                        AND date_trunc('month', col.date) = date_trunc('month', r.date)
                        AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
                    ), 0) AS "collectionKg"
@@ -85,7 +89,11 @@ export async function GET(request: NextRequest) {
                    COALESCE((
                      SELECT SUM(col.weight)::float
                      FROM "Collection" col
-                     WHERE col."customerId" = r."customerId"
+                     INNER JOIN "Customer" scope_c ON scope_c.id = col."customerId"
+                     WHERE (
+                       scope_c.id = r."customerId"
+                       OR scope_c."parentCustomerId" = r."customerId"
+                     )
                        AND date_trunc('month', col.date) = date_trunc('month', r.date)
                        AND LOWER(COALESCE(col.status, 'completed')) = 'completed'
                    ), 0) AS "collectionKg"

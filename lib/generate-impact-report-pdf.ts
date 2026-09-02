@@ -3,7 +3,8 @@ import { sql } from "@/lib/db"
 import { computeImpactReportData } from "@/lib/esg-metrics"
 import { ImpactReportPdfDocument } from "@/lib/impact-report-pdf"
 import { resolveLogoForPdf } from "@/lib/resolve-logo"
-import { fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
+import { earliestServiceStartIso, fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
+import { resolveReportScope } from "@/lib/group-customer-access"
 import React from "react"
 import { renderToBuffer } from "@react-pdf/renderer"
 
@@ -31,10 +32,7 @@ export async function generateImpactReportPdf(
   customerId: string,
   options?: ImpactReportOptions,
 ) {
-  const scopeIds =
-    options?.scopeCustomerIds && options.scopeCustomerIds.length > 0
-      ? options.scopeCustomerIds
-      : [customerId]
+  const scopeIds = await resolveReportScope(customerId, options?.scopeCustomerIds)
   const isAggregate = scopeIds.length > 1
 
   const window = resolveReportDateWindow({
@@ -71,10 +69,12 @@ export async function generateImpactReportPdf(
     throw new Error("Customer not found")
   }
 
-  const cumulativeStart = serviceStartIso(
-    customer.serviceStartDate as string | Date | null,
-    customer.joinDate as string | Date | null,
-  )
+  const cumulativeStart = isAggregate
+    ? await earliestServiceStartIso(scopeIds)
+    : serviceStartIso(
+        customer.serviceStartDate as string | Date | null,
+        customer.joinDate as string | Date | null,
+      )
 
   const collectionRows = await fetchReportCollections(scopeIds, {
     startIso: cumulativeStart,

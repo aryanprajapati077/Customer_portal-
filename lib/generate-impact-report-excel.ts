@@ -7,7 +7,8 @@ import {
   parseLocation,
 } from "@/lib/esg-metrics"
 import { parsePeriodMonth } from "@/lib/generate-impact-report-pdf"
-import { fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
+import { earliestServiceStartIso, fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
+import { resolveReportScope } from "@/lib/group-customer-access"
 
 const MONTHS_SHORT = [
   "Jan",
@@ -110,10 +111,7 @@ export async function generateImpactReportExcel(
     scopeCustomerIds?: string[]
   },
 ) {
-  const scopeIds =
-    options?.scopeCustomerIds && options.scopeCustomerIds.length > 0
-      ? options.scopeCustomerIds
-      : [customerId]
+  const scopeIds = await resolveReportScope(customerId, options?.scopeCustomerIds)
   const isAggregate = scopeIds.length > 1
 
   const { resolveReportDateWindow } = await import("@/lib/report-date-range")
@@ -149,10 +147,12 @@ export async function generateImpactReportExcel(
   const customer = customerRows[0] as Record<string, unknown> | undefined
   if (!customer) throw new Error("Customer not found")
 
-  const cumulativeStart = serviceStartIso(
-    customer.serviceStartDate as string | Date | null,
-    customer.joinDate as string | Date | null,
-  )
+  const cumulativeStart = isAggregate
+    ? await earliestServiceStartIso(scopeIds)
+    : serviceStartIso(
+        customer.serviceStartDate as string | Date | null,
+        customer.joinDate as string | Date | null,
+      )
 
   const collectionRows = await fetchReportCollections(scopeIds, {
     startIso: cumulativeStart,
@@ -210,7 +210,11 @@ export async function generateImpactReportExcel(
 
   // All months from service start through report as-of date
   const end = asOfDate ?? new Date()
-  const serviceStart = (customer.serviceStartDate || customer.joinDate) as string | Date | null
+  const serviceStart = isAggregate
+    ? cumulativeStart
+      ? new Date(cumulativeStart)
+      : end
+    : ((customer.serviceStartDate || customer.joinDate) as string | Date | null)
   let start = serviceStart ? new Date(serviceStart) : end
   if (collections.length > 0) {
     const first = new Date(collections[0].date as string | Date)

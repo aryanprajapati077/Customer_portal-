@@ -2,14 +2,17 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { formatPortalDate } from "@/lib/portal-metrics"
-import { computeRenewalDate, daysBetween } from "@/lib/admin-permissions"
+import { computeRenewalWindow } from "@/lib/admin-permissions"
+import { requireAdminSession } from "@/lib/admin-auth-server"
+import { hasAdminPermission } from "@/lib/admin-permissions"
 
 async function ensureCols() {
   await sql.query(`
     ALTER TABLE "Customer"
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
-      ADD COLUMN IF NOT EXISTS "serviceStartDate" TIMESTAMP(3)
+      ADD COLUMN IF NOT EXISTS "serviceStartDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "isGroup" BOOLEAN DEFAULT false
   `)
 }
 
@@ -30,13 +33,13 @@ type CustomerRenewalSource = {
 }
 
 function buildRenewalRow(c: CustomerRenewalSource, asOf: Date) {
-  const renewalDate = computeRenewalDate(
+  const window = computeRenewalWindow(
     c.serviceStartDate || c.joinDate,
     c.contractEndDate,
     asOf,
   )
-  if (!renewalDate) return null
-  const daysLeft = daysBetween(asOf, renewalDate)
+  if (!window) return null
+
   return {
     id: c.id,
     companyName: c.companyName,
@@ -48,15 +51,30 @@ function buildRenewalRow(c: CustomerRenewalSource, asOf: Date) {
     city: c.city,
     status: c.status,
     serviceStatus: c.serviceStatus,
-    contractEndDate: renewalDate.toISOString(),
+    contractEndDate: window.nextRenewalDate.toISOString(),
     serviceStartDate: c.serviceStartDate || c.joinDate || null,
-    daysLeft,
+    daysLeft: window.daysLeft,
+    isOverdue: window.isOverdue,
     renewalSource: c.contractEndDate ? "contractEndDate" : "serviceStart+1y",
   }
 }
 
-export async function GET() {
+async function requireRenewalsAdmin(request: NextRequest) {
+  const session = await requireAdminSession(request)
+  if (!session) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }) }
+  }
+  if (!hasAdminPermission(session.role, session.permissions, "renewals")) {
+    return { ok: false as const, response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }) }
+  }
+  return { ok: true as const, session }
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireRenewalsAdmin(request)
+    if (!auth.ok) return auth.response
+
     await ensureCols()
     const asOf = new Date()
 
@@ -66,6 +84,7 @@ export async function GET() {
              "serviceStartDate", "joinDate"
       FROM "Customer"
       WHERE COALESCE(status, 'Active') ILIKE 'active'
+        AND COALESCE("isGroup", false) = false
         AND (
           "serviceStartDate" IS NOT NULL
           OR "joinDate" IS NOT NULL
@@ -83,9 +102,9 @@ export async function GET() {
       const flagged = ["RENEWAL_DUE", "PAUSED_RENEWAL", "PAUSED_PAYMENT"].includes(
         String(c.serviceStatus || "").toUpperCase(),
       )
-      if (row.daysLeft < 0 || flagged) {
+      if (row.isOverdue || flagged) {
         pending.push(row)
-      } else if (row.daysLeft <= 60) {
+      } else if (row.daysLeft >= 0 && row.daysLeft <= 60) {
         upcoming.push(row)
       }
     }
@@ -107,6 +126,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRenewalsAdmin(request)
+    if (!auth.ok) return auth.response
+
     await ensureCols()
     const body = await request.json()
     const ids = Array.isArray(body?.customerIds)
@@ -124,7 +146,8 @@ export async function POST(request: NextRequest) {
           `SELECT id, email, "primaryPocEmail", "companyName", "contactPerson", "primaryPocName",
                   "contractEndDate", "serviceStartDate", "joinDate", status, "serviceStatus"
            FROM "Customer"
-           WHERE id = ANY($1::text[])`,
+           WHERE id = ANY($1::text[])
+             AND COALESCE("isGroup", false) = false`,
           [ids],
         )
       : await sql`
@@ -132,6 +155,7 @@ export async function POST(request: NextRequest) {
                  "contractEndDate", "serviceStartDate", "joinDate", status, "serviceStatus"
           FROM "Customer"
           WHERE COALESCE(status, 'Active') ILIKE 'active'
+            AND COALESCE("isGroup", false) = false
             AND (
               "serviceStartDate" IS NOT NULL
               OR "joinDate" IS NOT NULL
@@ -150,7 +174,7 @@ export async function POST(request: NextRequest) {
         targets.push({ ...c, renewal: row })
         continue
       }
-      if (bucket === "pending" && (row.daysLeft < 0 || flagged)) {
+      if (bucket === "pending" && (row.isOverdue || flagged)) {
         targets.push({ ...c, renewal: row })
       } else if (bucket !== "pending" && row.daysLeft >= 0 && row.daysLeft <= 60 && !flagged) {
         targets.push({ ...c, renewal: row })
@@ -181,7 +205,7 @@ export async function POST(request: NextRequest) {
               "Partner",
             company: row.companyName,
             renewalDate: formatPortalDate(row.renewal.contractEndDate),
-            daysLeft: String(row.renewal.daysLeft),
+            daysLeft: String(Math.max(0, row.renewal.daysLeft)),
             customerId: row.id,
           },
         })

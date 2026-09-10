@@ -120,7 +120,6 @@ export function computeImpactReportData(
       : Number(customer.totalWasteCollected) || 0
 
   const cigaretteButts = Math.round(totalWasteKg * 3000)
-  const microplasticUpcycledKg = +(totalWasteKg * 0.8).toFixed(2)
   const waterResourcesProtectedL = Math.round(cigaretteButts * 100)
   const reportDate = asOfDate ?? new Date()
 
@@ -133,10 +132,10 @@ export function computeImpactReportData(
     reportingPeriod: formatReportingPeriod(reportDate),
     reportingPeriodLabel: formatReportingPeriodLabel(reportDate),
     reportingPeriodRange: formatReportingPeriodRange(reportDate),
-    totalWasteKg: +totalWasteKg.toFixed(2),
+    totalWasteKg,
     cigaretteButts,
-    totalWasteRecycledKg: +totalWasteKg.toFixed(2),
-    microplasticUpcycledKg,
+    totalWasteRecycledKg: totalWasteKg,
+    microplasticUpcycledKg: totalWasteKg * 0.8,
     waterResourcesProtectedL,
     kraftrebornCredits: Number(customer.kraftrebornCredits) || 0,
     logoUrl: null,
@@ -146,4 +145,15 @@ export function computeImpactReportData(
 
 export function formatMetricNumber(value: number): string {
   return value.toLocaleString("en-IN")
+}
+
+/** Format kg without rounding small values to 0.03 (e.g. 0.025 stays 0.025). */
+export function formatWeightKg(value: number): string {
+  if (!Number.isFinite(value)) return "0 kg"
+  if (value === 0) return "0 kg"
+  const formatted = value.toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  })
+  return `${formatted} kg`
 }

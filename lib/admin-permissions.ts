@@ -70,11 +70,9 @@ export function permissionKeyForPath(pathname: string): AdminPermissionKey | "us
   return null
 }
 
-/** Next renewal anniversary relative to service start (annual). Prefer contractEndDate when set. */
-export function computeRenewalDate(
+function getFirstRenewalAnchor(
   serviceStart: Date | string | null | undefined,
   contractEnd: Date | string | null | undefined,
-  asOf = new Date(),
 ): Date | null {
   if (contractEnd) {
     const c = new Date(contractEnd)
@@ -83,22 +81,61 @@ export function computeRenewalDate(
   if (!serviceStart) return null
   const start = new Date(serviceStart)
   if (Number.isNaN(start.getTime())) return null
+  const anniversary = new Date(start)
+  anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1)
+  return anniversary
+}
 
-  // First renewal = start + 1 year; then roll forward annually year until we land on
-  // the current period end (overdue or next upcoming anniversary).
-  let end = new Date(start)
-  end.setUTCFullYear(end.getUTCFullYear() + 1)
+/** Current contract renewal date for asOf (may be in the past if overdue). */
+export function computeRenewalDate(
+  serviceStart: Date | string | null | undefined,
+  contractEnd: Date | string | null | undefined,
+  asOf = new Date(),
+): Date | null {
+  let renewal = getFirstRenewalAnchor(serviceStart, contractEnd)
+  if (!renewal) return null
 
-  const asOfDay = Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate())
+  const asOfDay = utcDay(asOf)
   while (true) {
-    const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate())
-    const next = new Date(end)
+    const next = new Date(renewal)
     next.setUTCFullYear(next.getUTCFullYear() + 1)
-    const nextDay = Date.UTC(next.getUTCFullYear(), next.getUTCMonth(), next.getUTCDate())
-    if (endDay >= asOfDay) return end
-    if (nextDay > asOfDay) return end // overdue for this anniversary
-    end = next
+    if (utcDay(next) <= asOfDay) {
+      renewal = next
+    } else {
+      break
+    }
   }
+  return renewal
+}
+
+export type RenewalWindow = {
+  nextRenewalDate: Date
+  lastRenewalDate: Date
+  daysLeft: number
+  isOverdue: boolean
+}
+
+export function computeRenewalWindow(
+  serviceStart: Date | string | null | undefined,
+  contractEnd: Date | string | null | undefined,
+  asOf = new Date(),
+): RenewalWindow | null {
+  const nextRenewalDate = computeRenewalDate(serviceStart, contractEnd, asOf)
+  if (!nextRenewalDate) return null
+
+  const lastRenewalDate = new Date(nextRenewalDate)
+  lastRenewalDate.setUTCFullYear(lastRenewalDate.getUTCFullYear() - 1)
+
+  const isOverdue = utcDay(asOf) > utcDay(nextRenewalDate)
+  const daysLeft = isOverdue
+    ? -daysBetween(nextRenewalDate, asOf)
+    : daysBetween(asOf, nextRenewalDate)
+
+  return { nextRenewalDate, lastRenewalDate, daysLeft, isOverdue }
+}
+
+function utcDay(d: Date): number {
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
 }
 
 export function daysBetween(from: Date, to: Date): number {

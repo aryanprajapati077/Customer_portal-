@@ -37,10 +37,14 @@ export default function AdminRenewalsPage() {
     try {
       const res = await fetch("/api/admin/renewals")
       const data = await res.json()
-      if (data?.success) {
-        setUpcoming(data.upcoming || [])
-        setPending(data.pending || [])
+      if (!res.ok || !data?.success) {
+        console.error("Renewals load failed:", data?.error || res.status)
+        setUpcoming([])
+        setPending([])
+        return
       }
+      setUpcoming(data.upcoming || [])
+      setPending(data.pending || [])
     } finally {
       setLoading(false)
     }

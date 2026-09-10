@@ -1255,7 +1255,7 @@ export default function AdminReportsPage() {
                           })}
                         </span>
                         <span className="text-[#1B7339] font-semibold">
-                          · {kg.toLocaleString("en-IN", { maximumFractionDigits: 1 })} kg collected
+                          · {kg.toLocaleString("en-IN", { maximumFractionDigits: 3 })} kg collected
                         </span>
                       </p>
                     </div>

@@ -4,6 +4,7 @@ import {
   computeImpactReportData,
   formatInstallDate,
   formatMetricNumber,
+  formatWeightKg,
   parseLocation,
 } from "@/lib/esg-metrics"
 import { parsePeriodMonth } from "@/lib/generate-impact-report-pdf"
@@ -310,7 +311,7 @@ export async function generateImpactReportExcel(
       sheet.getCell(`${col}${row}`).font = { size: 10 }
     })
     if (typeof total === "number") {
-      sheet.getCell(`D${row}`).numFmt = total % 1 === 0 ? "#,##0" : "#,##0.00"
+      sheet.getCell(`D${row}`).numFmt = total % 1 === 0 ? "#,##0" : "#,##0.###"
     }
   })
 
@@ -354,9 +355,9 @@ export async function generateImpactReportExcel(
   limitedKeys.forEach((key, i) => {
     const row = monthHeaderRow + 1 + i
     const data = byMonth.get(key) || { count: 0, wasteKg: 0, statuses: [] }
-    const waste = +data.wasteKg.toFixed(2)
+    const waste = data.wasteKg
     const recycled = waste
-    const micro = +(waste * 0.8).toFixed(2)
+    const micro = waste * 0.8
     const butts = Math.round(waste * 3000)
     const water = butts * 100
     const status =
@@ -382,7 +383,7 @@ export async function generateImpactReportExcel(
       cell.font = { size: 10 }
       thinBorder(cell)
       if (typeof v === "number" && col > 0 && col < 7) {
-        cell.numFmt = Number.isInteger(v) ? "#,##0" : "#,##0.00"
+        cell.numFmt = Number.isInteger(v) ? "#,##0" : "#,##0.###"
       }
     })
 
@@ -398,9 +399,9 @@ export async function generateImpactReportExcel(
   const totalValues = [
     "TOTAL",
     totals.count,
-    +totals.waste.toFixed(2),
-    +totals.recycled.toFixed(2),
-    +totals.micro.toFixed(2),
+    +totals.waste,
+    +totals.recycled,
+    +totals.micro,
     totals.water,
     totals.butts,
     "",
@@ -412,7 +413,7 @@ export async function generateImpactReportExcel(
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } }
     thinBorder(cell)
     if (typeof v === "number") {
-      cell.numFmt = Number.isInteger(v) ? "#,##0" : "#,##0.00"
+      cell.numFmt = Number.isInteger(v) ? "#,##0" : "#,##0.###"
     }
   })
 
@@ -438,6 +439,6 @@ export async function generateImpactReportExcel(
     buffer,
     filename,
     reportData,
-    summaryLine: `${formatMetricNumber(reportData.totalWasteKg)} kg · ${formatMetricNumber(reportData.cigaretteButts)} butts`,
+    summaryLine: `${formatWeightKg(reportData.totalWasteKg)} · ${formatMetricNumber(reportData.cigaretteButts)} butts`,
   }
 }

@@ -14,7 +14,7 @@ import {
   Rect,
 } from "@react-pdf/renderer"
 import type { ImpactReportData } from "@/lib/esg-metrics"
-import { formatMetricNumber } from "@/lib/esg-metrics"
+import { formatMetricNumber, formatWeightKg } from "@/lib/esg-metrics"
 
 const GREEN = "#1F4A30"
 const GREEN_MID = "#2D6A4F"
@@ -528,10 +528,10 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
   const kraft =
     data.kraftrebornCredits > 0 ? formatMetricNumber(data.kraftrebornCredits) : "Coming Soon"
   const kraftUnit = data.kraftrebornCredits > 0 ? "CREDITS" : ""
-  const waste = formatMetricNumber(data.totalWasteKg)
+  const waste = formatWeightKg(data.totalWasteKg).replace(/ kg$/, "")
   const butts = formatMetricNumber(data.cigaretteButts)
-  const recycled = formatMetricNumber(data.totalWasteRecycledKg)
-  const micro = formatMetricNumber(data.microplasticUpcycledKg)
+  const recycled = formatWeightKg(data.totalWasteRecycledKg).replace(/ kg$/, "")
+  const micro = formatWeightKg(data.microplasticUpcycledKg).replace(/ kg$/, "")
   const water = formatMetricNumber(data.waterResourcesProtectedL)
 
   const bizFields = [

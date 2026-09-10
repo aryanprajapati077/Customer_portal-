@@ -1,3 +1,5 @@
+import { formatWeightKg } from "@/lib/esg-metrics"
+
 export interface CollectionLike {
   weight?: number | string | null
   date?: string | Date | null
@@ -26,7 +28,7 @@ export function computePortalMetrics(
     collections && collections.length > 0 ? collectionsTotal : Number(fallbackWasteKg) || 0
 
   const cigaretteButts = Math.round(totalWasteKg * 3000)
-  const microplasticsKg = +(totalWasteKg * 0.8).toFixed(2)
+  const microplasticsKg = totalWasteKg * 0.8
   const waterProtectedL = Math.round(cigaretteButts * 100)
   const treesEquivalent = Math.max(0, Math.round(totalWasteKg * 8.14))
   const co2AvoidedKg = Math.round(totalWasteKg * 178)
@@ -49,8 +51,8 @@ export function formatIndianNumber(value: number): string {
   return new Intl.NumberFormat("en-IN").format(value)
 }
 
-export function formatKg(value: number, decimals = 1): string {
-  return `${value.toFixed(decimals)} kg`
+export function formatKg(value: number): string {
+  return formatWeightKg(value)
 }
 
 export function formatWaterL(value: number): string {
@@ -131,7 +133,7 @@ export function buildMonthlyTrend(
   const sliced = totals.slice(startMonth)
   return sliced.map((t) =>
     includeButts
-      ? { month: t.month, kg: +t.kg.toFixed(2), butts: t.butts }
-      : { month: t.month, kg: +t.kg.toFixed(2) },
+      ? { month: t.month, kg: t.kg, butts: t.butts }
+      : { month: t.month, kg: t.kg },
   )
 }

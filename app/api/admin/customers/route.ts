@@ -49,6 +49,16 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3)
   `,
       )
+      .then(() =>
+        sql.query(`
+          UPDATE "Customer"
+          SET "contractEndDate" = COALESCE("serviceStartDate", "joinDate") + INTERVAL '1 year',
+              "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "contractEndDate" IS NULL
+            AND COALESCE("serviceStartDate", "joinDate") IS NOT NULL
+            AND COALESCE("isGroup", false) = false
+        `),
+      )
       .then(() => undefined)
       .catch((err) => {
         g.__buffCustomerCols = undefined
@@ -269,6 +279,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const contractRenewalRaw = String(
+      body.contractRenewalDate || body.contractEndDate || "",
+    ).trim()
+    const contractEndDate = contractRenewalRaw
+      ? new Date(contractRenewalRaw)
+      : new Date(serviceStartDate)
+    if (!contractRenewalRaw) {
+      contractEndDate.setUTCFullYear(contractEndDate.getUTCFullYear() + 1)
+    }
+    if (Number.isNaN(contractEndDate.getTime())) {
+      return NextResponse.json(
+        { success: false, error: "Invalid contract renewal date" },
+        { status: 400 },
+      )
+    }
+
     const emailLower = primaryPocEmail
     const existing = await sql`
       SELECT id FROM "Customer" WHERE email = ${emailLower} LIMIT 1
@@ -306,7 +332,7 @@ export async function POST(request: NextRequest) {
         id, email, password, "companyName", "tradeName", city, state, gstin, "logoUrl",
         "lsuName", "lsuTechnicianName", "operationsIncharge",
         "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-        "collectionPocs", "serviceStartDate",
+        "collectionPocs", "serviceStartDate", "contractEndDate",
         "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
         "collectionFrequency", "kraftrebornCredits",
         "contactPerson", phone, address, status, "disposalUnitInstalled",
@@ -331,6 +357,7 @@ export async function POST(request: NextRequest) {
         ${primaryPocDesignation || null},
         ${collectionPocsJson},
         ${serviceStartDate.toISOString()},
+        ${contractEndDate.toISOString()},
         ${noOfKiosk},
         ${noOfBasicKiosk},
         ${noOfAdvanceKiosk},
@@ -351,7 +378,7 @@ export async function POST(request: NextRequest) {
       )
       RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
                 "primaryPocName", "primaryPocEmail", "primaryPocNumber",
-                "collectionFrequency", "noOfKiosk", "kraftrebornCredits", "serviceStartDate",
+                "collectionFrequency", "noOfKiosk", "kraftrebornCredits", "serviceStartDate", "contractEndDate",
                 "contactPerson", phone, address, status,
                 "disposalUnitInstalled", "createdAt", "updatedAt"
     `
@@ -436,9 +463,9 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"serviceStatus" = $${i++}`)
       values.push(String(body.serviceStatus).toUpperCase())
     }
-    if (body?.contractEndDate !== undefined) {
+    if (body?.contractEndDate !== undefined || body?.contractRenewalDate !== undefined) {
       updates.push(`"contractEndDate" = $${i++}`)
-      values.push(parseOptionalIsoDate(body.contractEndDate))
+      values.push(parseOptionalIsoDate(body.contractEndDate ?? body.contractRenewalDate))
     }
     if (body?.isGroup !== undefined) {
       updates.push(`"isGroup" = $${i++}`)

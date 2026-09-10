@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { formatPortalDate } from "@/lib/portal-metrics"
-import { computeRenewalWindow } from "@/lib/admin-permissions"
+import { computeContractRenewalWindow } from "@/lib/admin-permissions"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 
@@ -13,6 +13,14 @@ async function ensureCols() {
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
       ADD COLUMN IF NOT EXISTS "serviceStartDate" TIMESTAMP(3),
       ADD COLUMN IF NOT EXISTS "isGroup" BOOLEAN DEFAULT false
+  `)
+  await sql.query(`
+    UPDATE "Customer"
+    SET "contractEndDate" = COALESCE("serviceStartDate", "joinDate") + INTERVAL '1 year',
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "contractEndDate" IS NULL
+      AND COALESCE("serviceStartDate", "joinDate") IS NOT NULL
+      AND COALESCE("isGroup", false) = false
   `)
 }
 
@@ -33,11 +41,9 @@ type CustomerRenewalSource = {
 }
 
 function buildRenewalRow(c: CustomerRenewalSource, asOf: Date) {
-  const window = computeRenewalWindow(
-    c.serviceStartDate || c.joinDate,
-    c.contractEndDate,
-    asOf,
-  )
+  if (!c.contractEndDate) return null
+
+  const window = computeContractRenewalWindow(c.contractEndDate, asOf)
   if (!window) return null
 
   return {
@@ -52,10 +58,10 @@ function buildRenewalRow(c: CustomerRenewalSource, asOf: Date) {
     status: c.status,
     serviceStatus: c.serviceStatus,
     contractEndDate: window.nextRenewalDate.toISOString(),
+    contractRenewalDate: window.nextRenewalDate.toISOString(),
     serviceStartDate: c.serviceStartDate || c.joinDate || null,
     daysLeft: window.daysLeft,
     isOverdue: window.isOverdue,
-    renewalSource: c.contractEndDate ? "contractEndDate" : "serviceStart+1y",
   }
 }
 
@@ -85,11 +91,7 @@ export async function GET(request: NextRequest) {
       FROM "Customer"
       WHERE COALESCE(status, 'Active') ILIKE 'active'
         AND COALESCE("isGroup", false) = false
-        AND (
-          "serviceStartDate" IS NOT NULL
-          OR "joinDate" IS NOT NULL
-          OR "contractEndDate" IS NOT NULL
-        )
+        AND "contractEndDate" IS NOT NULL
       ORDER BY id ASC
     `) as CustomerRenewalSource[]
 
@@ -147,7 +149,8 @@ export async function POST(request: NextRequest) {
                   "contractEndDate", "serviceStartDate", "joinDate", status, "serviceStatus"
            FROM "Customer"
            WHERE id = ANY($1::text[])
-             AND COALESCE("isGroup", false) = false`,
+             AND COALESCE("isGroup", false) = false
+             AND "contractEndDate" IS NOT NULL`,
           [ids],
         )
       : await sql`
@@ -156,11 +159,7 @@ export async function POST(request: NextRequest) {
           FROM "Customer"
           WHERE COALESCE(status, 'Active') ILIKE 'active'
             AND COALESCE("isGroup", false) = false
-            AND (
-              "serviceStartDate" IS NOT NULL
-              OR "joinDate" IS NOT NULL
-              OR "contractEndDate" IS NOT NULL
-            )
+            AND "contractEndDate" IS NOT NULL
         `) as CustomerRenewalSource[]
 
     const targets = []

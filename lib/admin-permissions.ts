@@ -70,6 +70,18 @@ export function permissionKeyForPath(pathname: string): AdminPermissionKey | "us
   return null
 }
 
+/** Default contract renewal = service start + 1 year (YYYY-MM-DD for date inputs). */
+export function defaultContractRenewalDate(
+  serviceStart: Date | string | null | undefined,
+): string {
+  if (!serviceStart) return ""
+  const start = new Date(serviceStart)
+  if (Number.isNaN(start.getTime())) return ""
+  const renewal = new Date(start)
+  renewal.setUTCFullYear(renewal.getUTCFullYear() + 1)
+  return renewal.toISOString().slice(0, 10)
+}
+
 function getFirstRenewalAnchor(
   serviceStart: Date | string | null | undefined,
   contractEnd: Date | string | null | undefined,
@@ -132,6 +144,15 @@ export function computeRenewalWindow(
     : daysBetween(asOf, nextRenewalDate)
 
   return { nextRenewalDate, lastRenewalDate, daysLeft, isOverdue }
+}
+
+/** Renewal window from stored contract end / renewal date only. */
+export function computeContractRenewalWindow(
+  contractEnd: Date | string | null | undefined,
+  asOf = new Date(),
+): RenewalWindow | null {
+  if (!contractEnd) return null
+  return computeRenewalWindow(null, contractEnd, asOf)
 }
 
 function utcDay(d: Date): number {

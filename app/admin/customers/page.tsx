@@ -37,6 +37,7 @@ import {
 } from "@/components/admin/create-customer-form"
 import { Label } from "@/components/ui/label"
 import { COLLECTION_FREQUENCY_OPTIONS } from "@/lib/india-locations"
+import { defaultContractRenewalDate } from "@/lib/admin-permissions"
 import {
   defaultEmailEnabled,
   defaultPocStatus,
@@ -107,6 +108,7 @@ const SHEET_COLUMNS: { key: keyof CustomerRow | "collectionPocSummary"; label: s
   { key: "collectionFrequency", label: "Frequency", width: 120 },
   { key: "noOfKiosk", label: "Kiosks", width: 80 },
   { key: "serviceStartDate", label: "Service Start", width: 110 },
+  { key: "contractEndDate", label: "Contract Renewal", width: 120 },
   { key: "status", label: "Status", width: 90 },
   { key: "email", label: "Login Email", width: 180 },
 ]
@@ -122,7 +124,7 @@ function cellValue(row: CustomerRow, key: (typeof SHEET_COLUMNS)[number]["key"])
   }
   const v = row[key as keyof CustomerRow]
   if (v == null || v === "") return ""
-  if (key === "serviceStartDate" && typeof v === "string") {
+  if ((key === "serviceStartDate" || key === "contractEndDate") && typeof v === "string") {
     return new Date(v).toLocaleDateString("en-IN")
   }
   return String(v)
@@ -396,7 +398,14 @@ function EditableCustomerSheet({
               type="date"
               className={inputClass}
               value={draft.serviceStartDate}
-              onChange={(e) => set("serviceStartDate", e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                setDraft((d) => ({
+                  ...d,
+                  serviceStartDate: value,
+                  contractEndDate: d.contractEndDate || defaultContractRenewalDate(value),
+                }))
+              }}
             />,
           )}
           {row(
@@ -481,12 +490,13 @@ function EditableCustomerSheet({
             </Select>,
           )}
           {row(
-            "Contract End",
+            "Contract Renewal Date",
             <Input
               type="date"
               className={inputClass}
               value={draft.contractEndDate}
               onChange={(e) => set("contractEndDate", e.target.value)}
+              title="Used for the Renewals tab and renewal reminder emails"
             />,
           )}
           {row(
@@ -815,6 +825,9 @@ export default function AdminCustomersPage() {
           primaryPocStatus: createForm.primaryPocStatus,
           collectionPocs: createForm.collectionPocs,
           serviceStartDate: createForm.serviceStartDate,
+          contractRenewalDate:
+            createForm.contractRenewalDate ||
+            defaultContractRenewalDate(createForm.serviceStartDate),
           noOfKiosk: Number(createForm.noOfKiosk),
           noOfBasicKiosk: Number(createForm.noOfBasicKiosk) || 0,
           noOfAdvanceKiosk: Number(createForm.noOfAdvanceKiosk) || 0,

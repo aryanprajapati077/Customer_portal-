@@ -160,7 +160,7 @@ export default function AdminRenewalsPage() {
             Renewals
           </h1>
           <p className="text-sm text-muted-foreground">
-            Renewal date = service start + 1 year (rolls annually). Upcoming = next 60 days; pending = overdue or flagged.
+            Based on each client&apos;s contract renewal date. Upcoming = within 60 days; pending = overdue or flagged status.
           </p>
         </div>
         <Button variant="outline" onClick={load} disabled={loading}>
@@ -232,8 +232,8 @@ export default function AdminRenewalsPage() {
           <CardDescription>
             {filtered.length} clients
             {tab === "upcoming"
-              ? " · contract ends within 60 days"
-              : " · overdue or flagged renewal / pause status"}
+              ? " · contract renewal within 60 days"
+              : " · overdue contract renewal or flagged pause status"}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -255,7 +255,7 @@ export default function AdminRenewalsPage() {
                         onChange={toggleAll}
                       />
                     </th>
-                    {["ID", "Brand", "LSU", "Renewal date", "Days", "Email", "Service status"].map((h) => (
+                    {["ID", "Brand", "LSU", "Contract renewal", "Days", "Email", "Service status"].map((h) => (
                       <th
                         key={h}
                         className="border-b border-[#E2EBE4] px-3 py-2 text-left font-semibold text-[#1B7339]"

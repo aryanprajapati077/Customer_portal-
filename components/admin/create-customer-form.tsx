@@ -23,6 +23,7 @@ import {
   type PocStatus,
 } from "@/lib/poc-config"
 import { PocEmailStatusControls } from "@/components/admin/poc-email-status-controls"
+import { defaultContractRenewalDate } from "@/lib/admin-permissions"
 
 export type { CollectionPocForm } from "@/lib/poc-config"
 
@@ -42,6 +43,7 @@ export type CreateCustomerFormState = {
   primaryPocStatus: PocStatus
   collectionPocs: CollectionPocForm[]
   serviceStartDate: string
+  contractRenewalDate: string
   noOfKiosk: string
   noOfBasicKiosk: string
   noOfAdvanceKiosk: string
@@ -70,6 +72,7 @@ export const EMPTY_CREATE_CUSTOMER_FORM: CreateCustomerFormState = {
   primaryPocStatus: "Active",
   collectionPocs: [emptyCollectionPocForm()],
   serviceStartDate: "",
+  contractRenewalDate: "",
   noOfKiosk: "",
   noOfBasicKiosk: "0",
   noOfAdvanceKiosk: "0",
@@ -498,7 +501,23 @@ export function CreateCustomerForm({
             type="date"
             required
             value={form.serviceStartDate}
-            onChange={(e) => setForm((p) => ({ ...p, serviceStartDate: e.target.value }))}
+            onChange={(e) => {
+              const value = e.target.value
+              setForm((p) => ({
+                ...p,
+                serviceStartDate: value,
+                contractRenewalDate: p.contractRenewalDate || defaultContractRenewalDate(value),
+              }))
+            }}
+          />
+        </div>
+        <div className="space-y-2">
+          <Req>Contract Renewal Date</Req>
+          <Input
+            type="date"
+            required
+            value={form.contractRenewalDate}
+            onChange={(e) => setForm((p) => ({ ...p, contractRenewalDate: e.target.value }))}
           />
         </div>
         <div className="space-y-2">

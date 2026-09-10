@@ -306,7 +306,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const id = await nextCustomerId()
+    const requestedId = String(body.customerId || body.id || "")
+      .trim()
+      .toUpperCase()
+    let id = await nextCustomerId()
+    if (requestedId) {
+      if (!/^BI\d+$/.test(requestedId)) {
+        return NextResponse.json(
+          { success: false, error: "Customer ID must look like BI431" },
+          { status: 400 },
+        )
+      }
+      const taken = await sql`SELECT id FROM "Customer" WHERE id = ${requestedId} LIMIT 1`
+      if (Array.isArray(taken) && taken.length > 0) {
+        return NextResponse.json(
+          { success: false, error: `Customer ID ${requestedId} already exists` },
+          { status: 400 },
+        )
+      }
+      id = requestedId
+    }
     const tempPassword = generatePortalPassword(10)
     const passwordHash = await hashPassword(tempPassword)
     const now = new Date().toISOString()

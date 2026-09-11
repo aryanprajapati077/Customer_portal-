@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { formatPortalDate } from "@/lib/portal-metrics"
+import { resolveRenewalRecipients } from "@/lib/report-recipients"
 
 export type RenewalReminderResult = {
   customerId: string
@@ -27,7 +28,8 @@ export async function runServiceRenewalReminders(options?: {
 
   for (const days of windows) {
     const rows = await sql`
-      SELECT id, email, "primaryPocEmail", "companyName", "contactPerson", "contractEndDate"
+      SELECT id, email, "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus",
+             "collectionPocs", "companyName", "contactPerson", "contractEndDate"
       FROM "Customer"
       WHERE "contractEndDate" IS NOT NULL
         AND status = 'Active'
@@ -38,13 +40,14 @@ export async function runServiceRenewalReminders(options?: {
       id: string
       email: string
       primaryPocEmail?: string | null
+      primaryPocEmailEnabled?: boolean | null
+      primaryPocStatus?: string | null
+      collectionPocs?: string | null
       companyName: string
       contactPerson?: string | null
       contractEndDate: string | Date
     }[]) {
-      const to = String(row.primaryPocEmail || row.email || "")
-        .toLowerCase()
-        .trim()
+      const { to, cc } = resolveRenewalRecipients(row)
       if (!to.includes("@")) {
         results.push({
           customerId: row.id,
@@ -65,6 +68,7 @@ export async function runServiceRenewalReminders(options?: {
         await sendNotificationEmail({
           templateId: "service_renewal",
           to,
+          cc,
           vars: {
             name: row.contactPerson?.split(" ")[0] || row.companyName || "Partner",
             company: row.companyName,

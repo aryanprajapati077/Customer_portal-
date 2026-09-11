@@ -75,3 +75,20 @@ export function resolveReportRecipients(row: {
   const cc = collectionPocEmails(row.collectionPocs, to)
   return { to, cc }
 }
+
+/** Renewal email recipients: primary POC (or login) as To, collection POCs in CC. */
+export function resolveRenewalRecipients(row: {
+  email?: string | null
+  primaryPocEmail?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
+  collectionPocs?: string | null
+}) {
+  const recipients = resolveReportRecipients(row)
+  if (recipients.to) return recipients
+
+  const to = String(row.primaryPocEmail || row.email || "")
+    .toLowerCase()
+    .trim()
+  return { to, cc: collectionPocEmails(row.collectionPocs, to) }
+}

@@ -5,6 +5,7 @@ import { formatPortalDate } from "@/lib/portal-metrics"
 import { computeContractRenewalWindow } from "@/lib/admin-permissions"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
+import { resolveRenewalRecipients } from "@/lib/report-recipients"
 
 async function ensureCols() {
   await sql.query(`
@@ -29,6 +30,9 @@ type CustomerRenewalSource = {
   companyName: string
   email: string
   primaryPocEmail?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
+  collectionPocs?: string | null
   primaryPocName?: string | null
   contactPerson?: string | null
   lsuName?: string | null
@@ -145,7 +149,8 @@ export async function POST(request: NextRequest) {
     const asOf = new Date()
     const customers = (ids.length
       ? await sql.query(
-          `SELECT id, email, "primaryPocEmail", "companyName", "contactPerson", "primaryPocName",
+          `SELECT id, email, "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus",
+                  "collectionPocs", "companyName", "contactPerson", "primaryPocName",
                   "contractEndDate", "serviceStartDate", "joinDate", status, "serviceStatus"
            FROM "Customer"
            WHERE id = ANY($1::text[])
@@ -154,7 +159,8 @@ export async function POST(request: NextRequest) {
           [ids],
         )
       : await sql`
-          SELECT id, email, "primaryPocEmail", "companyName", "contactPerson", "primaryPocName",
+          SELECT id, email, "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus",
+                 "collectionPocs", "companyName", "contactPerson", "primaryPocName",
                  "contractEndDate", "serviceStartDate", "joinDate", status, "serviceStatus"
           FROM "Customer"
           WHERE COALESCE(status, 'Active') ILIKE 'active'
@@ -185,9 +191,7 @@ export async function POST(request: NextRequest) {
     const errors: { id: string; error: string }[] = []
 
     for (const row of targets) {
-      const to = String(row.primaryPocEmail || row.email || "")
-        .toLowerCase()
-        .trim()
+      const { to, cc } = resolveRenewalRecipients(row)
       if (!to.includes("@")) {
         failed++
         errors.push({ id: row.id, error: "No email" })
@@ -197,6 +201,7 @@ export async function POST(request: NextRequest) {
         await sendNotificationEmail({
           templateId: "service_renewal",
           to,
+          cc,
           vars: {
             name:
               (row.primaryPocName || row.contactPerson || "").split(" ")[0] ||

@@ -103,6 +103,7 @@ export async function sendNotificationEmail(options: {
   templateId: NotificationTemplateId
   to: string
   vars: Record<string, string>
+  cc?: string[]
   otpHighlight?: string
   queue?: boolean
   label?: string
@@ -131,9 +132,14 @@ export async function sendNotificationEmail(options: {
       console.warn(`[notify:${options.templateId}] RESEND_API_KEY missing — would send to`, to)
       return { sent: false as const, reason: "no_resend" as const, ...built }
     }
+    const cc = (options.cc || [])
+      .map((email) => String(email || "").toLowerCase().trim())
+      .filter((email) => email.includes("@") && email !== to)
+
     await resend.emails.send({
       from: getResendFrom(),
       to,
+      ...(cc.length ? { cc } : {}),
       replyTo: options.replyTo,
       subject: built.subject,
       html: built.html,

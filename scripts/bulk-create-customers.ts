@@ -22,6 +22,16 @@ type NewCustomer = {
 
 const CUSTOMERS: NewCustomer[] = [
   {
+    id: "BI501",
+    companyName: "Indiqube Serenity",
+    city: "Bengaluru",
+    state: "Karnataka",
+    lsuName: "Bengaluru",
+    lsuTechnicianName: "Ravikumar",
+    noOfKiosk: 2,
+    serviceStartDate: "2026-08-01",
+  },
+  {
     id: "BI515",
     companyName: "Indiqube Echo",
     city: "Bengaluru",

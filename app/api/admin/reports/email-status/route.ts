@@ -12,9 +12,11 @@ async function requireReportsAdmin(request: NextRequest) {
     }
   }
   if (!hasAdminPermission(session.role, session.permissions, "reports")) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }),
+    if (!hasAdminPermission(session.role, session.permissions, "report-status")) {
+      return {
+        ok: false as const,
+        response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }),
+      }
     }
   }
   return { ok: true as const, session }

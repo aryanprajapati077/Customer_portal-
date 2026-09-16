@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/select"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
 import { AdminLoadMore } from "@/components/admin/admin-ui"
-import {
-  type ReportEmailStatusKind,
-  type ReportEmailStatusRow,
-  type ReportEmailStatusSummary,
-  type ReportReasonSummary,
-} from "@/lib/report-email-status"
+import type {
+  ReportEmailStatusKind,
+  ReportEmailStatusRow,
+  ReportEmailStatusSummary,
+  ReportReasonSummary,
+} from "@/lib/report-status-types"
 import { REPORT_REASON_FILTERS, type ReportReasonCategory } from "@/lib/report-reason-categories"
 import { cn } from "@/lib/utils"
 import {
@@ -96,13 +96,17 @@ export default function AdminReportStatusPage() {
 
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const load = useCallback(
     async (opts?: { append?: boolean; nextOffset?: number }) => {
       const append = opts?.append ?? false
       const useOffset = opts?.nextOffset ?? 0
       if (append) setLoadingMore(true)
-      else setLoading(true)
+      else {
+        setLoading(true)
+        setLoadError(null)
+      }
 
       try {
         const params = new URLSearchParams({
@@ -115,13 +119,25 @@ export default function AdminReportStatusPage() {
         })
         const res = await fetch(`/api/admin/reports/email-status?${params}`)
         const data = await res.json()
-        if (!data?.success) return
+        if (!res.ok || !data?.success) {
+          setLoadError(data?.error || `Could not load report status (${res.status})`)
+          if (!append) {
+            setSummary(null)
+            setReasonSummary(null)
+            setRows([])
+            setRowsTotal(0)
+            setOffset(0)
+          }
+          return
+        }
 
         setSummary(data.summary)
         setReasonSummary(data.reasonSummary)
         setRowsTotal(data.rowsTotal || 0)
         setOffset(useOffset + (data.rows?.length || 0))
         setRows((prev) => (append ? [...prev, ...(data.rows || [])] : data.rows || []))
+      } catch {
+        setLoadError("Network error loading report status.")
       } finally {
         setLoading(false)
         setLoadingMore(false)
@@ -190,6 +206,9 @@ export default function AdminReportStatusPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-5 pt-5">
+          {loadError ? (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{loadError}</p>
+          ) : null}
           {summary && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
               {(

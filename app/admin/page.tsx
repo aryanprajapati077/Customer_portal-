@@ -11,6 +11,7 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
+  ListChecks,
 } from "lucide-react"
 
 export default async function AdminOverviewPage() {
@@ -134,6 +135,16 @@ export default async function AdminOverviewPage() {
             variant="outline"
             className="rounded-full border-[#DCE8DC] bg-white text-[#1B7339] hover:bg-[#E8F5E9]"
           >
+            <Link href="/admin/report-status">
+              <ListChecks className="mr-2 h-4 w-4" />
+              Report Status
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full border-[#DCE8DC] bg-white text-[#1B7339] hover:bg-[#E8F5E9]"
+          >
             <Link href="/admin/shop/orders">
               <Package className="mr-2 h-4 w-4" />
               Shop Orders
@@ -183,6 +194,12 @@ export default async function AdminOverviewPage() {
                 icon: TrendingUp,
                 title: "Portal Analytics",
                 desc: "Who is online, visits & sessions",
+              },
+              {
+                href: "/admin/report-status",
+                icon: ListChecks,
+                title: "Report Status",
+                desc: "Who received reports, bounces & pending reasons",
               },
               {
                 href: "/admin/reports",

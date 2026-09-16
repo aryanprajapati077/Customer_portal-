@@ -1,4 +1,4 @@
-import type { ReportEmailStatusKind } from "@/lib/report-email-status"
+import type { ReportEmailStatusKind } from "@/lib/report-status-types"
 
 export type ReportReasonCategory =
   | "received"

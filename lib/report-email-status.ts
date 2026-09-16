@@ -1,3 +1,5 @@
+import "server-only"
+
 import { sql } from "@/lib/db"
 import { ensureEmailDeliveryLogTable } from "@/lib/email-delivery-log"
 import { ensureReportSendTables } from "@/lib/report-send-job"
@@ -9,43 +11,21 @@ import {
   reasonCategoryLabel,
   type ReportReasonCategory,
 } from "@/lib/report-reason-categories"
+import type {
+  ReportEmailStatusKind,
+  ReportEmailStatusRow,
+  ReportEmailStatusSummary,
+  ReportReasonSummary,
+} from "@/lib/report-status-types"
 
+export type {
+  ReportEmailStatusKind,
+  ReportEmailStatusRow,
+  ReportEmailStatusSummary,
+  ReportReasonSummary,
+} from "@/lib/report-status-types"
 export type { ReportReasonCategory } from "@/lib/report-reason-categories"
 export { REPORT_REASON_FILTERS, reasonCategoryLabel } from "@/lib/report-reason-categories"
-
-export type ReportEmailStatusKind =
-  | "sent"
-  | "opened"
-  | "pending"
-  | "queued"
-  | "failed"
-  | "not_eligible"
-
-export type ReportEmailStatusRow = {
-  customerId: string
-  companyName: string
-  emailTo: string | null
-  status: ReportEmailStatusKind
-  emailStatus: string | null
-  reason: string | null
-  reasonCategory: ReportReasonCategory
-  reasonCategoryLabel: string
-  sentAt: string | null
-  openedAt: string | null
-  openedCount: number
-}
-
-export type ReportEmailStatusSummary = {
-  total: number
-  sent: number
-  opened: number
-  pending: number
-  queued: number
-  failed: number
-  not_eligible: number
-}
-
-export type ReportReasonSummary = Record<ReportReasonCategory, number>
 
 const SENT_STATUSES = new Set(["sent", "delivered", "opened", "clicked"])
 const FAILED_STATUSES = new Set(["failed", "bounced", "complained"])

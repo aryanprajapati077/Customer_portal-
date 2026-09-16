@@ -54,7 +54,14 @@ type AdminMe = {
   permissions?: string[]
 }
 
-type NavItem = { href: string; label: string; icon: LucideIcon }
+type NavItem = { href: string; label: string; icon: LucideIcon; keywords?: string[] }
+
+function navItemMatchesQuery(item: NavItem, groupLabel: string, q: string) {
+  if (!q) return true
+  const hay = [item.label, item.href, groupLabel, ...(item.keywords || [])].join(" ").toLowerCase()
+  const tokens = q.split(/\s+/).filter(Boolean)
+  return tokens.every((t) => hay.includes(t) || hay.replace(/\s+/g, "-").includes(t))
+}
 
 const navGroups: { label: string; items: NavItem[] }[] = [
   {
@@ -62,6 +69,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/analytics", label: "Portal Analytics", icon: BarChart3 },
+      {
+        href: "/admin/report-status",
+        label: "Report Status",
+        icon: ListChecks,
+        keywords: ["report", "status", "delivery", "bounce", "pending", "esg", "email"],
+      },
     ],
   },
   {
@@ -81,7 +94,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
       { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
       { href: "/admin/certificates", label: "Certificates", icon: Award },
-      { href: "/admin/report-status", label: "Report Status", icon: ListChecks },
     ],
   },
   {
@@ -194,6 +206,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .map((group) => ({
         ...group,
         items: group.items.filter((item) => {
+          if (admin?.role === "super_admin") return true
           const key = permissionKeyForPath(item.href)
           if (!key) return true
           return hasAdminPermission(admin?.role, admin?.permissions, key)
@@ -222,6 +235,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isAuthPage || !admin) return
+    if (admin.role === "super_admin") return
     const key = permissionKeyForPath(pathname)
     if (!key || key === "users") {
       if (key === "users" && admin.role !== "super_admin") {
@@ -254,13 +268,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const visibleGroups = filteredGroups.groups
       .map((group) => ({
         ...group,
-        items: group.items.filter(
-          (item) =>
-            !q ||
-            item.label.toLowerCase().includes(q) ||
-            group.label.toLowerCase().includes(q) ||
-            item.href.toLowerCase().includes(q),
-        ),
+        items: group.items.filter((item) => navItemMatchesQuery(item, group.label, q)),
       }))
       .filter((group) => group.items.length > 0)
 

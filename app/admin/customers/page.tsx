@@ -178,6 +178,9 @@ function EditableCustomerSheet({
     parseCollectionPocs(customer.collectionPocs),
   )
   const [sheetTab, setSheetTab] = useState<"details" | "pocs">("details")
+  const [logoPreview, setLogoPreview] = useState(customer.logoUrl || "")
+  const [logoBase64, setLogoBase64] = useState<string | null>(null)
+  const [clearLogo, setClearLogo] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState(false)
@@ -214,6 +217,9 @@ function EditableCustomerSheet({
       ),
     })
     setCollectionPocs(parseCollectionPocs(customer.collectionPocs))
+    setLogoPreview(customer.logoUrl || "")
+    setLogoBase64(null)
+    setClearLogo(false)
     setError(null)
     setOk(false)
   }, [customer.id])
@@ -270,6 +276,8 @@ function EditableCustomerSheet({
         serviceStatus: draft.serviceStatus,
         contractEndDate: draft.contractEndDate || null,
         kraftrebornCredits: Math.max(0, Math.floor(Number(draft.kraftrebornCredits) || 0)),
+        ...(logoBase64 ? { logoBase64 } : {}),
+        ...(clearLogo ? { clearLogo: true } : {}),
       }
       const res = await fetch("/api/admin/customers", {
         method: "PATCH",
@@ -288,7 +296,12 @@ function EditableCustomerSheet({
         kraftrebornCredits: payload.kraftrebornCredits,
         serviceStartDate: payload.serviceStartDate,
         contractEndDate: payload.contractEndDate,
+        logoUrl: clearLogo ? null : String(data.customer?.logoUrl || logoPreview || customer.logoUrl || "") || null,
       })
+      setLogoBase64(null)
+      setClearLogo(false)
+      if (data.customer?.logoUrl) setLogoPreview(String(data.customer.logoUrl))
+      else if (clearLogo) setLogoPreview("")
       setOk(true)
     } catch {
       setError("Network error")
@@ -348,6 +361,57 @@ function EditableCustomerSheet({
           {row(
             "GSTIN",
             <Input className={inputClass} value={draft.gstin} onChange={(e) => set("gstin", e.target.value)} />,
+          )}
+          {row(
+            "Customer Logo",
+            <div className="space-y-2 px-1">
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className={inputClass}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (file.size > 2 * 1024 * 1024) {
+                    setError("Logo must be under 2MB")
+                    return
+                  }
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    const result = String(reader.result || "")
+                    setLogoBase64(result)
+                    setLogoPreview(result)
+                    setClearLogo(false)
+                    setError(null)
+                  }
+                  reader.readAsDataURL(file)
+                }}
+              />
+              {logoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoPreview}
+                  alt="Logo preview"
+                  className="h-14 w-auto max-w-[160px] rounded-lg border border-[#E5E5E5] bg-white object-contain p-1"
+                />
+              ) : null}
+              {logoPreview ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-[12px]"
+                  onClick={() => {
+                    setLogoPreview("")
+                    setLogoBase64(null)
+                    setClearLogo(true)
+                  }}
+                >
+                  Remove logo
+                </Button>
+              ) : null}
+              <p className="text-[11px] text-[#6B6B6B]">PNG, JPG, or WebP · max 2MB. Save changes to upload.</p>
+            </div>,
           )}
           {row(
             "State",

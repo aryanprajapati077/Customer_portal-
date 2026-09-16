@@ -20,7 +20,6 @@ import {
   enqueueBulkReportSend,
   getActiveReportSendJob,
   getLatestReportSendJob,
-  processReportSendBatch,
 } from "@/lib/report-send-job"
 import {
   sendEsgReportEmail,
@@ -228,8 +227,7 @@ export async function POST(request: NextRequest) {
                    "serviceStartDate", "collectionFrequency",
                    "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
             FROM "Customer"
-            WHERE status = 'Active'
-              AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
+            WHERE COALESCE(status, 'Active') ILIKE 'active'
             ORDER BY "companyName" ASC
           `
 
@@ -331,7 +329,7 @@ export async function POST(request: NextRequest) {
       const period = body?.period ? String(body.period) : ""
       let job = period ? await getLatestReportSendJob(period) : await getActiveReportSendJob()
       if (job && (job.status === "queued" || job.status === "running")) {
-        await processReportSendBatch(8)
+        await drainReportSendJobs(55_000)
         job = (await getLatestReportSendJob(job.period)) || job
       }
       return NextResponse.json({ success: true, job })

@@ -486,6 +486,28 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"contractEndDate" = $${i++}`)
       values.push(parseOptionalIsoDate(body.contractEndDate ?? body.contractRenewalDate))
     }
+    if (body?.clearLogo === true) {
+      updates.push(`"logoUrl" = $${i++}`)
+      values.push(null)
+    } else if (body?.logoBase64 !== undefined && body?.logoBase64 !== null && body?.logoBase64 !== "") {
+      let logoUrl: string | null = null
+      if (String(body.logoBase64).startsWith("data:")) {
+        try {
+          const saved = await saveBase64Image(String(body.logoBase64), "logos", `customer-${id}`)
+          logoUrl = saved.url
+        } catch (logoErr) {
+          console.error("Logo upload failed:", logoErr)
+          logoUrl = String(body.logoBase64)
+        }
+      } else if (body?.logoUrl !== undefined) {
+        logoUrl = String(body.logoUrl || "").trim() || null
+      }
+      updates.push(`"logoUrl" = $${i++}`)
+      values.push(logoUrl)
+    } else if (body?.logoUrl !== undefined) {
+      updates.push(`"logoUrl" = $${i++}`)
+      values.push(String(body.logoUrl || "").trim() || null)
+    }
     if (body?.isGroup !== undefined) {
       updates.push(`"isGroup" = $${i++}`)
       values.push(Boolean(body.isGroup))
@@ -608,7 +630,7 @@ export async function PATCH(request: NextRequest) {
       UPDATE "Customer"
       SET ${updates.join(", ")}
       WHERE id = $${i}
-      RETURNING id, email, "companyName", "contactPerson", phone, address, status,
+      RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl", "contactPerson", phone, address, status,
                 "primaryPocEmail",
                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
                 "kraftrebornCredits", "updatedAt",

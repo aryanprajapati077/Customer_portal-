@@ -1,13 +1,15 @@
-# Deploy to impact.buffindia.com
+# Deploy to buffindia.com
 
 This portal is a **Next.js 16** app designed for **Vercel** + **Neon PostgreSQL**.
 
 | URL | Purpose |
 |-----|---------|
-| `https://impact.buffindia.com` | Public site + customer portal |
-| `https://impact.buffindia.com/login` | Customer login |
-| `https://impact.buffindia.com/dashboard` | Customer dashboard |
-| `https://impact.buffindia.com/admin` | Admin panel |
+| `https://buffindia.com` | Public site + customer portal |
+| `https://buffindia.com/login` | Customer login |
+| `https://buffindia.com/dashboard` | Customer dashboard |
+| `https://buffindia.com/admin` | Admin panel |
+
+Production links in code use `NEXT_PUBLIC_APP_URL` (see `lib/site-config.ts`). Default fallback is `https://buffindia.com`.
 
 ---
 
@@ -15,7 +17,7 @@ This portal is a **Next.js 16** app designed for **Vercel** + **Neon PostgreSQL*
 
 ```bash
 git add .
-git commit -m "Prepare production deployment for impact.buffindia.com"
+git commit -m "Prepare production deployment for buffindia.com"
 git push origin main
 ```
 
@@ -36,7 +38,7 @@ Add these for **Production**, **Preview**, and **Development**:
 
 | Variable | Example / notes |
 |----------|-----------------|
-| `NEXT_PUBLIC_APP_URL` | `https://impact.buffindia.com` |
+| `NEXT_PUBLIC_APP_URL` | `https://buffindia.com` (use `https://www.buffindia.com` only if that is your canonical host) |
 | `DATABASE_URL` | Your Neon pooled PostgreSQL URL |
 | `R2_ACCOUNT_ID` | Cloudflare account ID for R2 uploads |
 | `R2_ACCESS_KEY_ID` | Cloudflare R2 API access key |
@@ -58,14 +60,15 @@ Add these for **Production**, **Preview**, and **Development**:
 
 In Vercel → **Project → Settings → Domains**:
 
-1. Add `impact.buffindia.com`
-2. Vercel shows DNS records — add them at your domain registrar (where `buffindia.com` is managed):
+1. Add `buffindia.com` (and `www.buffindia.com` if you use www)
+2. Vercel shows DNS records — add them at your domain registrar:
 
-**Recommended (CNAME):**
+**Typical apex (A) + www (CNAME):**
 
 | Type | Name | Value |
 |------|------|-------|
-| CNAME | `impact` | `cname.vercel-dns.com` |
+| A | `@` | Vercel apex IP (shown in dashboard) |
+| CNAME | `www` | `cname.vercel-dns.com` |
 
 Wait 5–30 minutes for DNS propagation. Vercel will issue a free SSL certificate automatically.
 
@@ -79,9 +82,9 @@ For OTP and support emails from `@buffindia.com`:
 2. Add the DNS records Resend provides (SPF, DKIM)
 3. Use verified sender: `Buffindia <noreply@buffindia.com>`
 4. Resend → **Webhooks** → Add endpoint:
-   - URL: `https://impact.buffindia.com/api/webhooks/resend`
+   - URL: `https://buffindia.com/api/webhooks/resend`
    - Events: `email.bounced`, `email.failed`, `email.complained`, `email.delivered`
-   - This powers **Admin → Reports & Email → Failed & bounced emails** so you can see bounced addresses and update them.
+   - This powers **Admin → Email Status** and report bounce tracking.
 
 ---
 
@@ -113,12 +116,13 @@ vercel --prod
 
 ## 8. Post-deploy checklist
 
-- [ ] Homepage loads at `https://impact.buffindia.com`
+- [ ] Homepage loads at `https://buffindia.com`
 - [ ] Customer login + dashboard works
 - [ ] Admin login at `/admin/login`
 - [ ] Forgot password sends OTP email
 - [ ] ESG report PDF downloads
 - [ ] Support chat + tickets work
+- [ ] Report Status at `/admin/report-status`
 
 ---
 
@@ -166,7 +170,7 @@ npm run build
 npm start   # port 3000
 ```
 
-Use nginx/Caddy as reverse proxy with SSL for `impact.buffindia.com` → `localhost:3000`.
+Use nginx/Caddy as reverse proxy with SSL for `buffindia.com` → `localhost:3000`.
 
 ---
 

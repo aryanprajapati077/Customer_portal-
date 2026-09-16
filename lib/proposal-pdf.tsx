@@ -2,6 +2,7 @@ import React from "react"
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
 import type { ImpactEstimate } from "@/lib/impact-calculator"
 import { formatCompactLitres, formatInr } from "@/lib/impact-calculator"
+import { SITE_DOMAIN } from "@/lib/site-config"
 
 const styles = StyleSheet.create({
   page: {
@@ -389,7 +390,7 @@ export function ProposalPdfDocument({ lead, estimate, generatedAt }: ProposalPdf
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>7. BUFFINDIA CONTACT</Text>
-          <Row label="Website" value="impact.buffindia.com" />
+          <Row label="Website" value={SITE_DOMAIN} />
           <Row label="Sales" value="sales@buffindia.com" />
           <Text style={[styles.muted, { marginTop: 6 }]}>
             This proposal is generated from the Buffindia Impact Calculator (FRD v1.0). Final

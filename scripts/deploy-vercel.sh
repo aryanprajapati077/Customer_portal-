@@ -9,5 +9,5 @@ echo "→ Deploying to Vercel production (CLI upload, not GitHub)..."
 npx vercel@latest deploy --prod --yes
 
 echo ""
-echo "✓ Done. Open https://impact.buffindia.com in a few minutes."
+echo "✓ Done. Open https://buffindia.com in a few minutes."
 echo "  Dashboard: https://vercel.com/buffindias-projects/buffindia-impact"

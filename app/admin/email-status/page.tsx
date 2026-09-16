@@ -26,6 +26,7 @@ import {
   Send,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
+import { absoluteUrl } from "@/lib/site-config"
 import {
   Area,
   AreaChart,
@@ -232,7 +233,7 @@ export default function AdminEmailStatusPage() {
 
       <p className="rounded-xl border border-[#E2EBE4] bg-[#F7FBF7] px-4 py-3 text-sm text-[#3A3A3A]">
         Resend webhook URL:{" "}
-        <code className="rounded bg-white px-1.5 py-0.5 text-[12px]">https://impact.buffindia.com/api/webhooks/resend</code>
+        <code className="rounded bg-white px-1.5 py-0.5 text-[12px]">{absoluteUrl("/api/webhooks/resend")}</code>
         {" "}· Enable <strong>sent, delivered, opened, clicked</strong>, bounced, complained, failed, received.
         Opens only appear when the recipient opens the email in their inbox (Gmail/Outlook) with images allowed — not from the admin preview or Send button.
       </p>

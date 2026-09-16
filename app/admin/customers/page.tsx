@@ -905,11 +905,13 @@ export default function AdminCustomersPage() {
       })
       const data = await res.json()
       if (data?.success && data.customer) {
+        const created = data.customer as CustomerRow
         await fetchCustomers({ reset: true })
         setCreateForm(EMPTY_CREATE_CUSTOMER_FORM)
         setCreateOpen(false)
+        setSelected(created)
         alert(
-          `Customer ${data.customer.id} created.\nNo welcome email was sent yet — use “Send welcome emails” after all clients are entered.`,
+          `Customer ${created.id} created.\nUpload or change the customer logo in the sheet that just opened (Customer Logo field), then Save.\nNo welcome email was sent yet — use “Send welcome emails” after all clients are entered.`,
         )
       } else {
         setCreateError(data?.error || "Failed to create customer")

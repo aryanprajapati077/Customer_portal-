@@ -86,6 +86,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Reports & Email",
     items: [
       { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
+      { href: "/admin/report-status", label: "Report Status", icon: MailCheck },
       { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
       { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
       { href: "/admin/email-settings", label: "Email On/Off", icon: ToggleRight },
@@ -496,6 +497,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <nav aria-label="Admin footer links" className="flex flex-wrap gap-x-4 gap-y-1">
                   <Link href="/admin/support" className="hover:text-[#1b7339]">
                     Support inbox
+                  </Link>
+                  <Link href="/admin/report-status" className="hover:text-[#1b7339]">
+                    Report status
                   </Link>
                   <Link href="/admin/email-status" className="hover:text-[#1b7339]">
                     Email delivery

@@ -3,6 +3,15 @@ import { ensureEmailDeliveryLogTable } from "@/lib/email-delivery-log"
 import { ensureReportSendTables } from "@/lib/report-send-job"
 import { getCollectionStatsByCustomer, getReportSendBlockReasonSync } from "@/lib/report-eligibility"
 import { resolveReportRecipients } from "@/lib/report-recipients"
+import {
+  categorizeReportRow,
+  emptyReasonSummary,
+  reasonCategoryLabel,
+  type ReportReasonCategory,
+} from "@/lib/report-reason-categories"
+
+export type { ReportReasonCategory } from "@/lib/report-reason-categories"
+export { REPORT_REASON_FILTERS, reasonCategoryLabel } from "@/lib/report-reason-categories"
 
 export type ReportEmailStatusKind =
   | "sent"
@@ -19,6 +28,8 @@ export type ReportEmailStatusRow = {
   status: ReportEmailStatusKind
   emailStatus: string | null
   reason: string | null
+  reasonCategory: ReportReasonCategory
+  reasonCategoryLabel: string
   sentAt: string | null
   openedAt: string | null
   openedCount: number
@@ -33,6 +44,8 @@ export type ReportEmailStatusSummary = {
   failed: number
   not_eligible: number
 }
+
+export type ReportReasonSummary = Record<ReportReasonCategory, number>
 
 const SENT_STATUSES = new Set(["sent", "delivered", "opened", "clicked"])
 const FAILED_STATUSES = new Set(["failed", "bounced", "complained"])
@@ -136,10 +149,17 @@ function deriveStatus(
 
 export async function getReportEmailStatus(
   period: string,
-  options?: { status?: string; q?: string; limit?: number; offset?: number },
+  options?: {
+    status?: string
+    reason?: string
+    q?: string
+    limit?: number
+    offset?: number
+  },
 ): Promise<{
   period: string
   summary: ReportEmailStatusSummary
+  reasonSummary: ReportReasonSummary
   rows: ReportEmailStatusRow[]
   rowsTotal: number
   limit: number
@@ -153,7 +173,7 @@ export async function getReportEmailStatus(
            "serviceStartDate", "collectionFrequency",
            "primaryPocEmail", "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs"
     FROM "Customer"
-    WHERE status = 'Active'
+    WHERE COALESCE(status, 'Active') ILIKE 'active'
     ORDER BY "companyName" ASC
   `) as CustomerRow[]
 
@@ -201,6 +221,7 @@ export async function getReportEmailStatus(
       blockReason,
       Boolean(recipients.to),
     )
+    const reasonCategory = categorizeReportRow({ status, reason, emailStatus: delivery?.status || null })
 
     return {
       customerId: customer.id,
@@ -209,6 +230,8 @@ export async function getReportEmailStatus(
       status,
       emailStatus: delivery?.status || null,
       reason,
+      reasonCategory,
+      reasonCategoryLabel: reasonCategoryLabel(reasonCategory),
       sentAt: delivery?.deliveredAt || delivery?.updatedAt || null,
       openedAt: delivery?.openedAt || null,
       openedCount: delivery?.openedCount || 0,
@@ -224,20 +247,33 @@ export async function getReportEmailStatus(
     failed: 0,
     not_eligible: 0,
   }
+  const reasonSummary = emptyReasonSummary()
   for (const row of rows) {
     summary[row.status] += 1
+    reasonSummary[row.reasonCategory] += 1
   }
 
   const statusFilter = options?.status || "all"
+  const reasonFilter = options?.reason || "all"
   const q = (options?.q || "").trim().toLowerCase()
 
   let filtered = rows
   if (statusFilter !== "all") {
     filtered = filtered.filter((row) => row.status === statusFilter)
   }
+  if (reasonFilter !== "all") {
+    filtered = filtered.filter((row) => row.reasonCategory === reasonFilter)
+  }
   if (q) {
     filtered = filtered.filter((row) => {
-      const hay = [row.customerId, row.companyName, row.emailTo, row.reason, row.emailStatus]
+      const hay = [
+        row.customerId,
+        row.companyName,
+        row.emailTo,
+        row.reason,
+        row.emailStatus,
+        row.reasonCategoryLabel,
+      ]
         .map((v) => String(v || "").toLowerCase())
         .join(" ")
       return hay.includes(q)
@@ -249,5 +285,5 @@ export async function getReportEmailStatus(
   const offset = Math.max(0, options?.offset ?? 0)
   const page = filtered.slice(offset, offset + limit)
 
-  return { period, summary, rows: page, rowsTotal, limit, offset }
+  return { period, summary, reasonSummary, rows: page, rowsTotal, limit, offset }
 }

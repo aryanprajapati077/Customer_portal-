@@ -8,6 +8,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "kr-credits", label: "KR Credits", href: "/admin/kr-credits" },
   { key: "dropdowns", label: "Dropdowns", href: "/admin/dropdowns" },
   { key: "reports", label: "Reports & Email", href: "/admin/reports" },
+  { key: "reports", label: "Report Status", href: "/admin/report-status" },
   { key: "newsletter", label: "Newsletter", href: "/admin/newsletter" },
   { key: "email-templates", label: "Email Templates", href: "/admin/email-templates" },
   { key: "email-settings", label: "Email On/Off", href: "/admin/email-settings" },

@@ -81,11 +81,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
       { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
       { href: "/admin/certificates", label: "Certificates", icon: Award },
+      { href: "/admin/report-status", label: "Report Status", icon: ListChecks },
     ],
-  },
-  {
-    label: "Report Status",
-    items: [{ href: "/admin/report-status", label: "Report Status", icon: ListChecks }],
   },
   {
     label: "Reports & Email",

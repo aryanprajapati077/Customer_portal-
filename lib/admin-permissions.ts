@@ -58,6 +58,7 @@ export function hasAdminPermission(
   // Legacy admins with NULL permissions column: full access except users
   if (list === null) return true
   if (key === "report-status" && list.includes("reports")) return true
+  if (key === "reports" && list.includes("report-status")) return true
   return list.includes(key)
 }
 
@@ -65,6 +66,10 @@ export function permissionKeyForPath(pathname: string): AdminPermissionKey | "us
   if (pathname === "/admin" || pathname === "/admin/") return "overview"
   if (pathname.startsWith("/admin/security")) return null // all signed-in admins
   if (pathname.startsWith("/admin/users")) return "users"
+  // Same access as Reports & Email — avoids hiding nav for admins with only "reports"
+  if (pathname === "/admin/report-status" || pathname.startsWith("/admin/report-status/")) {
+    return "reports"
+  }
   for (const p of ADMIN_PERMISSIONS) {
     if (p.href === "/admin") continue
     if (pathname === p.href || pathname.startsWith(`${p.href}/`)) return p.key

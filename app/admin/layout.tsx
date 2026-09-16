@@ -34,6 +34,7 @@ import {
   Contact,
   ToggleRight,
   MailCheck,
+  ListChecks,
   ChevronRight,
   Search,
   type LucideIcon,
@@ -83,10 +84,13 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: "Report Status",
+    items: [{ href: "/admin/report-status", label: "Report Status", icon: ListChecks }],
+  },
+  {
     label: "Reports & Email",
     items: [
       { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
-      { href: "/admin/report-status", label: "Report Status", icon: MailCheck },
       { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
       { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
       { href: "/admin/email-settings", label: "Email On/Off", icon: ToggleRight },

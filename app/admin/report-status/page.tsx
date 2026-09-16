@@ -155,11 +155,6 @@ export default function AdminReportStatusPage() {
         title="Report Status"
         description="See who received the monthly ESG report, who is still pending, and exactly why a client did not get it (collection, email bounce, paused service, no email, etc.)."
         icon={<FileBarChart className="h-5 w-5" />}
-        actions={
-          <Button variant="outline" asChild className="rounded-full">
-            <Link href="/admin/reports">Reports &amp; Email</Link>
-          </Button>
-        }
       />
 
       <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">

@@ -8,7 +8,6 @@ export const ADMIN_PERMISSIONS = [
   { key: "kr-credits", label: "KR Credits", href: "/admin/kr-credits" },
   { key: "dropdowns", label: "Dropdowns", href: "/admin/dropdowns" },
   { key: "reports", label: "Reports & Email", href: "/admin/reports" },
-  { key: "reports", label: "Report Status", href: "/admin/report-status" },
   { key: "newsletter", label: "Newsletter", href: "/admin/newsletter" },
   { key: "email-templates", label: "Email Templates", href: "/admin/email-templates" },
   { key: "email-settings", label: "Email On/Off", href: "/admin/email-settings" },
@@ -17,6 +16,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "collections", label: "Collections", href: "/admin/collections" },
   { key: "pending-collections", label: "Pending Collections", href: "/admin/pending-collections" },
   { key: "renewals", label: "Renewals", href: "/admin/renewals" },
+  { key: "report-status", label: "Report Status", href: "/admin/report-status" },
   { key: "shop-products", label: "Shop Products", href: "/admin/shop/products" },
   { key: "shop-orders", label: "Shop Orders", href: "/admin/shop/orders" },
   { key: "certificates", label: "Certificates", href: "/admin/certificates" },
@@ -57,6 +57,7 @@ export function hasAdminPermission(
   const list = parsePermissions(permissions)
   // Legacy admins with NULL permissions column: full access except users
   if (list === null) return true
+  if (key === "report-status" && list.includes("reports")) return true
   return list.includes(key)
 }
 

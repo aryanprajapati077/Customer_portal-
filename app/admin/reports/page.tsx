@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,11 +32,11 @@ import {
   FileSpreadsheet,
   MailCheck,
   FileBarChart,
+  ListChecks,
 } from "lucide-react"
 import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
-import { EmailStatusStackChart } from "@/components/admin/admin-charts"
-import { AdminDataMeta, AdminLoadMore, AdminRefreshButton } from "@/components/admin/admin-ui"
+import { AdminRefreshButton } from "@/components/admin/admin-ui"
 import {
   Dialog,
   DialogContent,
@@ -106,28 +107,6 @@ type DeliveryIssue = {
   updatedAt: string
 }
 
-type ReportEmailStatusRow = {
-  customerId: string
-  companyName: string
-  emailTo: string | null
-  status: "sent" | "opened" | "pending" | "queued" | "failed" | "not_eligible"
-  emailStatus: string | null
-  reason: string | null
-  sentAt: string | null
-  openedAt: string | null
-  openedCount: number
-}
-
-type ReportEmailStatusSummary = {
-  total: number
-  sent: number
-  opened: number
-  pending: number
-  queued: number
-  failed: number
-  not_eligible: number
-}
-
 function currentMonthInput(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
@@ -187,56 +166,6 @@ export default function AdminReportsPage() {
     cc: string[]
   } | null>(null)
   const [loadingSendPreview, setLoadingSendPreview] = useState(false)
-
-  const [statusPeriod, setStatusPeriod] = useState(currentMonthInput())
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "sent" | "opened" | "pending" | "queued" | "failed" | "not_eligible"
-  >("all")
-  const [statusQ, setStatusQ] = useState("")
-  const [statusRows, setStatusRows] = useState<ReportEmailStatusRow[]>([])
-  const [statusSummary, setStatusSummary] = useState<ReportEmailStatusSummary | null>(null)
-  const [statusRowsTotal, setStatusRowsTotal] = useState(0)
-  const [statusLoading, setStatusLoading] = useState(false)
-  const [statusLoadingMore, setStatusLoadingMore] = useState(false)
-  const STATUS_PAGE_SIZE = 50
-
-  const loadEmailStatus = async (
-    month = statusPeriod,
-    filter = statusFilter,
-    search = statusQ,
-    { reset = true }: { reset?: boolean } = {},
-  ) => {
-    const offset = reset ? 0 : statusRows.length
-    if (reset) setStatusLoading(true)
-    else setStatusLoadingMore(true)
-    try {
-      const params = new URLSearchParams({
-        period: month,
-        status: filter,
-        q: search,
-        limit: String(STATUS_PAGE_SIZE),
-        offset: String(offset),
-      })
-      const res = await fetch(`/api/admin/reports/email-status?${params}`)
-      const data = await res.json()
-      if (data?.success) {
-        const nextRows = data.rows || []
-        if (reset) setStatusRows(nextRows)
-        else setStatusRows((prev) => [...prev, ...nextRows])
-        setStatusSummary(data.summary || null)
-        setStatusRowsTotal(Number(data.rowsTotal) || nextRows.length)
-      }
-    } finally {
-      if (reset) setStatusLoading(false)
-      else setStatusLoadingMore(false)
-    }
-  }
-
-  const loadMoreEmailStatus = () => {
-    if (statusLoading || statusLoadingMore) return
-    if (statusRows.length >= statusRowsTotal) return
-    void loadEmailStatus(statusPeriod, statusFilter, statusQ, { reset: false })
-  }
 
   const loadDeliveries = async (status = deliveryFilter, search = deliveryQ) => {
     setDeliveryLoading(true)
@@ -319,10 +248,6 @@ export default function AdminReportsPage() {
   }
 
   useEffect(() => {
-    void loadEmailStatus(statusPeriod, statusFilter, statusQ)
-  }, [statusPeriod, statusFilter])
-
-  useEffect(() => {
     if (!sendJob || (sendJob.status !== "queued" && sendJob.status !== "running")) return
     const timer = setInterval(async () => {
       try {
@@ -334,34 +259,13 @@ export default function AdminReportsPage() {
         const data = await res.json()
         if (data?.job) {
           setSendJob(data.job)
-          if (data.job.period === statusPeriod) {
-            void loadEmailStatus(statusPeriod, statusFilter, statusQ)
-          }
         }
       } catch {
         /* ignore poll errors */
       }
     }, 5000)
     return () => clearInterval(timer)
-  }, [sendJob?.id, sendJob?.status, sendJob?.period, statusPeriod, statusFilter, statusQ])
-
-  const statusBadgeClass = (status: ReportEmailStatusRow["status"]) => {
-    if (status === "opened") return "border-blue-200 bg-blue-50 text-blue-800"
-    if (status === "sent") return "border-secondary/30 bg-secondary/10 text-secondary"
-    if (status === "pending") return "border-amber-200 bg-amber-50 text-amber-800"
-    if (status === "queued") return "border-blue-200 bg-blue-50 text-blue-800"
-    if (status === "failed") return "border-destructive/30 bg-destructive/10 text-destructive"
-    return "border-border/60 bg-muted/40 text-muted-foreground"
-  }
-
-  const statusLabel = (status: ReportEmailStatusRow["status"]) => {
-    if (status === "opened") return "Opened"
-    if (status === "sent") return "Received"
-    if (status === "pending") return "Pending"
-    if (status === "queued") return "Queued"
-    if (status === "failed") return "Failed"
-    return "Not eligible"
-  }
+  }, [sendJob?.id, sendJob?.status, sendJob?.period])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -606,8 +510,6 @@ export default function AdminReportsPage() {
           alert(data.message || `Report email queued for ${targetCustomer}.`)
         } else if (data.job) {
           setSendJob(data.job)
-          setStatusPeriod(targetPeriod)
-          void loadEmailStatus(targetPeriod, statusFilter, statusQ)
           alert(
             data.reused
               ? `A send for ${targetPeriod} is already running (${data.job.sent}/${data.job.total} sent). It will continue automatically.`
@@ -915,240 +817,25 @@ export default function AdminReportsPage() {
 
       <Card className="overflow-hidden rounded-[14px] border-[#ebe9e4] bg-white shadow-sm">
         <CardHeader className="border-b border-[#ebe9e4] bg-[#fafaf8]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <MailCheck className="h-5 w-5 text-primary" />
-                Report Email Status
-              </CardTitle>
-              <CardDescription>
-                See which active clients received the ESG report email for a month, and who is still pending.
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Month</Label>
-                <Input
-                  type="month"
-                  value={statusPeriod}
-                  onChange={(e) => setStatusPeriod(e.target.value)}
-                  className="w-[170px]"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => void loadEmailStatus(statusPeriod, statusFilter, statusQ)}
-                disabled={statusLoading}
-              >
-                {statusLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                )}
-                Refresh
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-[#1B7339]" />
+            Report Status
+          </CardTitle>
+          <CardDescription>
+            Track who received the monthly ESG report, who is pending, and why (collection pending, email bounce,
+            paused service, no email, etc.) on a dedicated page — separate from send &amp; generate here.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {statusSummary && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
-              <button
-                type="button"
-                onClick={() => setStatusFilter("all")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "all" ? "border-primary/40 bg-primary/5" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">All clients</p>
-                <p className="text-2xl font-bold">{statusSummary.total}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("sent")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "sent" ? "border-secondary/40 bg-secondary/5" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Received</p>
-                <p className="text-2xl font-bold text-secondary">{statusSummary.sent}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("opened")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "opened" ? "border-blue-300 bg-blue-50" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Opened</p>
-                <p className="text-2xl font-bold text-blue-700">{statusSummary.opened}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("pending")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "pending" ? "border-amber-300 bg-amber-50" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-amber-700">{statusSummary.pending}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("queued")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "queued" ? "border-blue-300 bg-blue-50" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Queued</p>
-                <p className="text-2xl font-bold text-blue-700">{statusSummary.queued}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("failed")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "failed" ? "border-destructive/40 bg-destructive/5" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Failed</p>
-                <p className="text-2xl font-bold text-destructive">{statusSummary.failed}</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter("not_eligible")}
-                className={`rounded-xl border p-3 text-left transition ${
-                  statusFilter === "not_eligible" ? "border-border bg-muted/40" : "border-border/50"
-                }`}
-              >
-                <p className="text-xs text-muted-foreground">Not eligible</p>
-                <p className="text-2xl font-bold">{statusSummary.not_eligible}</p>
-              </button>
-            </div>
-          )}
-
-          {statusSummary ? <EmailStatusStackChart summary={statusSummary} /> : null}
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={statusQ}
-                onChange={(e) => setStatusQ(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void loadEmailStatus(statusPeriod, statusFilter, statusQ)
-                }}
-                placeholder="Search company, ID, email..."
-                className="pl-9"
-              />
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(v) =>
-                setStatusFilter(
-                  v as
-                    | "all"
-                    | "sent"
-                    | "opened"
-                    | "pending"
-                    | "queued"
-                    | "failed"
-                    | "not_eligible",
-                )
-              }
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="sent">Received</SelectItem>
-                <SelectItem value="opened">Opened</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="queued">Queued</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="not_eligible">Not eligible</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {statusLoading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : statusRows.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              No clients match this filter for {statusPeriod}.
-            </p>
-          ) : (
-            <>
-            <AdminDataMeta shown={statusRows.length} total={statusRowsTotal} noun="client" />
-            <div className="overflow-x-auto rounded-xl border border-[#ebe9e4]">
-              <table className="min-w-full text-sm">
-                <thead className="bg-[#fafaf8] text-left text-[10px] font-bold uppercase tracking-[0.08em] text-[#777]">
-                  <tr>
-                    <th className="px-4 py-3">Client</th>
-                    <th className="px-4 py-3">To email</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Details</th>
-                    <th className="px-4 py-3">Sent / updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {statusRows.map((row) => (
-                    <tr key={row.customerId} className="border-t border-border/40">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-foreground">{row.companyName}</p>
-                        <p className="text-xs text-muted-foreground">{row.customerId}</p>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{row.emailTo || "—"}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={statusBadgeClass(row.status)}>
-                          {statusLabel(row.status)}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {row.reason ||
-                          (row.status === "opened"
-                            ? `Opened ${row.openedCount || 1} time(s)`
-                            : row.emailStatus && row.status === "sent"
-                              ? `Email ${row.emailStatus}`
-                              : row.status === "pending"
-                                ? "Eligible — not sent yet"
-                                : "—")}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {row.openedAt
-                          ? new Date(row.openedAt).toLocaleString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : row.sentAt
-                            ? new Date(row.sentAt).toLocaleString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {statusRows.length < statusRowsTotal ? (
-              <AdminLoadMore
-                loading={statusLoadingMore}
-                pageSize={STATUS_PAGE_SIZE}
-                onClick={loadMoreEmailStatus}
-              />
-            ) : null}
-            </>
-          )}
+        <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Use filters by month, delivery status, and reason category with a searchable client list.
+          </p>
+          <Button asChild className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]">
+            <Link href="/admin/report-status">
+              <ListChecks className="mr-2 h-4 w-4" />
+              Open Report Status
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

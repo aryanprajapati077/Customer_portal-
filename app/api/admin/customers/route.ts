@@ -89,16 +89,14 @@ function parseOptionalIsoDate(raw: unknown): string | null {
   return d.toISOString()
 }
 
-async function findLoginEmailConflict(email: string, excludeId: string): Promise<string | null> {
-  const normalized = email.toLowerCase().trim()
-  const rows = await sql`
-    SELECT id, "companyName" FROM "Customer"
-    WHERE lower(email) = ${normalized} AND id <> ${excludeId}
-    LIMIT 1
-  `
-  const hit = rows[0] as { id?: string; companyName?: string } | undefined
-  if (!hit?.id) return null
-  return hit.companyName ? `${hit.id} (${hit.companyName})` : hit.id
+/** Same person can be login/POC for multiple locations — allow shared emails. */
+async function ensureSharedLoginEmailsAllowed() {
+  try {
+    await sql.query(`ALTER TABLE "Customer" DROP CONSTRAINT IF EXISTS "Customer_email_key"`)
+    await sql.query(`DROP INDEX IF EXISTS "Customer_email_key"`)
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -296,15 +294,8 @@ export async function POST(request: NextRequest) {
     }
 
     const emailLower = primaryPocEmail
-    const existing = await sql`
-      SELECT id FROM "Customer" WHERE email = ${emailLower} LIMIT 1
-    `
-    if (Array.isArray(existing) && existing.length > 0) {
-      return NextResponse.json(
-        { success: false, error: "Primary POC email already exists" },
-        { status: 400 },
-      )
-    }
+    // Shared login emails are allowed (same person across locations).
+    await ensureSharedLoginEmailsAllowed()
 
     const requestedId = String(body.customerId || body.id || "")
       .trim()
@@ -521,13 +512,7 @@ export async function PATCH(request: NextRequest) {
       if (!email.includes("@")) {
         return NextResponse.json({ success: false, error: "Valid email required" }, { status: 400 })
       }
-      const conflict = await findLoginEmailConflict(email, id)
-      if (conflict) {
-        return NextResponse.json(
-          { success: false, error: `Login email already in use by customer ${conflict}` },
-          { status: 400 },
-        )
-      }
+      await ensureSharedLoginEmailsAllowed()
       updates.push(`email = $${i++}`)
       values.push(email)
     }
@@ -540,13 +525,7 @@ export async function PATCH(request: NextRequest) {
       values.push(email)
       // Keep login email in sync when primary POC is the login identity
       if (body?.syncLoginEmail) {
-        const conflict = await findLoginEmailConflict(email, id)
-        if (conflict) {
-          return NextResponse.json(
-            { success: false, error: `Login email already in use by customer ${conflict}` },
-            { status: 400 },
-          )
-        }
+        await ensureSharedLoginEmailsAllowed()
         updates.push(`email = $${i++}`)
         values.push(email)
       }
@@ -696,9 +675,10 @@ export async function PATCH(request: NextRequest) {
     console.error("Error updating customer:", error)
     const pg = error as { code?: string; constraint?: string }
     if (pg.code === "23505" && String(pg.constraint || "").includes("email")) {
+      await ensureSharedLoginEmailsAllowed()
       return NextResponse.json(
-        { success: false, error: "Login email already in use by another customer" },
-        { status: 400 },
+        { success: false, error: "Please save again — shared login emails are now allowed." },
+        { status: 409 },
       )
     }
     if (error instanceof Error && error.message === "Invalid date") {

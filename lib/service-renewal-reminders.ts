@@ -2,6 +2,7 @@ import { sql } from "@/lib/db"
 import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { formatPortalDate } from "@/lib/portal-metrics"
 import { resolveRenewalRecipients } from "@/lib/report-recipients"
+import { ensureRenewalCtaPointsToPublicPage } from "@/lib/renewal-response"
 
 export type RenewalReminderResult = {
   customerId: string
@@ -22,6 +23,7 @@ export async function runServiceRenewalReminders(options?: {
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
   `)
+  await ensureRenewalCtaPointsToPublicPage()
 
   const windows = [30, 15, 7]
   const results: RenewalReminderResult[] = []

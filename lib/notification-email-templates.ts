@@ -182,7 +182,7 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateMeta[] = [
     id: "service_renewal",
     name: "Service Renewal Reminder",
     description: "Reminder before contract expiry.",
-    placeholders: ["name", "company", "renewalDate", "portalUrl", "daysLeft"],
+    placeholders: ["name", "company", "renewalDate", "portalUrl", "daysLeft", "customerId"],
     defaults: {
       subject: "Your Buffindia Service Renewal is Due",
       eyebrow: "BuffIndia · Renewal",
@@ -190,7 +190,7 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateMeta[] = [
       intro: "Hi {{name}},",
       body: "Your Buffindia service for {{company}} is due for renewal on {{renewalDate}}{{daysLeftLine}}.\n\nRenew your service to continue uninterrupted cigarette waste collection, ESG reporting, and access to Buffindia ImpactOS.",
       ctaLabel: "Renew Now",
-      ctaUrl: "{{portalUrl}}/dashboard/organization",
+      ctaUrl: "{{portalUrl}}/renew?c={{customerId}}",
       closing: "If you have any questions, our team will be happy to assist you.\n\nWarm regards,",
       signOff: "Team Buffindia",
       footerLine: "Buffindia Receptacles Pvt. Ltd. · support@buffindia.com · www.buffindia.com",

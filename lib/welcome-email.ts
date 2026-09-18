@@ -208,6 +208,7 @@ ${emailSupporterFooterText()}`
 
 export async function sendWelcomeEmail(options: {
   to: string
+  cc?: string[]
   brandName: string
   contactName: string
   customerId: string
@@ -222,6 +223,7 @@ export async function sendWelcomeEmail(options: {
   if (!resend) {
     console.warn("[welcome-email] RESEND_API_KEY not set — credentials:", {
       to: options.to,
+      cc: options.cc,
       email: options.email,
       password: options.password,
       customerId: options.customerId,
@@ -229,9 +231,14 @@ export async function sendWelcomeEmail(options: {
     return { sent: false as const, reason: "RESEND_API_KEY not configured" }
   }
 
+  const cc = (options.cc || [])
+    .map((email) => String(email || "").toLowerCase().trim())
+    .filter((email) => email.includes("@") && email !== options.to.toLowerCase().trim())
+
   await resend.emails.send({
     from: getResendFrom(),
     to: options.to,
+    ...(cc.length ? { cc } : {}),
     subject,
     html,
     text,

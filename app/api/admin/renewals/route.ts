@@ -6,6 +6,7 @@ import { computeContractRenewalWindow } from "@/lib/admin-permissions"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { resolveRenewalRecipients } from "@/lib/report-recipients"
+import { ensureRenewalCtaPointsToPublicPage } from "@/lib/renewal-response"
 
 async function ensureCols() {
   await sql.query(`
@@ -23,6 +24,10 @@ async function ensureCols() {
       AND COALESCE("serviceStartDate", "joinDate") IS NOT NULL
       AND COALESCE("isGroup", false) = false
   `)
+  // Allow same login email across locations (same person / shared POC)
+  await sql.query(`ALTER TABLE "Customer" DROP CONSTRAINT IF EXISTS "Customer_email_key"`)
+  await sql.query(`DROP INDEX IF EXISTS "Customer_email_key"`)
+  await ensureRenewalCtaPointsToPublicPage()
 }
 
 type CustomerRenewalSource = {

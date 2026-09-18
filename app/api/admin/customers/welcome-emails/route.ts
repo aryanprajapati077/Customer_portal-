@@ -4,6 +4,7 @@ import { hashPassword } from "@/lib/password"
 import { generatePortalPassword, sendWelcomeEmail } from "@/lib/welcome-email"
 import { queueEmail } from "@/lib/email-queue"
 import { isEmailEnabled } from "@/lib/email-settings"
+import { resolveReportRecipients } from "@/lib/report-recipients"
 
 async function ensureWelcomeColumn() {
   await sql.query(`
@@ -17,6 +18,10 @@ type WelcomeCustomer = {
   email: string
   companyName: string
   primaryPocName: string | null
+  primaryPocEmail?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
+  collectionPocs?: string | null
   contactPerson: string | null
   welcomeEmailSentAt?: string | Date | null
 }
@@ -70,7 +75,9 @@ export async function POST(request: NextRequest) {
 
     if (idList.length > 0) {
       customers = await sql.query<WelcomeCustomer>(
-        `SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+        `SELECT id, email, "companyName", "primaryPocName", "primaryPocEmail",
+                "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs",
+                "contactPerson", "welcomeEmailSentAt"
          FROM "Customer"
          WHERE id = ANY($1::text[])
            AND COALESCE("isGroup", false) = false
@@ -116,7 +123,9 @@ export async function POST(request: NextRequest) {
     } else {
       customers = onlyPending
         ? ((await sql`
-            SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+            SELECT id, email, "companyName", "primaryPocName", "primaryPocEmail",
+                   "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs",
+                   "contactPerson", "welcomeEmailSentAt"
             FROM "Customer"
             WHERE COALESCE("isGroup", false) = false
               AND "welcomeEmailSentAt" IS NULL
@@ -125,7 +134,9 @@ export async function POST(request: NextRequest) {
             ORDER BY "companyName" ASC
           `) as WelcomeCustomer[])
         : ((await sql`
-            SELECT id, email, "companyName", "primaryPocName", "contactPerson", "welcomeEmailSentAt"
+            SELECT id, email, "companyName", "primaryPocName", "primaryPocEmail",
+                   "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs",
+                   "contactPerson", "welcomeEmailSentAt"
             FROM "Customer"
             WHERE COALESCE("isGroup", false) = false
               AND email IS NOT NULL
@@ -172,13 +183,28 @@ export async function POST(request: NextRequest) {
       const contactName =
         customer.primaryPocName || customer.contactPerson || customer.companyName || "Partner"
 
+      const { to: preferredTo, cc } = resolveReportRecipients(customer)
+      const welcomeTo = preferredTo.includes("@") ? preferredTo : to
+      const welcomeCc = [
+        ...cc,
+        ...(to.includes("@") && to !== welcomeTo ? [to] : []),
+        ...(String(customer.primaryPocEmail || "")
+          .toLowerCase()
+          .trim()
+          .includes("@") &&
+        String(customer.primaryPocEmail || "").toLowerCase().trim() !== welcomeTo
+          ? [String(customer.primaryPocEmail).toLowerCase().trim()]
+          : []),
+      ].filter((email, index, arr) => email.includes("@") && arr.indexOf(email) === index && email !== welcomeTo)
+
       queueEmail(`welcome-${customer.id}-${Date.now()}`, () =>
         sendWelcomeEmail({
-          to,
+          to: welcomeTo,
+          cc: welcomeCc,
           brandName: customer.companyName,
           contactName,
           customerId: customer.id,
-          email: to,
+          email: welcomeTo,
           password,
         }),
       )

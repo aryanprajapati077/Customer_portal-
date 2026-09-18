@@ -58,7 +58,7 @@ export async function ensureRenewalEmailTemplate() {
   const sample = buildRenewalReminderEmail({
     customerName: "{{Customer Name}}",
     renewalDate: "{{Renewal Date}}",
-    renewUrl: absoluteUrl("/dashboard/organization"),
+    renewUrl: absoluteUrl("/renew?c={{CustomerId}}"),
   })
   const rows = await sql`
     SELECT id FROM "EmailTemplate" WHERE id = ${"service_renewal"} LIMIT 1
@@ -88,7 +88,7 @@ export async function getRenewalEmailTemplate() {
     return buildRenewalReminderEmail({
       customerName: "{{Customer Name}}",
       renewalDate: "{{Renewal Date}}",
-      renewUrl: absoluteUrl("/dashboard/organization"),
+      renewUrl: absoluteUrl("/renew?c={{CustomerId}}"),
     })
   }
   const payload = JSON.parse(String((rows[0] as { payload: string }).payload || "{}"))

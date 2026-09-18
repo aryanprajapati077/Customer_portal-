@@ -84,8 +84,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const customer = await prisma.customer.findUnique({
+    const customers = await prisma.customer.findMany({
       where: { email: normalizedEmail },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
       select: {
         id: true,
         email: true,
@@ -116,12 +117,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    if (customer) {
-      const valid = await verifyPassword(password, customer.password)
-      if (!valid) {
-        return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
+    // Prefer Active; if shared email, accept the first account whose password matches.
+    let customer = null as (typeof customers)[number] | null
+    for (const candidate of customers) {
+      if (await verifyPassword(password, candidate.password)) {
+        customer = candidate
+        break
       }
+    }
+    // Keep timing similar when none matched but email exists
+    if (!customer && customers.length > 0) {
+      await verifyPassword(password, "")
+      return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
+    }
 
+    if (customer) {
       if (!isPasswordHashed(customer.password)) {
         await prisma.customer
           .update({

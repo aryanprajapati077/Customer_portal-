@@ -82,6 +82,8 @@ export type CustomerMinAggregateOutputType = {
   primaryPocNumber: string | null
   primaryPocDesignation: string | null
   collectionPocs: string | null
+  primaryPocEmailEnabled: boolean | null
+  primaryPocStatus: string | null
   serviceStartDate: Date | null
   noOfKiosk: number | null
   noOfBasicKiosk: number | null
@@ -135,6 +137,8 @@ export type CustomerMaxAggregateOutputType = {
   primaryPocNumber: string | null
   primaryPocDesignation: string | null
   collectionPocs: string | null
+  primaryPocEmailEnabled: boolean | null
+  primaryPocStatus: string | null
   serviceStartDate: Date | null
   noOfKiosk: number | null
   noOfBasicKiosk: number | null
@@ -188,6 +192,8 @@ export type CustomerCountAggregateOutputType = {
   primaryPocNumber: number
   primaryPocDesignation: number
   collectionPocs: number
+  primaryPocEmailEnabled: number
+  primaryPocStatus: number
   serviceStartDate: number
   noOfKiosk: number
   noOfBasicKiosk: number
@@ -283,6 +289,8 @@ export type CustomerMinAggregateInputType = {
   primaryPocNumber?: true
   primaryPocDesignation?: true
   collectionPocs?: true
+  primaryPocEmailEnabled?: true
+  primaryPocStatus?: true
   serviceStartDate?: true
   noOfKiosk?: true
   noOfBasicKiosk?: true
@@ -336,6 +344,8 @@ export type CustomerMaxAggregateInputType = {
   primaryPocNumber?: true
   primaryPocDesignation?: true
   collectionPocs?: true
+  primaryPocEmailEnabled?: true
+  primaryPocStatus?: true
   serviceStartDate?: true
   noOfKiosk?: true
   noOfBasicKiosk?: true
@@ -389,6 +399,8 @@ export type CustomerCountAggregateInputType = {
   primaryPocNumber?: true
   primaryPocDesignation?: true
   collectionPocs?: true
+  primaryPocEmailEnabled?: true
+  primaryPocStatus?: true
   serviceStartDate?: true
   noOfKiosk?: true
   noOfBasicKiosk?: true
@@ -529,6 +541,8 @@ export type CustomerGroupByOutputType = {
   primaryPocNumber: string | null
   primaryPocDesignation: string | null
   collectionPocs: string | null
+  primaryPocEmailEnabled: boolean | null
+  primaryPocStatus: string | null
   serviceStartDate: Date | null
   noOfKiosk: number
   noOfBasicKiosk: number
@@ -605,6 +619,8 @@ export type CustomerWhereInput = {
   primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
   primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
   collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmailEnabled?: Prisma.BoolNullableFilter<"Customer"> | boolean | null
+  primaryPocStatus?: Prisma.StringNullableFilter<"Customer"> | string | null
   serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   noOfKiosk?: Prisma.IntFilter<"Customer"> | number
   noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
@@ -665,6 +681,8 @@ export type CustomerOrderByWithRelationInput = {
   primaryPocNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   primaryPocDesignation?: Prisma.SortOrderInput | Prisma.SortOrder
   collectionPocs?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocEmailEnabled?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
   noOfKiosk?: Prisma.SortOrder
   noOfBasicKiosk?: Prisma.SortOrder
@@ -711,10 +729,10 @@ export type CustomerOrderByWithRelationInput = {
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  email?: string
   AND?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   OR?: Prisma.CustomerWhereInput[]
   NOT?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
+  email?: Prisma.StringFilter<"Customer"> | string
   password?: Prisma.StringFilter<"Customer"> | string
   companyName?: Prisma.StringFilter<"Customer"> | string
   tradeName?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -728,6 +746,8 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
   primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
   collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmailEnabled?: Prisma.BoolNullableFilter<"Customer"> | boolean | null
+  primaryPocStatus?: Prisma.StringNullableFilter<"Customer"> | string | null
   serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   noOfKiosk?: Prisma.IntFilter<"Customer"> | number
   noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
@@ -770,7 +790,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   reports?: Prisma.ReportListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   shopOrders?: Prisma.ShopOrderListRelationFilter
-}, "id" | "email">
+}, "id">
 
 export type CustomerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -788,6 +808,8 @@ export type CustomerOrderByWithAggregationInput = {
   primaryPocNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   primaryPocDesignation?: Prisma.SortOrderInput | Prisma.SortOrder
   collectionPocs?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocEmailEnabled?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryPocStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
   noOfKiosk?: Prisma.SortOrder
   noOfBasicKiosk?: Prisma.SortOrder
@@ -849,6 +871,8 @@ export type CustomerScalarWhereWithAggregatesInput = {
   primaryPocNumber?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   primaryPocDesignation?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   collectionPocs?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  primaryPocEmailEnabled?: Prisma.BoolNullableWithAggregatesFilter<"Customer"> | boolean | null
+  primaryPocStatus?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   serviceStartDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
   noOfKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
   noOfBasicKiosk?: Prisma.IntWithAggregatesFilter<"Customer"> | number
@@ -902,6 +926,8 @@ export type CustomerCreateInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -961,6 +987,8 @@ export type CustomerUncheckedCreateInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1020,6 +1048,8 @@ export type CustomerUpdateInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1079,6 +1109,8 @@ export type CustomerUncheckedUpdateInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1138,6 +1170,8 @@ export type CustomerCreateManyInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1191,6 +1225,8 @@ export type CustomerUpdateManyMutationInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1243,6 +1279,8 @@ export type CustomerUncheckedUpdateManyInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1311,6 +1349,8 @@ export type CustomerCountOrderByAggregateInput = {
   primaryPocNumber?: Prisma.SortOrder
   primaryPocDesignation?: Prisma.SortOrder
   collectionPocs?: Prisma.SortOrder
+  primaryPocEmailEnabled?: Prisma.SortOrder
+  primaryPocStatus?: Prisma.SortOrder
   serviceStartDate?: Prisma.SortOrder
   noOfKiosk?: Prisma.SortOrder
   noOfBasicKiosk?: Prisma.SortOrder
@@ -1384,6 +1424,8 @@ export type CustomerMaxOrderByAggregateInput = {
   primaryPocNumber?: Prisma.SortOrder
   primaryPocDesignation?: Prisma.SortOrder
   collectionPocs?: Prisma.SortOrder
+  primaryPocEmailEnabled?: Prisma.SortOrder
+  primaryPocStatus?: Prisma.SortOrder
   serviceStartDate?: Prisma.SortOrder
   noOfKiosk?: Prisma.SortOrder
   noOfBasicKiosk?: Prisma.SortOrder
@@ -1437,6 +1479,8 @@ export type CustomerMinOrderByAggregateInput = {
   primaryPocNumber?: Prisma.SortOrder
   primaryPocDesignation?: Prisma.SortOrder
   collectionPocs?: Prisma.SortOrder
+  primaryPocEmailEnabled?: Prisma.SortOrder
+  primaryPocStatus?: Prisma.SortOrder
   serviceStartDate?: Prisma.SortOrder
   noOfKiosk?: Prisma.SortOrder
   noOfBasicKiosk?: Prisma.SortOrder
@@ -1525,6 +1569,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -1687,6 +1735,8 @@ export type CustomerCreateWithoutChildCustomersInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1745,6 +1795,8 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1808,6 +1860,8 @@ export type CustomerCreateWithoutParentCustomerInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1866,6 +1920,8 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -1945,6 +2001,8 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2003,6 +2061,8 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2080,6 +2140,8 @@ export type CustomerScalarWhereInput = {
   primaryPocNumber?: Prisma.StringNullableFilter<"Customer"> | string | null
   primaryPocDesignation?: Prisma.StringNullableFilter<"Customer"> | string | null
   collectionPocs?: Prisma.StringNullableFilter<"Customer"> | string | null
+  primaryPocEmailEnabled?: Prisma.BoolNullableFilter<"Customer"> | boolean | null
+  primaryPocStatus?: Prisma.StringNullableFilter<"Customer"> | string | null
   serviceStartDate?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   noOfKiosk?: Prisma.IntFilter<"Customer"> | number
   noOfBasicKiosk?: Prisma.IntFilter<"Customer"> | number
@@ -2133,6 +2195,8 @@ export type CustomerCreateWithoutNotificationsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2191,6 +2255,8 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2265,6 +2331,8 @@ export type CustomerUpdateWithoutNotificationsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2323,6 +2391,8 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2381,6 +2451,8 @@ export type CustomerCreateWithoutCollectionsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2439,6 +2511,8 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2513,6 +2587,8 @@ export type CustomerUpdateWithoutCollectionsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2571,6 +2647,8 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2629,6 +2707,8 @@ export type CustomerCreateWithoutCertificatesInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2687,6 +2767,8 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2761,6 +2843,8 @@ export type CustomerUpdateWithoutCertificatesInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2819,6 +2903,8 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2877,6 +2963,8 @@ export type CustomerCreateWithoutReportsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -2935,6 +3023,8 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -3009,6 +3099,8 @@ export type CustomerUpdateWithoutReportsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3067,6 +3159,8 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3125,6 +3219,8 @@ export type CustomerCreateWithoutShopOrdersInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -3183,6 +3279,8 @@ export type CustomerUncheckedCreateWithoutShopOrdersInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -3257,6 +3355,8 @@ export type CustomerUpdateWithoutShopOrdersInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3315,6 +3415,8 @@ export type CustomerUncheckedUpdateWithoutShopOrdersInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3373,6 +3475,8 @@ export type CustomerCreateManyParentCustomerInput = {
   primaryPocNumber?: string | null
   primaryPocDesignation?: string | null
   collectionPocs?: string | null
+  primaryPocEmailEnabled?: boolean | null
+  primaryPocStatus?: string | null
   serviceStartDate?: Date | string | null
   noOfKiosk?: number
   noOfBasicKiosk?: number
@@ -3425,6 +3529,8 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3483,6 +3589,8 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3541,6 +3649,8 @@ export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
   primaryPocNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   primaryPocDesignation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectionPocs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryPocEmailEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  primaryPocStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noOfKiosk?: Prisma.IntFieldUpdateOperationsInput | number
   noOfBasicKiosk?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3669,6 +3779,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   primaryPocNumber?: boolean
   primaryPocDesignation?: boolean
   collectionPocs?: boolean
+  primaryPocEmailEnabled?: boolean
+  primaryPocStatus?: boolean
   serviceStartDate?: boolean
   noOfKiosk?: boolean
   noOfBasicKiosk?: boolean
@@ -3730,6 +3842,8 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   primaryPocNumber?: boolean
   primaryPocDesignation?: boolean
   collectionPocs?: boolean
+  primaryPocEmailEnabled?: boolean
+  primaryPocStatus?: boolean
   serviceStartDate?: boolean
   noOfKiosk?: boolean
   noOfBasicKiosk?: boolean
@@ -3784,6 +3898,8 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   primaryPocNumber?: boolean
   primaryPocDesignation?: boolean
   collectionPocs?: boolean
+  primaryPocEmailEnabled?: boolean
+  primaryPocStatus?: boolean
   serviceStartDate?: boolean
   noOfKiosk?: boolean
   noOfBasicKiosk?: boolean
@@ -3838,6 +3954,8 @@ export type CustomerSelectScalar = {
   primaryPocNumber?: boolean
   primaryPocDesignation?: boolean
   collectionPocs?: boolean
+  primaryPocEmailEnabled?: boolean
+  primaryPocStatus?: boolean
   serviceStartDate?: boolean
   noOfKiosk?: boolean
   noOfBasicKiosk?: boolean
@@ -3875,7 +3993,7 @@ export type CustomerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "serviceStatus" | "contractEndDate" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "primaryPocEmailEnabled" | "primaryPocStatus" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "serviceStatus" | "contractEndDate" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentCustomer?: boolean | Prisma.Customer$parentCustomerArgs<ExtArgs>
   childCustomers?: boolean | Prisma.Customer$childCustomersArgs<ExtArgs>
@@ -3920,6 +4038,8 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     primaryPocNumber: string | null
     primaryPocDesignation: string | null
     collectionPocs: string | null
+    primaryPocEmailEnabled: boolean | null
+    primaryPocStatus: string | null
     serviceStartDate: Date | null
     noOfKiosk: number
     noOfBasicKiosk: number
@@ -4403,6 +4523,8 @@ export interface CustomerFieldRefs {
   readonly primaryPocNumber: Prisma.FieldRef<"Customer", 'String'>
   readonly primaryPocDesignation: Prisma.FieldRef<"Customer", 'String'>
   readonly collectionPocs: Prisma.FieldRef<"Customer", 'String'>
+  readonly primaryPocEmailEnabled: Prisma.FieldRef<"Customer", 'Boolean'>
+  readonly primaryPocStatus: Prisma.FieldRef<"Customer", 'String'>
   readonly serviceStartDate: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly noOfKiosk: Prisma.FieldRef<"Customer", 'Int'>
   readonly noOfBasicKiosk: Prisma.FieldRef<"Customer", 'Int'>

@@ -93,6 +93,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: "/admin/collections", label: "Collections", icon: Package },
       { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
       { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
+      {
+        href: "/admin/renewal-responses",
+        label: "Renewal Responses",
+        icon: CalendarClock,
+        keywords: ["renew", "response", "interest", "renew now"],
+      },
       { href: "/admin/certificates", label: "Certificates", icon: Award },
     ],
   },

@@ -101,6 +101,8 @@ export const CustomerScalarFieldEnum = {
   primaryPocNumber: 'primaryPocNumber',
   primaryPocDesignation: 'primaryPocDesignation',
   collectionPocs: 'collectionPocs',
+  primaryPocEmailEnabled: 'primaryPocEmailEnabled',
+  primaryPocStatus: 'primaryPocStatus',
   serviceStartDate: 'serviceStartDate',
   noOfKiosk: 'noOfKiosk',
   noOfBasicKiosk: 'noOfBasicKiosk',

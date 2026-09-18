@@ -16,6 +16,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "collections", label: "Collections", href: "/admin/collections" },
   { key: "pending-collections", label: "Pending Collections", href: "/admin/pending-collections" },
   { key: "renewals", label: "Renewals", href: "/admin/renewals" },
+  { key: "renewals", label: "Renewal Responses", href: "/admin/renewal-responses" },
   { key: "report-status", label: "Report Status", href: "/admin/report-status" },
   { key: "shop-products", label: "Shop Products", href: "/admin/shop/products" },
   { key: "shop-orders", label: "Shop Orders", href: "/admin/shop/orders" },

@@ -507,7 +507,7 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"parentCustomerId" = $${i++}`)
       values.push(body.parentCustomerId ? String(body.parentCustomerId) : null)
     }
-    if (body?.email !== undefined) {
+    if (body?.email !== undefined && body?.primaryPocEmail === undefined) {
       const email = String(body.email).toLowerCase().trim()
       if (!email.includes("@")) {
         return NextResponse.json({ success: false, error: "Valid email required" }, { status: 400 })
@@ -523,12 +523,10 @@ export async function PATCH(request: NextRequest) {
       }
       updates.push(`"primaryPocEmail" = $${i++}`)
       values.push(email)
-      // Keep login email in sync when primary POC is the login identity
-      if (body?.syncLoginEmail) {
-        await ensureSharedLoginEmailsAllowed()
-        updates.push(`email = $${i++}`)
-        values.push(email)
-      }
+      // Primary POC is the portal login identity — always keep login email in sync.
+      await ensureSharedLoginEmailsAllowed()
+      updates.push(`email = $${i++}`)
+      values.push(email)
     }
 
     const setText = (col: string, raw: unknown) => {

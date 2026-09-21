@@ -271,7 +271,9 @@ function EditableCustomerSheet({
         noOfAdvanceKiosk: Number(draft.noOfAdvanceKiosk) || 0,
         noOfPanVendorKiosk: Number(draft.noOfPanVendorKiosk) || 0,
         noOfWallMountKiosk: Number(draft.noOfWallMountKiosk) || 0,
-        email: draft.email.trim().toLowerCase(),
+        // Primary POC is the portal login identity — keep login email in sync.
+        email: draft.primaryPocEmail.trim().toLowerCase() || draft.email.trim().toLowerCase(),
+        syncLoginEmail: true,
         status: draft.status,
         serviceStatus: draft.serviceStatus,
         contractEndDate: draft.contractEndDate || null,
@@ -593,7 +595,15 @@ function EditableCustomerSheet({
               </div>
               <div className="space-y-1">
                 <Label className="text-[11px] text-[#6B6B6B]">Email</Label>
-                <Input className={inputClass} type="email" value={draft.primaryPocEmail} onChange={(e) => set("primaryPocEmail", e.target.value)} />
+                <Input
+                  className={inputClass}
+                  type="email"
+                  value={draft.primaryPocEmail}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setDraft((d) => ({ ...d, primaryPocEmail: value, email: value }))
+                  }}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-[11px] text-[#6B6B6B]">Phone</Label>

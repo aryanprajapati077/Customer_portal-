@@ -27,7 +27,7 @@ import {
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
 import { absoluteUrl } from "@/lib/site-config"
-import { emailKindLabel } from "@/lib/email-status"
+import { emailKindLabel } from "@/lib/email-kind-labels"
 import {
   Area,
   AreaChart,

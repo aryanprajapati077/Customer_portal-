@@ -1,6 +1,21 @@
 import { sql } from "@/lib/db"
 import { ensureEmailDeliveryLogTable } from "@/lib/email-delivery-log"
 
+export const KNOWN_EMAIL_KINDS = ["esg_report", "welcome", "renewal", "newsletter"] as const
+
+export const EMAIL_KIND_LABELS: Record<string, string> = {
+  esg_report: "ESG Report",
+  welcome: "Welcome",
+  renewal: "Renewal",
+  newsletter: "Newsletter",
+  inbound: "Inbound",
+  unknown: "Other",
+}
+
+export function emailKindLabel(kind: string) {
+  return EMAIL_KIND_LABELS[kind] || kind.replace(/_/g, " ")
+}
+
 export type EmailStatusFilters = {
   from?: string
   to?: string
@@ -181,7 +196,12 @@ export async function getEmailStatusDashboard(filters: EmailStatusFilters) {
     byKind,
     rows,
     totalRows: totalRows[0]?.n || 0,
-    kinds: kinds.map((k) => k.kind).filter(Boolean),
+    kinds: Array.from(
+      new Set([
+        ...KNOWN_EMAIL_KINDS,
+        ...kinds.map((k) => k.kind).filter(Boolean),
+      ]),
+    ),
     take,
     offset,
   }

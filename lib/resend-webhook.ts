@@ -93,7 +93,8 @@ export async function applyResendWebhookEvent(input: {
     email: input.email,
     status,
     error: input.error,
-    kind: status === "received" ? "inbound" : "esg_report",
+    // Do not assume ESG — match by resendId / latest row so welcome & renewal update correctly.
+    kind: status === "received" ? "inbound" : null,
   })
 
   if (!updated && input.email) {
@@ -108,7 +109,7 @@ export async function applyResendWebhookEvent(input: {
       customerId: row?.id || null,
       email: input.email,
       emailRole: "to",
-      kind: status === "received" ? "inbound" : "esg_report",
+      kind: status === "received" ? "inbound" : "unknown",
       status,
       error: input.error || null,
       resendId: input.resendId,

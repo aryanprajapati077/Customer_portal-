@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto"
 import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
+import { logEmailDelivery } from "@/lib/email-delivery-log"
 import {
   emailSupporterFooterHtml,
   emailSupporterFooterText,
@@ -235,7 +236,7 @@ export async function sendWelcomeEmail(options: {
     .map((email) => String(email || "").toLowerCase().trim())
     .filter((email) => email.includes("@") && email !== options.to.toLowerCase().trim())
 
-  await resend.emails.send({
+  const sendResult = await resend.emails.send({
     from: getResendFrom(),
     to: options.to,
     ...(cc.length ? { cc } : {}),
@@ -243,6 +244,43 @@ export async function sendWelcomeEmail(options: {
     html,
     text,
   })
+  const sendError = (sendResult as { error?: { message?: string } | null })?.error
+  const resendId = (sendResult as { data?: { id?: string } })?.data?.id || null
 
-  return { sent: true as const }
+  if (sendError) {
+    await logEmailDelivery({
+      customerId: options.customerId,
+      email: options.to,
+      emailRole: "to",
+      kind: "welcome",
+      status: "failed",
+      error: sendError.message || "Welcome email send failed",
+      resendId,
+      companyName: options.brandName,
+    })
+    throw new Error(sendError.message || "Welcome email send failed")
+  }
+
+  await logEmailDelivery({
+    customerId: options.customerId,
+    email: options.to,
+    emailRole: "to",
+    kind: "welcome",
+    status: "sent",
+    resendId,
+    companyName: options.brandName,
+  })
+  for (const ccEmail of cc) {
+    await logEmailDelivery({
+      customerId: options.customerId,
+      email: ccEmail,
+      emailRole: "cc",
+      kind: "welcome",
+      status: "sent",
+      resendId,
+      companyName: options.brandName,
+    })
+  }
+
+  return { sent: true as const, resendId }
 }

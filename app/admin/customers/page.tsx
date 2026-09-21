@@ -526,7 +526,15 @@ function EditableCustomerSheet({
           )}
           {row(
             "Login Email",
-            <Input className={inputClass} value={draft.email} onChange={(e) => set("email", e.target.value)} />,
+            <div className="space-y-1">
+              <Input
+                className={inputClass}
+                value={draft.email}
+                onChange={(e) => set("email", e.target.value)}
+                title="Synced from Primary POC email when you save Updates"
+              />
+              <p className="text-[10px] text-[#8a8a8a]">Matches Primary POC email (portal login)</p>
+            </div>,
           )}
           {row(
             "Client Status",

@@ -11,6 +11,12 @@ import { resend, getResendFrom } from "@/lib/resend"
 import { SITE_URL } from "@/lib/site-config"
 import { queueEmail } from "@/lib/email-queue"
 import { isEmailEnabled, type EmailToggleId } from "@/lib/email-settings"
+import { logEmailDelivery } from "@/lib/email-delivery-log"
+
+function deliveryKindForTemplate(templateId: NotificationTemplateId) {
+  if (templateId === "service_renewal") return "renewal"
+  return templateId
+}
 
 async function ensureEmailTemplateTable() {
   await sql.query(`
@@ -127,6 +133,10 @@ export async function sendNotificationEmail(options: {
     { otpHighlight: options.otpHighlight },
   )
 
+  const kind = deliveryKindForTemplate(options.templateId)
+  const customerId = options.vars.customerId || null
+  const companyName = options.vars.company || options.vars.companyName || null
+
   const send = async () => {
     if (!resend) {
       console.warn(`[notify:${options.templateId}] RESEND_API_KEY missing — would send to`, to)
@@ -136,7 +146,7 @@ export async function sendNotificationEmail(options: {
       .map((email) => String(email || "").toLowerCase().trim())
       .filter((email) => email.includes("@") && email !== to)
 
-    await resend.emails.send({
+    const sendResult = await resend.emails.send({
       from: getResendFrom(),
       to,
       ...(cc.length ? { cc } : {}),
@@ -149,7 +159,45 @@ export async function sendNotificationEmail(options: {
         content: a.content,
       })),
     })
-    return { sent: true as const, ...built }
+    const sendError = (sendResult as { error?: { message?: string } | null })?.error
+    const resendId = (sendResult as { data?: { id?: string } })?.data?.id || null
+
+    if (sendError) {
+      await logEmailDelivery({
+        customerId,
+        email: to,
+        emailRole: "to",
+        kind,
+        status: "failed",
+        error: sendError.message || "Notification send failed",
+        resendId,
+        companyName,
+      })
+      throw new Error(sendError.message || "Notification send failed")
+    }
+
+    await logEmailDelivery({
+      customerId,
+      email: to,
+      emailRole: "to",
+      kind,
+      status: "sent",
+      resendId,
+      companyName,
+    })
+    for (const ccEmail of cc) {
+      await logEmailDelivery({
+        customerId,
+        email: ccEmail,
+        emailRole: "cc",
+        kind,
+        status: "sent",
+        resendId,
+        companyName,
+      })
+    }
+
+    return { sent: true as const, resendId, ...built }
   }
 
   if (options.queue !== false) {

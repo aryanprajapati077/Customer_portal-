@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
 import { absoluteUrl } from "@/lib/site-config"
+import { emailKindLabel } from "@/lib/email-status"
 import {
   Area,
   AreaChart,
@@ -222,7 +223,7 @@ export default function AdminEmailStatusPage() {
       <AdminPageHeader
         icon={<MailCheck className="h-6 w-6 text-primary" />}
         title="Email Status"
-        description="Live Resend delivery analytics — delivered, opened, clicked, bounced, failed, and inbound"
+        description="ESG reports, welcome emails, renewals, and more — filter by type, status, and date"
         actions={
           <Button variant="outline" onClick={load} disabled={loading} className="rounded-lg">
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -273,7 +274,7 @@ export default function AdminEmailStatusPage() {
                 <SelectItem value="all">All types</SelectItem>
                 {(data?.kinds || []).map((k) => (
                   <SelectItem key={k} value={k}>
-                    {k}
+                    {emailKindLabel(k)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -385,7 +386,7 @@ export default function AdminEmailStatusPage() {
                   kind === k.kind ? "border-[#1B7339] bg-[#E8F5E9] text-[#1B7339]" : "border-border bg-white"
                 }`}
               >
-                {k.kind} · {k.count}
+                {emailKindLabel(k.kind)} · {k.count}
               </button>
             ))}
           </CardContent>
@@ -435,7 +436,7 @@ export default function AdminEmailStatusPage() {
                     <div>{r.customerCompanyName || r.companyName || "—"}</div>
                     <div className="text-xs text-muted-foreground">{r.customerId || ""}</div>
                   </td>
-                  <td className="px-4 py-2">{r.kind}</td>
+                  <td className="px-4 py-2">{emailKindLabel(r.kind)}</td>
                   <td className="px-4 py-2">{r.openedCount || 0} / {r.clickedCount || 0}</td>
                   <td className="px-4 py-2 text-muted-foreground">{r.period || "—"}</td>
                 </tr>

@@ -38,7 +38,7 @@ export default function KraftStorePage() {
   const [products, setProducts] = useState<ShopProduct[]>([])
   const [loading, setLoading] = useState(true)
 
-  const rupeeAmount = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
+  const rupeeAmount = creditsToRupees(Number(customer?.kraftrebornCredits ?? 0) || 0)
 
   useEffect(() => {
     ;(async () => {

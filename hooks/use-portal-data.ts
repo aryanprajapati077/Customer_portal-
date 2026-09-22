@@ -94,12 +94,15 @@ export function usePortalData() {
     if (!customer?.id) return
     setDataLoading(true)
     const locQs = selectedLocationId ? `&locationId=${encodeURIComponent(selectedLocationId)}` : ""
+    const profileQs = selectedLocationId
+      ? `?locationId=${encodeURIComponent(selectedLocationId)}`
+      : ""
     try {
       const [collectionsRes, certificatesRes, reportsRes, profileRes] = await Promise.all([
-        fetch(`/api/customer/collections?customerId=${customer.id}${locQs}`),
-        fetch(`/api/customer/certificates?customerId=${customer.id}${locQs}`),
-        fetch(`/api/customer/reports?customerId=${customer.id}${locQs}`),
-        fetch(`/api/customer/profile?customerId=${customer.id}`, { cache: "no-store" }),
+        fetch(`/api/customer/collections?customerId=${customer.id}${locQs}`, { credentials: "include" }),
+        fetch(`/api/customer/certificates?customerId=${customer.id}${locQs}`, { credentials: "include" }),
+        fetch(`/api/customer/reports?customerId=${customer.id}${locQs}`, { credentials: "include" }),
+        fetch(`/api/customer/profile${profileQs}`, { credentials: "include", cache: "no-store" }),
       ])
       const [collectionsData, certificatesData, reportsData, profileData] = await Promise.all([
         collectionsRes.json(),

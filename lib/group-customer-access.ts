@@ -103,3 +103,19 @@ export async function resolveReadableCustomerIds(
   }
   return { ok: true, customerIds: children.map((c) => c.id) }
 }
+
+/** KR / rupee balance for portal (single site, one location, or group aggregate). */
+export async function sumKrCreditsForReadableScope(
+  sessionCustomerId: string,
+  locationId?: string | null,
+): Promise<number> {
+  const scope = await resolveReadableCustomerIds(sessionCustomerId, locationId)
+  if (!scope.ok) return 0
+  const rows = await sql.query<{ total: number }>(
+    `SELECT COALESCE(SUM("kraftrebornCredits"), 0)::float AS total
+     FROM "Customer"
+     WHERE id = ANY($1::text[])`,
+    [scope.customerIds],
+  )
+  return Math.max(0, Math.floor(Number(rows[0]?.total) || 0))
+}

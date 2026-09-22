@@ -90,7 +90,9 @@ function ShopContent() {
   }, [category, catalog, favouriteIds])
 
   const visible = showAll ? filtered : filtered.slice(0, 10)
-  const rupeeAmount = creditsToRupees(Number(metrics.kraftrebornCredits) || 0)
+  const rupeeAmount = creditsToRupees(
+    Number(customer?.kraftrebornCredits ?? metrics.kraftrebornCredits) || 0,
+  )
   const productsClaimed = ordersCompleted
 
   return (

@@ -71,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!customer?.id) return
 
     try {
-      const response = await fetch(
-        `/api/customer/profile?customerId=${encodeURIComponent(customer.id)}`,
-        { credentials: "include", cache: "no-store" },
-      )
+      const response = await fetch("/api/customer/profile", {
+        credentials: "include",
+        cache: "no-store",
+      })
       if (response.status === 401) {
         setCustomer(null)
         clearLocalCustomer()
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Revalidate cookie session against server (clears stale localStorage after logout/expiry)
-    void fetch(`/api/customer/profile?customerId=${encodeURIComponent(parsed.id)}`, {
+    void fetch("/api/customer/profile", {
       credentials: "include",
       cache: "no-store",
     })

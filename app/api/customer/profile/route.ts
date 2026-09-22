@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { resolveCustomerId } from "@/lib/customer-api-auth"
-import { getGroupLocations } from "@/lib/group-customer-access"
+import { requireCustomerSession } from "@/lib/customer-api-auth"
+import { getGroupLocations, sumKrCreditsForReadableScope } from "@/lib/group-customer-access"
 
 /** Safe portal profile fields — never select password or secrets. */
 const PROFILE_SELECT = `
@@ -20,9 +20,11 @@ const PROFILE_SELECT = `
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await resolveCustomerId(request.nextUrl.searchParams.get("customerId"))
-    if (!auth.ok) return auth.response
-    const customerId = auth.customerId
+    // Always use the signed-in session — ignore stale customerId in query/localStorage.
+    const session = await requireCustomerSession()
+    if (!session.ok) return session.response
+    const customerId = session.customerId
+    const locationId = request.nextUrl.searchParams.get("locationId")
 
     const result = await sql.query(
       `SELECT ${PROFILE_SELECT} FROM "Customer" WHERE id = $1 LIMIT 1`,
@@ -42,6 +44,8 @@ export async function GET(request: NextRequest) {
     const contactPerson =
       String(customerData.contactPerson || customerData.primaryPocName || "").trim() || null
 
+    const kraftrebornCredits = await sumKrCreditsForReadableScope(customerId, locationId)
+
     return NextResponse.json(
       {
         success: true,
@@ -51,7 +55,7 @@ export async function GET(request: NextRequest) {
           primaryPocName: customerData.primaryPocName ?? contactPerson,
           disposalUnitInstalled: customerData.disposalUnitInstalled ?? 0,
           totalWasteCollected: customerData.totalWasteCollected || 0,
-          kraftrebornCredits: customerData.kraftrebornCredits || 0,
+          kraftrebornCredits,
           isGroup,
           parentCustomerId: customerData.parentCustomerId ?? null,
           groupLocations,

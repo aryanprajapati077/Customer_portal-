@@ -46,7 +46,8 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
-      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3)
+      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "kraftrebornCredits" DOUBLE PRECISION DEFAULT 0
   `,
       )
       .then(() =>

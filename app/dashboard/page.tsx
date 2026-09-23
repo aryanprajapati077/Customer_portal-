@@ -20,6 +20,7 @@ import { MetricCard } from "@/components/portal/metric-card"
 import { MotionItem, MotionPage, fadeUp, scaleIn, staggerFast } from "@/components/portal/motion"
 import { motion } from "framer-motion"
 import { usePortalData } from "@/hooks/use-portal-data"
+import { useLiveKrCredits } from "@/hooks/use-live-kr-credits"
 import { DownloadImpactReport } from "@/components/portal/download-impact-report"
 import { ReportThumb, reportPeriodFromDate } from "@/components/portal/report-thumb"
 import {
@@ -41,6 +42,7 @@ export default function DashboardPage() {
     handleRefresh,
     selectedLocationId,
   } = usePortalData()
+  const { credits: liveCredits } = useLiveKrCredits(selectedLocationId)
 
   const latestReport = reports[0]
   const name = firstName(
@@ -102,7 +104,7 @@ export default function DashboardPage() {
       iconBg: "bg-[#FFF3E0]",
       iconColor: "text-[#EF6C00]",
       label: "Amount to be claim pending",
-      value: formatIndianNumber(metrics.kraftrebornCredits),
+      value: formatIndianNumber(liveCredits),
       description: "Pending claim amount",
       footer: (
         <Link href="/dashboard/shop" className="inline-block mt-2 text-[12px] font-semibold text-[#1565C0]">

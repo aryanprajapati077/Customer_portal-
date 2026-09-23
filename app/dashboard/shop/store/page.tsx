@@ -22,6 +22,7 @@ import { ProductPrice } from "@/components/dashboard/shop/product-price"
 import { formatIndianNumber } from "@/lib/portal-metrics"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { useShopFavourites } from "@/hooks/use-shop-favourites"
+import { useLiveKrCredits } from "@/hooks/use-live-kr-credits"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -31,6 +32,7 @@ const CATEGORIES = [
 
 export default function KraftStorePage() {
   const { customer } = useAuth()
+  const { credits: liveCredits } = useLiveKrCredits()
   const { itemCount } = useCart()
   const { favouriteIds, toggle, isFavourite } = useShopFavourites()
   const [category, setCategory] = useState("all")
@@ -38,7 +40,7 @@ export default function KraftStorePage() {
   const [products, setProducts] = useState<ShopProduct[]>([])
   const [loading, setLoading] = useState(true)
 
-  const rupeeAmount = creditsToRupees(Number(customer?.kraftrebornCredits ?? 0) || 0)
+  const rupeeAmount = creditsToRupees(liveCredits)
 
   useEffect(() => {
     ;(async () => {

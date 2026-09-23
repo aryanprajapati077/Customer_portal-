@@ -56,7 +56,8 @@ function clearLocalCustomer() {
   localStorage.removeItem("buffindia_customer_auth")
 }
 
-const PROFILE_REFRESH_MS = 30_000
+const PROFILE_REFRESH_MS = 15_000
+const CREDITS_REFRESH_MS = 10_000
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -65,6 +66,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const syncCustomer = useCallback((profile: Customer) => {
     setCustomer(profile)
     localStorage.setItem("buffindia_customer", JSON.stringify(profile))
+  }, [])
+
+  const refreshCreditsOnly = useCallback(async () => {
+    try {
+      const response = await fetch("/api/customer/credits", {
+        credentials: "include",
+        cache: "no-store",
+      })
+      if (response.status === 401) return
+      const data = await response.json()
+      if (!data?.success) return
+      const next = Math.max(0, Math.floor(Number(data.kraftrebornCredits) || 0))
+      setCustomer((prev) => {
+        if (!prev) return prev
+        if (Number(prev.kraftrebornCredits) === next) return prev
+        const updated = { ...prev, kraftrebornCredits: next }
+        localStorage.setItem("buffindia_customer", JSON.stringify(updated))
+        return updated
+      })
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   const refreshCustomerData = useCallback(async () => {
@@ -82,8 +105,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const data = await response.json()
       if (data.success && data.customer) {
-        setCustomer((prev) => ({ ...(prev || {}), ...data.customer }))
-        localStorage.setItem("buffindia_customer", JSON.stringify(data.customer))
+        // Always take live kraftrebornCredits from the server — never keep a stale local value.
+        setCustomer((prev) => {
+          const merged = {
+            ...(prev || {}),
+            ...data.customer,
+            kraftrebornCredits: Number(data.customer.kraftrebornCredits) || 0,
+          }
+          localStorage.setItem("buffindia_customer", JSON.stringify(merged))
+          return merged
+        })
       }
     } catch (error) {
       console.error("Error refreshing customer data:", error)
@@ -145,23 +176,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!customer?.id || isLoading) return
 
     const refresh = () => void refreshCustomerData()
+    const refreshCredits = () => void refreshCreditsOnly()
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refresh()
+      if (document.visibilityState === "visible") {
+        refreshCredits()
+        refresh()
+      }
     }
 
-    window.addEventListener("focus", refresh)
+    // Credits first — admin KR updates should land within ~10s without full profile reload.
+    refreshCredits()
+    window.addEventListener("focus", onVisibility)
     document.addEventListener("visibilitychange", onVisibility)
-    const interval = window.setInterval(() => {
+    const creditsInterval = window.setInterval(() => {
+      if (document.visibilityState === "visible") refreshCredits()
+    }, CREDITS_REFRESH_MS)
+    const profileInterval = window.setInterval(() => {
       if (document.visibilityState === "visible") refresh()
     }, PROFILE_REFRESH_MS)
 
     return () => {
-      window.removeEventListener("focus", refresh)
+      window.removeEventListener("focus", onVisibility)
       document.removeEventListener("visibilitychange", onVisibility)
-      window.clearInterval(interval)
+      window.clearInterval(creditsInterval)
+      window.clearInterval(profileInterval)
     }
-  }, [customer?.id, isLoading, refreshCustomerData])
+  }, [customer?.id, isLoading, refreshCustomerData, refreshCreditsOnly])
 
   const login = async (email: string, password: string) => {
     try {

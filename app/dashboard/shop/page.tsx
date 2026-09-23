@@ -26,6 +26,7 @@ import { SHOP_FILTER_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
 import { formatIndianNumber, formatKg } from "@/lib/portal-metrics"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { useShopFavourites } from "@/hooks/use-shop-favourites"
+import { useLiveKrCredits } from "@/hooks/use-live-kr-credits"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -34,7 +35,8 @@ const CATEGORIES = [
 ] as const
 
 function ShopContent() {
-  const { customer, authLoading, dataLoading, metrics } = usePortalData()
+  const { customer, authLoading, dataLoading, metrics, selectedLocationId } = usePortalData()
+  const { credits: liveCredits } = useLiveKrCredits(selectedLocationId)
   const { favouriteIds } = useShopFavourites()
   const searchParams = useSearchParams()
   const orderedId = searchParams.get("ordered")
@@ -90,9 +92,8 @@ function ShopContent() {
   }, [category, catalog, favouriteIds])
 
   const visible = showAll ? filtered : filtered.slice(0, 10)
-  const rupeeAmount = creditsToRupees(
-    Number(customer?.kraftrebornCredits ?? metrics.kraftrebornCredits) || 0,
-  )
+  // Live server balance — never rely on stale localStorage alone.
+  const rupeeAmount = creditsToRupees(liveCredits)
   const productsClaimed = ordersCompleted
 
   return (

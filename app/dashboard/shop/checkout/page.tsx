@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { formatInr } from "@/lib/kraftreborn-products"
+import { useLiveKrCredits } from "@/hooks/use-live-kr-credits"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +19,7 @@ import { OrderReceiptAnimation } from "@/components/dashboard/shop/order-receipt
 
 export default function CheckoutPage() {
   const { customer, refreshCustomerData } = useAuth()
+  const { credits: liveCredits, refresh: refreshCredits } = useLiveKrCredits()
   const { lines, subtotal, itemCount, clearCart } = useCart()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -42,7 +44,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!customer?.id) return
     void refreshCustomerData()
-  }, [customer?.id, refreshCustomerData])
+    void refreshCredits()
+  }, [customer?.id, refreshCustomerData, refreshCredits])
 
   // Empty cart → back to cart, but never after a successful place-order
   // (clearCart would otherwise race and land on cart instead of KraftReborn).
@@ -51,7 +54,7 @@ export default function CheckoutPage() {
     if (lines.length === 0) router.replace("/dashboard/shop/cart")
   }, [lines.length, router, submitting])
 
-  const credits = creditsToRupees(Number(customer?.kraftrebornCredits) || 0)
+  const credits = creditsToRupees(liveCredits)
   const canPayWithCredits = credits >= subtotal && subtotal > 0
 
   const useProfileLogo = () => {

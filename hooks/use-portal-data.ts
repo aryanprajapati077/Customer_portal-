@@ -131,6 +131,16 @@ export function usePortalData() {
     if (customer?.id) fetchCustomerData()
   }, [customer?.id, fetchCustomerData])
 
+  // Keep customerView.kraftrebornCredits in sync when auth poll updates it.
+  useEffect(() => {
+    if (customer?.kraftrebornCredits == null) return
+    setCustomerView((prev) => {
+      if (!prev) return prev
+      if (Number(prev.kraftrebornCredits) === Number(customer.kraftrebornCredits)) return prev
+      return { ...prev, kraftrebornCredits: customer.kraftrebornCredits }
+    })
+  }, [customer?.kraftrebornCredits])
+
   useEffect(() => {
     const onLoc = (e: Event) => {
       const id = (e as CustomEvent<string | null>).detail ?? null

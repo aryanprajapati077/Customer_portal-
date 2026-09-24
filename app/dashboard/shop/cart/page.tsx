@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ShopShell } from "@/components/dashboard/shop/shop-shell"
 import { useCart } from "@/lib/cart-context"
 import { formatInr } from "@/lib/kraftreborn-products"
+import { toPortalMediaUrl } from "@/lib/media-url"
 import { ArrowRight, Minus, Plus, Sparkles, Trash2 } from "lucide-react"
 
 export default function CartPage() {
@@ -33,9 +34,9 @@ export default function CartPage() {
                 className="flex gap-4 rounded-[1.25rem] border border-black/[0.06] bg-white p-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
               >
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-[#F4F3EE]">
-                  {(line.product.imageUrls?.[0] || line.product.imageUrl) ? (
+                  {toPortalMediaUrl(line.product.imageUrls?.[0] || line.product.imageUrl) ? (
                     <Image
-                      src={line.product.imageUrls?.[0] || line.product.imageUrl || ""}
+                      src={toPortalMediaUrl(line.product.imageUrls?.[0] || line.product.imageUrl)}
                       alt={line.product.name}
                       fill
                       className="object-cover"

@@ -4,6 +4,7 @@ import { sql } from "@/lib/db"
 import { ensureShopProductsSeeded } from "@/lib/shop"
 import { DEFAULT_PRODUCT_COLORS, parseProductColors } from "@/lib/product-colors"
 import { buildColorImageMap } from "@/lib/product-color-images"
+import { toPortalMediaUrl, toPortalMediaUrls } from "@/lib/media-url"
 
 async function loadProductMetaMap() {
   try {
@@ -52,7 +53,8 @@ export async function GET() {
       success: true,
       products: products.map((p) => {
         const meta = metaMap.get(p.id)
-        const imageUrls = meta?.imageUrls?.length ? meta.imageUrls : p.imageUrl ? [p.imageUrl] : []
+        const rawImages = meta?.imageUrls?.length ? meta.imageUrls : p.imageUrl ? [p.imageUrl] : []
+        const imageUrls = toPortalMediaUrls(rawImages)
         const availableColors = meta?.availableColors || [...DEFAULT_PRODUCT_COLORS]
         return {
           id: p.id,
@@ -63,7 +65,7 @@ export async function GET() {
           category: p.category,
           tagline: p.tagline || "",
           buttsRescued: p.buttsRescued,
-          imageUrl: imageUrls[0] || p.imageUrl,
+          imageUrl: imageUrls[0] || toPortalMediaUrl(p.imageUrl) || null,
           imageUrls,
           colorImages: buildColorImageMap(availableColors, imageUrls),
           imageGradient: p.imageGradient,

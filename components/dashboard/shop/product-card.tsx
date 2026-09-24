@@ -5,6 +5,7 @@ import Link from "next/link"
 import { type ShopProduct } from "@/lib/cart-context"
 import { ProductPrice } from "@/components/dashboard/shop/product-price"
 import { useShopFavourites } from "@/hooks/use-shop-favourites"
+import { toPortalMediaUrl } from "@/lib/media-url"
 import { Heart, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -16,7 +17,7 @@ interface ProductCardProps {
 export function ProductCard({ product, forceImage }: ProductCardProps) {
   const { isFavourite, toggle } = useShopFavourites()
   const liked = isFavourite(product.id)
-  const img = forceImage || product.imageUrls?.[0] || product.imageUrl
+  const img = toPortalMediaUrl(forceImage || product.imageUrls?.[0] || product.imageUrl)
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-black/[0.06] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">

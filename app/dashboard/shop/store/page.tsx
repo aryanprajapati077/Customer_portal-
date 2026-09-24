@@ -23,6 +23,7 @@ import { formatIndianNumber } from "@/lib/portal-metrics"
 import { creditsToRupees } from "@/lib/kraftreborn"
 import { useShopFavourites } from "@/hooks/use-shop-favourites"
 import { useLiveKrCredits } from "@/hooks/use-live-kr-credits"
+import { toPortalMediaUrl } from "@/lib/media-url"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -213,9 +214,9 @@ export default function KraftStorePage() {
                 >
                   <div className="relative aspect-square overflow-hidden bg-[#F4F3EE]">
                     <Link href={`/dashboard/shop/${product.id}`} className="absolute inset-0 block">
-                      {product.imageUrls?.[0] || product.imageUrl ? (
+                      {toPortalMediaUrl(product.imageUrls?.[0] || product.imageUrl) ? (
                         <Image
-                          src={product.imageUrls?.[0] || product.imageUrl || ""}
+                          src={toPortalMediaUrl(product.imageUrls?.[0] || product.imageUrl)}
                           alt={product.name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"

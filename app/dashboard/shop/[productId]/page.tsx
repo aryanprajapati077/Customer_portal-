@@ -10,6 +10,7 @@ import { formatInr } from "@/lib/kraftreborn-products"
 import type { ShopProduct } from "@/lib/cart-context"
 import { useCart } from "@/lib/cart-context"
 import { imageForColor } from "@/lib/product-color-images"
+import { toPortalMediaUrls } from "@/lib/media-url"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Minus, Plus, ShoppingBag, Loader2 } from "lucide-react"
@@ -44,11 +45,12 @@ export default function ProductDetailPage() {
 
   const productImages = useMemo(() => {
     if (!product) return []
-    return product.imageUrls?.length
+    const raw = product.imageUrls?.length
       ? product.imageUrls
       : product.imageUrl
         ? [product.imageUrl]
         : []
+    return toPortalMediaUrls(raw)
   }, [product])
 
   useEffect(() => {

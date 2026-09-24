@@ -12,10 +12,64 @@ export type RenewalReminderResult = {
   error?: string
 }
 
+export type ServiceStatusSyncResult = {
+  pausedRenewal: number
+  renewalDue: number
+}
+
+/**
+ * Keep serviceStatus aligned with contractEndDate — independent of email success.
+ * - Past renewal date → PAUSED_RENEWAL (from ACTIVE or RENEWAL_DUE)
+ * - Within next 30 days → RENEWAL_DUE (from ACTIVE only)
+ * Does not change PAUSED_PAYMENT / INACTIVE.
+ */
+export async function syncServiceStatusesFromContractDates(): Promise<ServiceStatusSyncResult> {
+  await sql.query(`
+    ALTER TABLE "Customer"
+      ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
+      ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
+  `)
+
+  const paused = await sql`
+    UPDATE "Customer"
+    SET "serviceStatus" = 'PAUSED_RENEWAL',
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "contractEndDate" IS NOT NULL
+      AND COALESCE("isGroup", false) = false
+      AND status = 'Active'
+      AND DATE("contractEndDate") < CURRENT_DATE
+      AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
+    RETURNING id
+  `
+
+  const due = await sql`
+    UPDATE "Customer"
+    SET "serviceStatus" = 'RENEWAL_DUE',
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "contractEndDate" IS NOT NULL
+      AND COALESCE("isGroup", false) = false
+      AND status = 'Active'
+      AND DATE("contractEndDate") >= CURRENT_DATE
+      AND DATE("contractEndDate") <= (CURRENT_DATE + INTERVAL '30 days')
+      AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
+    RETURNING id
+  `
+
+  return {
+    pausedRenewal: Array.isArray(paused) ? paused.length : 0,
+    renewalDue: Array.isArray(due) ? due.length : 0,
+  }
+}
+
 /** Email customers whose contract ends in exactly 30, 15, or 7 days. */
 export async function runServiceRenewalReminders(options?: {
   dryRun?: boolean
-}): Promise<{ dryRun: boolean; sent: number; results: RenewalReminderResult[] }> {
+}): Promise<{
+  dryRun: boolean
+  sent: number
+  results: RenewalReminderResult[]
+  statusSync: ServiceStatusSyncResult
+}> {
   const dryRun = Boolean(options?.dryRun)
 
   await sql.query(`
@@ -24,6 +78,11 @@ export async function runServiceRenewalReminders(options?: {
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
   `)
   await ensureRenewalCtaPointsToPublicPage()
+
+  // Always sync statuses first so overdue clients pause even if email fails.
+  const statusSync = dryRun
+    ? { pausedRenewal: 0, renewalDue: 0 }
+    : await syncServiceStatusesFromContractDates()
 
   const windows = [30, 15, 7]
   const results: RenewalReminderResult[] = []
@@ -35,6 +94,7 @@ export async function runServiceRenewalReminders(options?: {
       FROM "Customer"
       WHERE "contractEndDate" IS NOT NULL
         AND status = 'Active'
+        AND COALESCE("isGroup", false) = false
         AND DATE("contractEndDate") = (CURRENT_DATE + (${days}::int) * INTERVAL '1 day')::date
     `
 
@@ -66,6 +126,17 @@ export async function runServiceRenewalReminders(options?: {
         continue
       }
 
+      // Mark renewal due even if email later fails.
+      if (days <= 30) {
+        await sql`
+          UPDATE "Customer"
+          SET "serviceStatus" = 'RENEWAL_DUE', "updatedAt" = CURRENT_TIMESTAMP
+          WHERE id = ${row.id}
+            AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
+            AND DATE("contractEndDate") >= CURRENT_DATE
+        `
+      }
+
       try {
         await sendNotificationEmail({
           templateId: "service_renewal",
@@ -79,14 +150,6 @@ export async function runServiceRenewalReminders(options?: {
             customerId: row.id,
           },
         })
-        if (days <= 30) {
-          await sql`
-            UPDATE "Customer"
-            SET "serviceStatus" = 'RENEWAL_DUE', "updatedAt" = CURRENT_TIMESTAMP
-            WHERE id = ${row.id}
-              AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
-          `
-        }
         results.push({ customerId: row.id, email: to, daysLeft: days, status: "queued" })
       } catch (err) {
         results.push({
@@ -104,6 +167,7 @@ export async function runServiceRenewalReminders(options?: {
     dryRun,
     sent: results.filter((r) => r.status === "queued" || r.status === "sent").length,
     results,
+    statusSync,
   }
 }
 

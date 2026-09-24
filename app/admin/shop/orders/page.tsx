@@ -29,8 +29,10 @@ import {
   Mail,
   User,
   Wallet,
+  Download,
 } from "lucide-react"
 import { AdminPrintSlip } from "@/components/admin/admin-print-slip"
+import { toPortalMediaUrl } from "@/lib/media-url"
 
 type OrderRow = {
   id: string
@@ -412,27 +414,37 @@ export default function AdminOrdersPage() {
 
                 {selected.logoRequested && (
                   <section className="rounded-2xl border border-[#E5EBE6] bg-[#F7FBF7] p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7339]">
                         Customer logo
                       </p>
                       {selected.logoUrl ? (
-                        <a
-                          href={selected.logoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1B7339] hover:underline"
-                        >
-                          Open full size
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <a
+                            href={toPortalMediaUrl(selected.logoUrl) || selected.logoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1B7339] hover:underline"
+                          >
+                            Open full size
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                          <a
+                            href={`/api/admin/orders/logo?orderId=${encodeURIComponent(selected.id)}`}
+                            className="inline-flex items-center gap-1 rounded-full border border-[#1B7339]/30 bg-white px-3 py-1 text-[12px] font-semibold text-[#1B7339] hover:bg-[#E8F5E9]"
+                            download
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Download logo
+                          </a>
+                        </div>
                       ) : null}
                     </div>
                     {selected.logoUrl ? (
                       <div className="flex items-center justify-center rounded-xl border border-[#DCE6DF] bg-white p-6">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={selected.logoUrl}
+                          src={toPortalMediaUrl(selected.logoUrl) || selected.logoUrl}
                           alt="Customer logo for this order"
                           className="max-h-40 max-w-full object-contain"
                         />

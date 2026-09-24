@@ -1,5 +1,5 @@
 import React from "react"
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer"
 import { formatInr } from "@/lib/kraftreborn-products"
 import { orderStatusLabel } from "@/lib/shop-constants"
 
@@ -26,8 +26,25 @@ const styles = StyleSheet.create({
   col3: { width: "20%", textAlign: "right" },
   col4: { width: "20%", textAlign: "right" },
   total: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, fontSize: 12, fontWeight: "bold" },
-  footer: { position: "absolute", bottom: 40, left: 40, right: 40, fontSize: 8, color: "#888", textAlign: "center" },
+  footer: {
+    position: "absolute",
+    bottom: 40,
+    left: 40,
+    right: 40,
+    fontSize: 8,
+    color: "#888",
+    textAlign: "center",
+  },
   logoNote: { marginTop: 12, padding: 10, backgroundColor: "#fff8f0", fontSize: 9 },
+  logoBox: {
+    marginTop: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  logoImage: { width: 160, height: 80, objectFit: "contain" },
 })
 
 export interface OrderSheetData {
@@ -43,8 +60,16 @@ export interface OrderSheetData {
   useKrCredits: boolean
   logoRequested: boolean
   logoUrl?: string | null
+  /** Resolved path/data URL for embedding in PDF (optional). */
+  logoImageSrc?: string | null
   notes?: string | null
-  items: { productName: string; quantity: number; price: number; allowsLogo: boolean; selectedColor?: string | null }[]
+  items: {
+    productName: string
+    quantity: number
+    price: number
+    allowsLogo: boolean
+    selectedColor?: string | null
+  }[]
 }
 
 export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
@@ -53,7 +78,9 @@ export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.brand}>Kraft Reborn · Order Sheet</Text>
-          <Text style={styles.subtitle}>Buffindia Receptacles Pvt. Ltd. · Packing & fulfilment list</Text>
+          <Text style={styles.subtitle}>
+            Buffindia Receptacles Pvt. Ltd. · Packing & fulfilment list
+          </Text>
         </View>
 
         <View style={styles.row}>
@@ -70,7 +97,9 @@ export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Payment</Text>
-          <Text style={styles.value}>{data.useKrCredits ? "KR Credits (deducted on order)" : "Other"}</Text>
+          <Text style={styles.value}>
+            {data.useKrCredits ? "KR Credits (deducted on order)" : "Other"}
+          </Text>
         </View>
 
         <Text style={styles.sectionTitle}>Ship To</Text>
@@ -121,7 +150,17 @@ export function OrderSheetPdf({ data }: { data: OrderSheetData }) {
 
         {data.logoRequested && (
           <View style={styles.logoNote}>
-            <Text>Custom logo requested{data.logoUrl ? " — logo file attached in order record" : ""}</Text>
+            <Text>
+              Custom logo requested
+              {data.logoImageSrc || data.logoUrl
+                ? " — see logo below / order record"
+                : " — no file uploaded"}
+            </Text>
+            {data.logoImageSrc ? (
+              <View style={styles.logoBox}>
+                <Image src={data.logoImageSrc} style={styles.logoImage} />
+              </View>
+            ) : null}
           </View>
         )}
 

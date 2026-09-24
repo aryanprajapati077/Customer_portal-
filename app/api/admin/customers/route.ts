@@ -475,8 +475,23 @@ export async function PATCH(request: NextRequest) {
       values.push(String(body.serviceStatus).toUpperCase())
     }
     if (body?.contractEndDate !== undefined || body?.contractRenewalDate !== undefined) {
+      const iso = parseOptionalIsoDate(body.contractEndDate ?? body.contractRenewalDate)
       updates.push(`"contractEndDate" = $${i++}`)
-      values.push(parseOptionalIsoDate(body.contractEndDate ?? body.contractRenewalDate))
+      values.push(iso)
+      // When renewal date is changed and serviceStatus is not set manually, derive it.
+      if (body?.serviceStatus === undefined && iso) {
+        const end = new Date(iso)
+        const today = new Date()
+        today.setUTCHours(0, 0, 0, 0)
+        end.setUTCHours(0, 0, 0, 0)
+        const msPerDay = 24 * 60 * 60 * 1000
+        const daysLeft = Math.round((end.getTime() - today.getTime()) / msPerDay)
+        let derived = "ACTIVE"
+        if (daysLeft < 0) derived = "PAUSED_RENEWAL"
+        else if (daysLeft <= 30) derived = "RENEWAL_DUE"
+        updates.push(`"serviceStatus" = $${i++}`)
+        values.push(derived)
+      }
     }
     if (body?.clearLogo === true) {
       updates.push(`"logoUrl" = $${i++}`)

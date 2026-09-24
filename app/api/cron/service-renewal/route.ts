@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { runServiceRenewalReminders } from "@/lib/service-renewal-reminders"
 
 /**
- * Daily cron: send service_renewal emails at 30 / 15 / 7 days before contractEndDate.
+ * Daily cron:
+ * 1) Sync serviceStatus from contractEndDate (RENEWAL_DUE / PAUSED_RENEWAL)
+ * 2) Send service_renewal emails at 30 / 15 / 7 days before contractEndDate
  * Secured with CRON_SECRET (Vercel Cron sends Authorization: Bearer <CRON_SECRET>).
  */
 function authorizeCron(request: NextRequest): boolean {

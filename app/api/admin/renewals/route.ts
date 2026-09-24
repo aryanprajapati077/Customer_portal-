@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
                 END,
                 "updatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${row.id}
-              AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
+              AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
           `
         }
         sent++

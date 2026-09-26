@@ -39,6 +39,11 @@ import { Label } from "@/components/ui/label"
 import { COLLECTION_FREQUENCY_OPTIONS } from "@/lib/india-locations"
 import { defaultContractRenewalDate } from "@/lib/admin-permissions"
 import {
+  deriveServiceStatusFromContractEnd,
+  isManualServiceStatus,
+} from "@/lib/service-status"
+import { cn } from "@/lib/utils"
+import {
   defaultEmailEnabled,
   defaultPocStatus,
   emptyCollectionPocForm,
@@ -569,7 +574,16 @@ function EditableCustomerSheet({
               type="date"
               className={inputClass}
               value={draft.contractEndDate}
-              onChange={(e) => set("contractEndDate", e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                setDraft((d) => {
+                  const next = { ...d, contractEndDate: value }
+                  if (value && !isManualServiceStatus(d.serviceStatus)) {
+                    next.serviceStatus = deriveServiceStatusFromContractEnd(value)
+                  }
+                  return next
+                })
+              }}
               title="Used for the Renewals tab and renewal reminder emails"
             />,
           )}
@@ -716,6 +730,7 @@ export default function AdminCustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+  const [cardFilter, setCardFilter] = useState<"all" | "active" | "inactive" | "welcome">("all")
   const PAGE_TAKE = 50
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -746,16 +761,22 @@ export default function AdminCustomersPage() {
     if (reset) setLoading(true)
     else setLoadingMore(true)
     try {
-      const url = q
-        ? `/api/admin/customers?take=${PAGE_TAKE}&offset=${currentOffset}&q=${encodeURIComponent(q)}`
-        : `/api/admin/customers?take=${PAGE_TAKE}&offset=${currentOffset}`
-      const res = await fetch(url)
+      const take = cardFilter === "welcome" ? 1000 : PAGE_TAKE
+      const params = new URLSearchParams({
+        take: String(take),
+        offset: String(currentOffset),
+      })
+      if (q) params.set("q", q)
+      if (cardFilter === "active") params.set("status", "Active")
+      if (cardFilter === "inactive") params.set("status", "Inactive")
+      if (cardFilter === "welcome") params.set("welcomePending", "1")
+      const res = await fetch(`/api/admin/customers?${params}`)
       const data = await res.json()
       const nextRows = data?.customers || []
       if (reset) setRows(nextRows)
       else setRows((prev) => [...prev, ...nextRows])
       setOffset(currentOffset + nextRows.length)
-      setHasMore(nextRows.length === PAGE_TAKE)
+      setHasMore(cardFilter === "welcome" ? false : nextRows.length === take)
     } finally {
       if (reset) setLoading(false)
       else setLoadingMore(false)
@@ -767,7 +788,7 @@ export default function AdminCustomersPage() {
       fetchCustomers({ reset: true }).catch((err) => console.error("[admin/customers] load failed:", err))
     }, 300)
     return () => window.clearTimeout(t)
-  }, [q])
+  }, [q, cardFilter])
 
   useEffect(() => {
     refreshWelcomeStats()
@@ -783,6 +804,15 @@ export default function AdminCustomersPage() {
       inactive: rows.length - active,
     }
   }, [rows])
+
+  const filterLabel =
+    cardFilter === "active"
+      ? "Active clients"
+      : cardFilter === "inactive"
+        ? "Inactive clients"
+        : cardFilter === "welcome"
+          ? "Welcome email pending"
+          : null
 
   const sendWelcomeToCustomer = async (customer: CustomerRow, forceResend = false) => {
     const alreadySent = Boolean(customer.welcomeEmailSentAt)
@@ -1092,25 +1122,53 @@ export default function AdminCustomersPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="admin-stat-card">
+        <button
+          type="button"
+          onClick={() => startTransition(() => setCardFilter("all"))}
+          className={cn(
+            "admin-stat-card text-left transition hover:border-[#c8e6d4]",
+            cardFilter === "all" && "ring-2 ring-[#1b7339]/30 border-[#1b7339]",
+          )}
+        >
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">Loaded</p>
           <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">{stats.loaded}</p>
-          <p className="mt-1 text-[11px] text-[#6b6b6b]">Rows in spreadsheet view</p>
-        </div>
-        <div className="admin-stat-card">
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Rows in spreadsheet view · click to clear filter</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => startTransition(() => setCardFilter("active"))}
+          className={cn(
+            "admin-stat-card text-left transition hover:border-[#c8e6d4]",
+            cardFilter === "active" && "ring-2 ring-[#1b7339]/30 border-[#1b7339]",
+          )}
+        >
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
             <UserCheck className="h-3.5 w-3.5 text-[#1b7339]" />
             Active
           </p>
           <p className="mt-1 text-2xl font-bold tracking-tight text-[#1b7339]">{stats.active}</p>
-          <p className="mt-1 text-[11px] text-[#6b6b6b]">Among loaded clients</p>
-        </div>
-        <div className="admin-stat-card">
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Click to show active clients</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => startTransition(() => setCardFilter("inactive"))}
+          className={cn(
+            "admin-stat-card text-left transition hover:border-[#e5e5e5]",
+            cardFilter === "inactive" && "ring-2 ring-[#141414]/20 border-[#141414]",
+          )}
+        >
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">Inactive</p>
           <p className="mt-1 text-2xl font-bold tracking-tight text-[#141414]">{stats.inactive}</p>
-          <p className="mt-1 text-[11px] text-[#6b6b6b]">Among loaded clients</p>
-        </div>
-        <div className="admin-stat-card">
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Click to show inactive clients</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => startTransition(() => setCardFilter("welcome"))}
+          className={cn(
+            "admin-stat-card text-left transition hover:border-amber-200",
+            cardFilter === "welcome" && "ring-2 ring-amber-500/30 border-amber-500",
+          )}
+        >
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a8a8a]">
             <MailWarning className="h-3.5 w-3.5 text-amber-600" />
             Welcome pending
@@ -1118,8 +1176,8 @@ export default function AdminCustomersPage() {
           <p className="mt-1 text-2xl font-bold tracking-tight text-amber-700">
             {welcomePending ?? "—"}
           </p>
-          <p className="mt-1 text-[11px] text-[#6b6b6b]">Not yet emailed portal login</p>
-        </div>
+          <p className="mt-1 text-[11px] text-[#6b6b6b]">Click to show not-yet-emailed logins</p>
+        </button>
       </div>
 
       <div className="flex flex-col gap-3 rounded-[14px] border border-[#ebe9e4] bg-white p-4 sm:flex-row sm:items-center">
@@ -1144,7 +1202,17 @@ export default function AdminCustomersPage() {
         <p className="text-[12px] text-[#6b6b6b]">
           <Table2 className="mr-1 inline h-3.5 w-3.5" />
           {filtered.length} row{filtered.length === 1 ? "" : "s"}
+          {filterLabel ? ` · ${filterLabel}` : ""}
           {isPending ? " · filtering…" : ""}
+          {cardFilter !== "all" ? (
+            <button
+              type="button"
+              className="ml-2 font-semibold text-[#1b7339] hover:underline"
+              onClick={() => setCardFilter("all")}
+            >
+              Clear filter
+            </button>
+          ) : null}
         </p>
       </div>
 

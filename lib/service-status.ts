@@ -136,3 +136,85 @@ function escapeHtml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
 }
+
+/** Statuses that are driven by contractEndDate (auto-sync). */
+export const DATE_DRIVEN_SERVICE_STATUSES = [
+  "ACTIVE",
+  "RENEWAL_DUE",
+  "PAUSED_RENEWAL",
+] as const
+
+export const MANUAL_SERVICE_STATUSES = ["PAUSED_PAYMENT", "INACTIVE"] as const
+
+const IST = "Asia/Kolkata"
+
+/** Calendar YYYY-MM-DD in Asia/Kolkata for a Date or ISO/date string. */
+export function kolkataDateKey(input?: Date | string | null): string | null {
+  if (input == null || input === "") return null
+  if (typeof input === "string") {
+    const m = input.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+    if (m) return m[1]
+  }
+  const d = input instanceof Date ? input : new Date(input)
+  if (Number.isNaN(d.getTime())) return null
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: IST,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d)
+}
+
+export function kolkataTodayKey(asOf = new Date()): string {
+  return kolkataDateKey(asOf) || new Date().toISOString().slice(0, 10)
+}
+
+function daysBetweenKeys(fromKey: string, toKey: string): number {
+  const a = Date.UTC(
+    Number(fromKey.slice(0, 4)),
+    Number(fromKey.slice(5, 7)) - 1,
+    Number(fromKey.slice(8, 10)),
+  )
+  const b = Date.UTC(
+    Number(toKey.slice(0, 4)),
+    Number(toKey.slice(5, 7)) - 1,
+    Number(toKey.slice(8, 10)),
+  )
+  return Math.round((b - a) / 86_400_000)
+}
+
+/** Derive date-driven service status from contract end date. */
+export function deriveServiceStatusFromContractEnd(
+  contractEnd: Date | string | null | undefined,
+  asOf = new Date(),
+): "ACTIVE" | "RENEWAL_DUE" | "PAUSED_RENEWAL" {
+  const endKey = kolkataDateKey(contractEnd)
+  if (!endKey) return "ACTIVE"
+  const todayKey = kolkataTodayKey(asOf)
+  const daysLeft = daysBetweenKeys(todayKey, endKey)
+  if (daysLeft < 0) return "PAUSED_RENEWAL"
+  if (daysLeft <= 30) return "RENEWAL_DUE"
+  return "ACTIVE"
+}
+
+export function isManualServiceStatus(status: string | null | undefined): boolean {
+  const s = String(status || "").toUpperCase()
+  return (MANUAL_SERVICE_STATUSES as readonly string[]).includes(s)
+}
+
+/**
+ * Resolve service status when saving a customer.
+ * Manual statuses (payment pause / inactive) win; otherwise date wins.
+ */
+export function resolveServiceStatusOnSave(opts: {
+  contractEndDate?: Date | string | null
+  requestedServiceStatus?: string | null
+}): ServiceStatusCode {
+  const requested = String(opts.requestedServiceStatus || "").toUpperCase()
+  if (isManualServiceStatus(requested)) return requested as ServiceStatusCode
+  if (opts.contractEndDate) {
+    return deriveServiceStatusFromContractEnd(opts.contractEndDate)
+  }
+  if (requested) return normalizeServiceStatus(requested)
+  return "ACTIVE"
+}

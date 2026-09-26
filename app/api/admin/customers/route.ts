@@ -13,6 +13,8 @@ import {
   defaultPocStatus,
   normalizeCollectionPocs,
 } from "@/lib/poc-config"
+import { resolveServiceStatusOnSave } from "@/lib/service-status"
+import { syncServiceStatusesFromContractDates } from "@/lib/service-renewal-reminders"
 
 async function ensureCustomerColumns() {
   // Run once per server process — avoid ALTER TABLE on every list request
@@ -83,7 +85,10 @@ async function nextCustomerId(): Promise<string> {
 
 function parseOptionalIsoDate(raw: unknown): string | null {
   if (raw == null || raw === "") return null
-  const d = new Date(String(raw))
+  const s = String(raw).trim()
+  // Date-only inputs are calendar days in India — store as UTC midnight of that day.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00:00.000Z`
+  const d = new Date(s)
   if (Number.isNaN(d.getTime())) {
     throw new Error("Invalid date")
   }
@@ -137,49 +142,66 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, nextId: id })
     }
 
+    // Re-align service statuses from renewal dates (throttled to once per few minutes).
+    try {
+      const g = globalThis as typeof globalThis & { __buffStatusSyncAt?: number }
+      const now = Date.now()
+      if (!g.__buffStatusSyncAt || now - g.__buffStatusSyncAt > 3 * 60_000) {
+        g.__buffStatusSyncAt = now
+        await syncServiceStatusesFromContractDates()
+      }
+    } catch (syncErr) {
+      console.warn("service status sync on customers GET failed:", syncErr)
+    }
+
+    const statusFilter = String(request.nextUrl.searchParams.get("status") || "").trim()
+    const welcomePending =
+      request.nextUrl.searchParams.get("welcomePending") === "1" ||
+      request.nextUrl.searchParams.get("welcomePending") === "true"
+
     const pattern = q ? `%${q}%` : null
-    const rows = pattern
-      ? await sql`
-          SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
-                 "lsuName", "lsuTechnicianName", "operationsIncharge",
-                 "contactPerson", phone, address, status,
-                 "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-                 "primaryPocEmailEnabled", "primaryPocStatus",
-                 "collectionPocs", "collectionFrequency",
-                 "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
-                 "serviceStartDate",
-                 "serviceStatus", "contractEndDate",
-                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-                 "kraftrebornCredits", "updatedAt", "createdAt",
-                 "isGroup", "parentCustomerId", "welcomeEmailSentAt"
-          FROM "Customer"
-          WHERE id ILIKE ${pattern}
-             OR email ILIKE ${pattern}
-             OR "companyName" ILIKE ${pattern}
-             OR "tradeName" ILIKE ${pattern}
-             OR gstin ILIKE ${pattern}
-             OR city ILIKE ${pattern}
-             OR state ILIKE ${pattern}
-          ORDER BY id ASC
-          LIMIT ${take} OFFSET ${offset}
-        `
-      : await sql`
-          SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
-                 "lsuName", "lsuTechnicianName", "operationsIncharge",
-                 "contactPerson", phone, address, status,
-                 "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-                 "primaryPocEmailEnabled", "primaryPocStatus",
-                 "collectionPocs", "collectionFrequency",
-                 "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
-                 "serviceStartDate",
-                 "serviceStatus", "contractEndDate",
-                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-                 "kraftrebornCredits", "updatedAt", "createdAt",
-                 "isGroup", "parentCustomerId", "welcomeEmailSentAt"
-          FROM "Customer"
-          ORDER BY id ASC
-          LIMIT ${take} OFFSET ${offset}
-        `
+    const clauses: string[] = []
+    const values: unknown[] = []
+    let i = 1
+
+    if (pattern) {
+      clauses.push(
+        `(id ILIKE $${i} OR email ILIKE $${i} OR "companyName" ILIKE $${i} OR "tradeName" ILIKE $${i} OR gstin ILIKE $${i} OR city ILIKE $${i} OR state ILIKE $${i})`,
+      )
+      values.push(pattern)
+      i++
+    }
+    if (statusFilter.toLowerCase() === "active") {
+      clauses.push(`LOWER(COALESCE(status, '')) = 'active'`)
+    } else if (statusFilter.toLowerCase() === "inactive") {
+      clauses.push(`LOWER(COALESCE(status, '')) <> 'active'`)
+    }
+    if (welcomePending) {
+      clauses.push(`"welcomeEmailSentAt" IS NULL`)
+      clauses.push(`COALESCE("isGroup", false) = false`)
+    }
+
+    const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : ""
+    const query = `
+      SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+             "lsuName", "lsuTechnicianName", "operationsIncharge",
+             "contactPerson", phone, address, status,
+             "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+             "primaryPocEmailEnabled", "primaryPocStatus",
+             "collectionPocs", "collectionFrequency",
+             "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
+             "serviceStartDate",
+             "serviceStatus", "contractEndDate",
+             "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
+             "kraftrebornCredits", "updatedAt", "createdAt",
+             "isGroup", "parentCustomerId", "welcomeEmailSentAt"
+      FROM "Customer"
+      ${where}
+      ORDER BY id ASC
+      LIMIT $${i} OFFSET $${i + 1}
+    `
+    values.push(take, offset)
+    const rows = await sql.query(query, values)
     return NextResponse.json({ success: true, customers: rows })
   } catch (error) {
     console.error("Error fetching customers:", error)
@@ -294,6 +316,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const serviceStatus = resolveServiceStatusOnSave({
+      contractEndDate,
+      requestedServiceStatus: body.serviceStatus,
+    })
+
     const emailLower = primaryPocEmail
     // Shared login emails are allowed (same person across locations).
     await ensureSharedLoginEmailsAllowed()
@@ -346,7 +373,7 @@ export async function POST(request: NextRequest) {
         "collectionPocs", "serviceStartDate", "contractEndDate",
         "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
         "collectionFrequency", "kraftrebornCredits",
-        "contactPerson", phone, address, status, "disposalUnitInstalled",
+        "contactPerson", phone, address, status, "serviceStatus", "disposalUnitInstalled",
         "joinDate", "isGroup", "parentCustomerId",
         "createdAt", "updatedAt"
       ) VALUES (
@@ -380,6 +407,7 @@ export async function POST(request: NextRequest) {
         ${primaryPocNumber},
         ${address},
         ${"Active"},
+        ${serviceStatus},
         ${noOfKiosk},
         ${serviceStartDate.toISOString()},
         ${false},
@@ -470,28 +498,24 @@ export async function PATCH(request: NextRequest) {
       updates.push(`status = $${i++}`)
       values.push(String(body.status))
     }
-    if (body?.serviceStatus !== undefined) {
-      updates.push(`"serviceStatus" = $${i++}`)
-      values.push(String(body.serviceStatus).toUpperCase())
-    }
-    if (body?.contractEndDate !== undefined || body?.contractRenewalDate !== undefined) {
+
+    const hasContractDateUpdate =
+      body?.contractEndDate !== undefined || body?.contractRenewalDate !== undefined
+
+    if (hasContractDateUpdate) {
       const iso = parseOptionalIsoDate(body.contractEndDate ?? body.contractRenewalDate)
       updates.push(`"contractEndDate" = $${i++}`)
       values.push(iso)
-      // When renewal date is changed and serviceStatus is not set manually, derive it.
-      if (body?.serviceStatus === undefined && iso) {
-        const end = new Date(iso)
-        const today = new Date()
-        today.setUTCHours(0, 0, 0, 0)
-        end.setUTCHours(0, 0, 0, 0)
-        const msPerDay = 24 * 60 * 60 * 1000
-        const daysLeft = Math.round((end.getTime() - today.getTime()) / msPerDay)
-        let derived = "ACTIVE"
-        if (daysLeft < 0) derived = "PAUSED_RENEWAL"
-        else if (daysLeft <= 30) derived = "RENEWAL_DUE"
-        updates.push(`"serviceStatus" = $${i++}`)
-        values.push(derived)
-      }
+      // Date wins for ACTIVE / RENEWAL_DUE / PAUSED_RENEWAL; payment/inactive holds stay manual.
+      const resolved = resolveServiceStatusOnSave({
+        contractEndDate: iso,
+        requestedServiceStatus: body?.serviceStatus,
+      })
+      updates.push(`"serviceStatus" = $${i++}`)
+      values.push(resolved)
+    } else if (body?.serviceStatus !== undefined) {
+      updates.push(`"serviceStatus" = $${i++}`)
+      values.push(String(body.serviceStatus).toUpperCase())
     }
     if (body?.clearLogo === true) {
       updates.push(`"logoUrl" = $${i++}`)

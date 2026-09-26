@@ -37,6 +37,7 @@ import {
   ListChecks,
   ChevronRight,
   Search,
+  Zap,
   type LucideIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -106,6 +107,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Reports & Email",
     items: [
       { href: "/admin/reports", label: "Reports & Email", icon: FileBarChart },
+      {
+        href: "/admin/quick-report",
+        label: "Quick Report",
+        icon: Zap,
+        keywords: ["quick", "download", "impact", "pdf", "excel", "month"],
+      },
       { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
       { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
       { href: "/admin/email-settings", label: "Email On/Off", icon: ToggleRight },

@@ -8,6 +8,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "kr-credits", label: "KR Credits", href: "/admin/kr-credits" },
   { key: "dropdowns", label: "Dropdowns", href: "/admin/dropdowns" },
   { key: "reports", label: "Reports & Email", href: "/admin/reports" },
+  { key: "reports", label: "Quick Report", href: "/admin/quick-report" },
   { key: "newsletter", label: "Newsletter", href: "/admin/newsletter" },
   { key: "email-templates", label: "Email Templates", href: "/admin/email-templates" },
   { key: "email-settings", label: "Email On/Off", href: "/admin/email-settings" },
@@ -69,6 +70,9 @@ export function permissionKeyForPath(pathname: string): AdminPermissionKey | "us
   if (pathname.startsWith("/admin/users")) return "users"
   // Same access as Reports & Email — avoids hiding nav for admins with only "reports"
   if (pathname === "/admin/report-status" || pathname.startsWith("/admin/report-status/")) {
+    return "reports"
+  }
+  if (pathname === "/admin/quick-report" || pathname.startsWith("/admin/quick-report/")) {
     return "reports"
   }
   for (const p of ADMIN_PERMISSIONS) {

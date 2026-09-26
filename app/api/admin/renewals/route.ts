@@ -7,6 +7,7 @@ import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { resolveRenewalRecipients } from "@/lib/report-recipients"
 import { ensureRenewalCtaPointsToPublicPage } from "@/lib/renewal-response"
+import { syncServiceStatusesFromContractDates } from "@/lib/service-renewal-reminders"
 
 async function ensureCols() {
   await sql.query(`
@@ -91,6 +92,8 @@ export async function GET(request: NextRequest) {
     if (!auth.ok) return auth.response
 
     await ensureCols()
+    // Always re-align serviceStatus from contractEndDate before listing.
+    await syncServiceStatusesFromContractDates()
     const asOf = new Date()
 
     const customers = (await sql`
@@ -227,7 +230,7 @@ export async function POST(request: NextRequest) {
                 END,
                 "updatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${row.id}
-              AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
+              AND COALESCE("serviceStatus", 'ACTIVE') NOT IN ('PAUSED_PAYMENT', 'INACTIVE')
           `
         }
         sent++

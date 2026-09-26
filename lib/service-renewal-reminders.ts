@@ -15,13 +15,13 @@ export type RenewalReminderResult = {
 export type ServiceStatusSyncResult = {
   pausedRenewal: number
   renewalDue: number
+  restoredActive: number
 }
 
 /**
- * Keep serviceStatus aligned with contractEndDate — independent of email success.
- * - Past renewal date → PAUSED_RENEWAL (from ACTIVE or RENEWAL_DUE)
- * - Within next 30 days → RENEWAL_DUE (from ACTIVE only)
- * Does not change PAUSED_PAYMENT / INACTIVE.
+ * Keep serviceStatus aligned with contractEndDate (Asia/Kolkata calendar).
+ * Bidirectional — also restores ACTIVE when a renewal date is pushed forward.
+ * Does not change PAUSED_PAYMENT / INACTIVE (manual holds).
  */
 export async function syncServiceStatusesFromContractDates(): Promise<ServiceStatusSyncResult> {
   await sql.query(`
@@ -30,6 +30,7 @@ export async function syncServiceStatusesFromContractDates(): Promise<ServiceSta
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3)
   `)
 
+  // Calendar date in India; contractEndDate is stored as a date-at-midnight timestamp.
   const paused = await sql`
     UPDATE "Customer"
     SET "serviceStatus" = 'PAUSED_RENEWAL',
@@ -37,8 +38,9 @@ export async function syncServiceStatusesFromContractDates(): Promise<ServiceSta
     WHERE "contractEndDate" IS NOT NULL
       AND COALESCE("isGroup", false) = false
       AND status = 'Active'
-      AND DATE("contractEndDate") < CURRENT_DATE
-      AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
+      AND ("contractEndDate")::date < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+      AND COALESCE("serviceStatus", 'ACTIVE') NOT IN ('PAUSED_PAYMENT', 'INACTIVE')
+      AND COALESCE("serviceStatus", 'ACTIVE') IS DISTINCT FROM 'PAUSED_RENEWAL'
     RETURNING id
   `
 
@@ -49,15 +51,30 @@ export async function syncServiceStatusesFromContractDates(): Promise<ServiceSta
     WHERE "contractEndDate" IS NOT NULL
       AND COALESCE("isGroup", false) = false
       AND status = 'Active'
-      AND DATE("contractEndDate") >= CURRENT_DATE
-      AND DATE("contractEndDate") <= (CURRENT_DATE + INTERVAL '30 days')
-      AND COALESCE("serviceStatus", 'ACTIVE') = 'ACTIVE'
+      AND ("contractEndDate")::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+      AND ("contractEndDate")::date <= ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '30 days')
+      AND COALESCE("serviceStatus", 'ACTIVE') NOT IN ('PAUSED_PAYMENT', 'INACTIVE')
+      AND COALESCE("serviceStatus", 'ACTIVE') IS DISTINCT FROM 'RENEWAL_DUE'
+    RETURNING id
+  `
+
+  const active = await sql`
+    UPDATE "Customer"
+    SET "serviceStatus" = 'ACTIVE',
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "contractEndDate" IS NOT NULL
+      AND COALESCE("isGroup", false) = false
+      AND status = 'Active'
+      AND ("contractEndDate")::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '30 days')
+      AND COALESCE("serviceStatus", 'ACTIVE') NOT IN ('PAUSED_PAYMENT', 'INACTIVE')
+      AND COALESCE("serviceStatus", 'ACTIVE') IS DISTINCT FROM 'ACTIVE'
     RETURNING id
   `
 
   return {
     pausedRenewal: Array.isArray(paused) ? paused.length : 0,
     renewalDue: Array.isArray(due) ? due.length : 0,
+    restoredActive: Array.isArray(active) ? active.length : 0,
   }
 }
 
@@ -81,7 +98,7 @@ export async function runServiceRenewalReminders(options?: {
 
   // Always sync statuses first so overdue clients pause even if email fails.
   const statusSync = dryRun
-    ? { pausedRenewal: 0, renewalDue: 0 }
+    ? { pausedRenewal: 0, renewalDue: 0, restoredActive: 0 }
     : await syncServiceStatusesFromContractDates()
 
   const windows = [30, 15, 7]
@@ -95,7 +112,8 @@ export async function runServiceRenewalReminders(options?: {
       WHERE "contractEndDate" IS NOT NULL
         AND status = 'Active'
         AND COALESCE("isGroup", false) = false
-        AND DATE("contractEndDate") = (CURRENT_DATE + (${days}::int) * INTERVAL '1 day')::date
+        AND ("contractEndDate")::date =
+          ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + (${days}::int) * INTERVAL '1 day')
     `
 
     for (const row of rows as {
@@ -132,8 +150,8 @@ export async function runServiceRenewalReminders(options?: {
           UPDATE "Customer"
           SET "serviceStatus" = 'RENEWAL_DUE', "updatedAt" = CURRENT_TIMESTAMP
           WHERE id = ${row.id}
-            AND COALESCE("serviceStatus", 'ACTIVE') IN ('ACTIVE', 'RENEWAL_DUE')
-            AND DATE("contractEndDate") >= CURRENT_DATE
+            AND COALESCE("serviceStatus", 'ACTIVE') NOT IN ('PAUSED_PAYMENT', 'INACTIVE')
+            AND ("contractEndDate")::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         `
       }
 
@@ -178,11 +196,13 @@ export async function listUpcomingRenewals() {
   `)
   return sql`
     SELECT id, "companyName", email, "primaryPocEmail", "contractEndDate",
-           (DATE("contractEndDate") - CURRENT_DATE) AS days_left
+           (("contractEndDate")::date - (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date) AS days_left
     FROM "Customer"
     WHERE "contractEndDate" IS NOT NULL
       AND status = 'Active'
-      AND DATE("contractEndDate") BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')
+      AND ("contractEndDate")::date BETWEEN
+            (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+        AND ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '30 days')
     ORDER BY "contractEndDate" ASC
     LIMIT 100
   `

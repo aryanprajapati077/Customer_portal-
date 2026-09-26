@@ -132,6 +132,7 @@ export function CreateCustomerForm({
 }) {
   const cities = useMemo(() => getCitiesForState(form.state), [form.state])
   const [lsuTeams, setLsuTeams] = useState<{ lsuName: string; technicianName: string }[]>([])
+  const [opsManagers, setOpsManagers] = useState<string[]>([])
   const [dropdownsLoading, setDropdownsLoading] = useState(true)
 
   useEffect(() => {
@@ -139,17 +140,27 @@ export function CreateCustomerForm({
     ;(async () => {
       setDropdownsLoading(true)
       try {
-        const res = await fetch("/api/admin/lsu-teams")
-        const data = await res.json()
+        const [teamsRes, managersRes] = await Promise.all([
+          fetch("/api/admin/lsu-teams"),
+          fetch("/api/admin/operations-managers"),
+        ])
+        const teamsData = await teamsRes.json()
+        const managersData = await managersRes.json()
         if (cancelled) return
         setLsuTeams(
-          (data.teams || []).map((t: { lsuName: string; technicianName: string }) => ({
+          (teamsData.teams || []).map((t: { lsuName: string; technicianName: string }) => ({
             lsuName: t.lsuName,
             technicianName: t.technicianName,
           })),
         )
+        setOpsManagers(
+          (managersData.managers || []).map((m: { name: string }) => m.name).filter(Boolean),
+        )
       } catch {
-        if (!cancelled) setLsuTeams([])
+        if (!cancelled) {
+          setLsuTeams([])
+          setOpsManagers([])
+        }
       } finally {
         if (!cancelled) setDropdownsLoading(false)
       }
@@ -362,11 +373,36 @@ export function CreateCustomerForm({
 
       <div className="space-y-2">
         <Req>Operations Incharge</Req>
-        <Input
+        <Select
+          value={form.operationsIncharge || undefined}
+          onValueChange={(v) => setForm((p) => ({ ...p, operationsIncharge: v }))}
+          disabled={dropdownsLoading || opsManagers.length === 0}
           required
-          value={form.operationsIncharge}
-          onChange={(e) => setForm((p) => ({ ...p, operationsIncharge: e.target.value }))}
-        />
+        >
+          <SelectTrigger className="bg-white">
+            <SelectValue
+              placeholder={
+                dropdownsLoading
+                  ? "Loading…"
+                  : opsManagers.length
+                    ? "Select operations manager"
+                    : "Add managers in Dropdowns first"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {opsManagers.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {!dropdownsLoading && opsManagers.length === 0 && (
+          <p className="text-[11px] text-amber-700">
+            No active managers — add them under Admin → Dropdowns → Operations managers.
+          </p>
+        )}
       </div>
       </FormSection>
 

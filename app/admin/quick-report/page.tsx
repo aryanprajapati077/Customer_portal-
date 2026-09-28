@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
-import { Download, FileSpreadsheet, FileText, Loader2, Zap } from "lucide-react"
+import { Download, FileSpreadsheet, FileText, Loader2, Search, Zap } from "lucide-react"
 
 type CustomerOption = {
   id: string
@@ -23,7 +23,6 @@ type CustomerOption = {
 
 function defaultPeriod() {
   const d = new Date()
-  // Previous month is usually what ops want for a "quick" report
   d.setMonth(d.getMonth() - 1)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
 }
@@ -33,10 +32,9 @@ export default function AdminQuickReportPage() {
   const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [customerId, setCustomerId] = useState("")
   const [period, setPeriod] = useState(defaultPeriod)
-  const [format, setFormat] = useState<"pdf" | "excel">("pdf")
-  const [downloading, setDownloading] = useState(false)
+  const [downloading, setDownloading] = useState<"pdf" | "excel" | null>(null)
   const [error, setError] = useState("")
-  const [q, setQ] = useState("")
+  const [clientSearch, setClientSearch] = useState("")
 
   useEffect(() => {
     let cancelled = false
@@ -59,7 +57,7 @@ export default function AdminQuickReportPage() {
   }, [])
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
+    const s = clientSearch.trim().toLowerCase()
     if (!s) return customers
     return customers.filter(
       (c) =>
@@ -67,16 +65,16 @@ export default function AdminQuickReportPage() {
         c.companyName.toLowerCase().includes(s) ||
         (c.email || "").toLowerCase().includes(s),
     )
-  }, [customers, q])
+  }, [customers, clientSearch])
 
   const selected = customers.find((c) => c.id === customerId)
 
-  const download = async () => {
+  const download = async (format: "pdf" | "excel") => {
     if (!customerId || !/^\d{4}-\d{2}$/.test(period)) {
       setError("Select a client and a valid month.")
       return
     }
-    setDownloading(true)
+    setDownloading(format)
     setError("")
     try {
       const url = `/api/admin/reports/download?customerId=${encodeURIComponent(customerId)}&period=${encodeURIComponent(period)}&format=${format}`
@@ -101,7 +99,7 @@ export default function AdminQuickReportPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed")
     } finally {
-      setDownloading(false)
+      setDownloading(null)
     }
   }
 
@@ -109,26 +107,19 @@ export default function AdminQuickReportPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <AdminPageHeader
         title="Quick Report"
-        description="Pick a client and month, then download the impact report as PDF or Excel."
+        description="Pick a client and month, then download PDF or Excel."
         icon={<Zap className="h-5 w-5 text-[#1B7339]" />}
       />
 
       <div className="space-y-5 rounded-2xl border border-[#E5E5E5] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
         <div className="space-y-1.5">
-          <Label>Search client</Label>
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Type ID or company name…"
-            className="h-11 rounded-xl"
-          />
-        </div>
-
-        <div className="space-y-1.5">
           <Label>Client *</Label>
           <Select
             value={customerId || undefined}
-            onValueChange={setCustomerId}
+            onValueChange={(v) => {
+              setCustomerId(v)
+              setClientSearch("")
+            }}
             disabled={loadingCustomers}
           >
             <SelectTrigger className="h-11 rounded-xl">
@@ -136,12 +127,29 @@ export default function AdminQuickReportPage() {
                 placeholder={loadingCustomers ? "Loading clients…" : "Select client"}
               />
             </SelectTrigger>
-            <SelectContent className="max-h-72">
-              {filtered.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.id} — {c.companyName}
-                </SelectItem>
-              ))}
+            <SelectContent className="max-h-80">
+              <div className="sticky top-0 z-10 border-b border-[#EAEAEA] bg-white p-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8A8A8A]" />
+                  <Input
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    placeholder="Search by ID or name…"
+                    className="h-9 rounded-lg pl-8"
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+              {filtered.length === 0 ? (
+                <p className="px-3 py-4 text-center text-[13px] text-[#6B6B6B]">No clients match</p>
+              ) : (
+                filtered.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.id} — {c.companyName}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
           {selected ? (
@@ -152,37 +160,15 @@ export default function AdminQuickReportPage() {
           ) : null}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="period">Month *</Label>
-            <Input
-              id="period"
-              type="month"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="h-11 rounded-xl"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Format</Label>
-            <Select value={format} onValueChange={(v) => setFormat(v as "pdf" | "excel")}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pdf">
-                  <span className="inline-flex items-center gap-2">
-                    <FileText className="h-3.5 w-3.5" /> PDF
-                  </span>
-                </SelectItem>
-                <SelectItem value="excel">
-                  <span className="inline-flex items-center gap-2">
-                    <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="period">Month *</Label>
+          <Input
+            id="period"
+            type="month"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="h-11 rounded-xl"
+          />
         </div>
 
         {error ? (
@@ -191,19 +177,40 @@ export default function AdminQuickReportPage() {
           </p>
         ) : null}
 
-        <Button
-          type="button"
-          onClick={download}
-          disabled={downloading || !customerId || !period}
-          className="h-11 w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
-        >
-          {downloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          {downloading ? "Preparing…" : `Download ${format.toUpperCase()}`}
-        </Button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button
+            type="button"
+            onClick={() => download("pdf")}
+            disabled={!!downloading || !customerId || !period}
+            className="h-11 rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+          >
+            {downloading === "pdf" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="mr-2 h-4 w-4" />
+            )}
+            {downloading === "pdf" ? "Preparing…" : "Download PDF"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => download("excel")}
+            disabled={!!downloading || !customerId || !period}
+            className="h-11 rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9]"
+          >
+            {downloading === "excel" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+            )}
+            {downloading === "excel" ? "Preparing…" : "Download Excel"}
+          </Button>
+        </div>
+
+        <p className="text-center text-[11px] text-[#8A8A8A]">
+          <Download className="mr-1 inline h-3 w-3" />
+          Both formats download the monthly impact report for the selected client.
+        </p>
       </div>
     </div>
   )

@@ -5,6 +5,11 @@ import { formatGroupCustomerId, parseGroupCustomerIdNumber } from "@/lib/india-l
 import { ensureGroupColumns, getGroupLocations } from "@/lib/group-customer-access"
 import { generatePortalPassword } from "@/lib/welcome-email"
 import { queueEmail } from "@/lib/email-queue"
+import {
+  defaultEmailEnabled,
+  defaultPocStatus,
+  normalizeCollectionPocs,
+} from "@/lib/poc-config"
 
 async function sendGroupWelcomeEmail(options: {
   to: string
@@ -40,15 +45,31 @@ async function nextGroupCustomerId(): Promise<string> {
   return formatGroupCustomerId(max + 1)
 }
 
+async function ensurePocColumns() {
+  await sql.query(`
+    ALTER TABLE "Customer"
+      ADD COLUMN IF NOT EXISTS "primaryPocName" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocEmail" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocNumber" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocDesignation" TEXT,
+      ADD COLUMN IF NOT EXISTS "primaryPocEmailEnabled" BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS "primaryPocStatus" TEXT DEFAULT 'Active',
+      ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT
+  `)
+}
+
 export async function GET() {
   try {
     await ensureGroupColumns()
+    await ensurePocColumns()
 
     const groups = await sql`
-      SELECT id, email, "companyName", "isGroup", "createdAt"
+      SELECT id, email, "companyName", "isGroup", "createdAt",
+             "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+             "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status
       FROM "Customer"
       WHERE "isGroup" = true
-      ORDER BY "companyName" ASC
+      ORDER BY id ASC
     `
 
     const available = await sql`
@@ -60,12 +81,26 @@ export async function GET() {
     `
 
     const groupsWithLocations = await Promise.all(
-      (groups as { id: string; email: string; companyName: string; isGroup: boolean; createdAt: string }[]).map(
-        async (g) => ({
-          ...g,
-          locations: await getGroupLocations(g.id),
-        }),
-      ),
+      (
+        groups as {
+          id: string
+          email: string
+          companyName: string
+          isGroup: boolean
+          createdAt: string
+          primaryPocName: string | null
+          primaryPocEmail: string | null
+          primaryPocNumber: string | null
+          primaryPocDesignation: string | null
+          primaryPocEmailEnabled: boolean | null
+          primaryPocStatus: string | null
+          collectionPocs: string | null
+          status: string
+        }[]
+      ).map(async (g) => ({
+        ...g,
+        locations: await getGroupLocations(g.id),
+      })),
     )
 
     return NextResponse.json({
@@ -82,6 +117,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await ensureGroupColumns()
+    await ensurePocColumns()
     const body = await request.json()
     const action = String(body?.action || "createGroup")
 
@@ -141,6 +177,105 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, locations })
     }
 
+    if (action === "updatePocs") {
+      const groupId = String(body?.groupId || "").trim()
+      if (!groupId) {
+        return NextResponse.json({ success: false, error: "groupId required" }, { status: 400 })
+      }
+
+      const groupRows = await sql`
+        SELECT id, email FROM "Customer" WHERE id = ${groupId} AND "isGroup" = true LIMIT 1
+      `
+      if (!groupRows[0]) {
+        return NextResponse.json({ success: false, error: "Group not found" }, { status: 404 })
+      }
+
+      const primaryPocName = String(body?.primaryPocName || "").trim()
+      const primaryPocEmail = String(body?.primaryPocEmail || "").trim().toLowerCase()
+      const primaryPocNumber = String(body?.primaryPocNumber || "").trim()
+      const primaryPocDesignation = String(body?.primaryPocDesignation || "").trim()
+      const primaryPocEmailEnabled = defaultEmailEnabled(body?.primaryPocEmailEnabled)
+      const primaryPocStatus = defaultPocStatus(body?.primaryPocStatus)
+      const collectionPocs = normalizeCollectionPocs(body?.collectionPocs)
+      const collectionPocsJson = JSON.stringify(collectionPocs)
+      const companyName =
+        body?.companyName !== undefined
+          ? String(body.companyName).trim()
+          : undefined
+
+      // Keep group login email in sync with primary POC email when provided.
+      const loginEmail = primaryPocEmail.includes("@")
+        ? primaryPocEmail
+        : String((groupRows[0] as { email: string }).email || "").toLowerCase()
+
+      if (primaryPocEmail.includes("@") && loginEmail !== String((groupRows[0] as { email: string }).email || "").toLowerCase()) {
+        const taken = await sql`
+          SELECT id FROM "Customer"
+          WHERE LOWER(email) = ${loginEmail} AND id <> ${groupId}
+          LIMIT 1
+        `
+        if (taken[0]) {
+          return NextResponse.json(
+            { success: false, error: "Primary POC email is already used by another account" },
+            { status: 409 },
+          )
+        }
+      }
+
+      await sql`
+        UPDATE "Customer"
+        SET "primaryPocName" = ${primaryPocName || null},
+            "primaryPocEmail" = ${primaryPocEmail || null},
+            "primaryPocNumber" = ${primaryPocNumber || null},
+            "primaryPocDesignation" = ${primaryPocDesignation || null},
+            "primaryPocEmailEnabled" = ${primaryPocEmailEnabled},
+            "primaryPocStatus" = ${primaryPocStatus},
+            "collectionPocs" = ${collectionPocsJson},
+            email = ${loginEmail},
+            "contactPerson" = ${primaryPocName || null},
+            phone = ${primaryPocNumber || null},
+            "companyName" = COALESCE(${companyName || null}, "companyName"),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ${groupId}
+      `
+
+      const updated = await sql`
+        SELECT id, email, "companyName", "isGroup", "createdAt",
+               "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+               "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status
+        FROM "Customer"
+        WHERE id = ${groupId}
+        LIMIT 1
+      `
+      const locations = await getGroupLocations(groupId)
+      return NextResponse.json({
+        success: true,
+        group: { ...(updated[0] as object), locations },
+      })
+    }
+
+    if (action === "deleteGroup") {
+      const groupId = String(body?.groupId || "").trim()
+      if (!groupId) {
+        return NextResponse.json({ success: false, error: "groupId required" }, { status: 400 })
+      }
+
+      const groupRows = await sql`
+        SELECT id FROM "Customer" WHERE id = ${groupId} AND "isGroup" = true LIMIT 1
+      `
+      if (!groupRows[0]) {
+        return NextResponse.json({ success: false, error: "Group not found" }, { status: 404 })
+      }
+
+      await sql`
+        UPDATE "Customer"
+        SET "parentCustomerId" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "parentCustomerId" = ${groupId}
+      `
+      await sql`DELETE FROM "Customer" WHERE id = ${groupId}`
+      return NextResponse.json({ success: true, deleted: groupId })
+    }
+
     if (action === "resendWelcome") {
       const groupId = String(body?.groupId || "").trim()
       if (!groupId) {
@@ -187,14 +322,22 @@ export async function POST(request: NextRequest) {
     }
 
     const companyName = String(body?.companyName || "").trim()
-    const email = String(body?.email || "").trim().toLowerCase()
+    const primaryPocName = String(body?.primaryPocName || "").trim()
+    const primaryPocEmail = String(body?.primaryPocEmail || body?.email || "")
+      .trim()
+      .toLowerCase()
+    const primaryPocNumber = String(body?.primaryPocNumber || "").trim()
+    const email = primaryPocEmail || String(body?.email || "").trim().toLowerCase()
     let password = String(body?.password || "").trim()
     if (!companyName || !email) {
-      return NextResponse.json({ success: false, error: "companyName and email required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: "Group name and login email (or primary POC email) required" },
+        { status: 400 },
+      )
     }
     if (!password) password = generatePortalPassword()
 
-    const existing = await sql`SELECT id FROM "Customer" WHERE email = ${email} LIMIT 1`
+    const existing = await sql`SELECT id FROM "Customer" WHERE LOWER(email) = ${email} LIMIT 1`
     if (existing[0]) {
       return NextResponse.json({ success: false, error: "Email already in use" }, { status: 409 })
     }
@@ -205,10 +348,16 @@ export async function POST(request: NextRequest) {
     await sql`
       INSERT INTO "Customer" (
         id, email, password, "companyName", status, "isGroup", "joinDate", "updatedAt",
-        "kraftrebornCredits", "noOfKiosk"
+        "kraftrebornCredits", "noOfKiosk",
+        "primaryPocName", "primaryPocEmail", "primaryPocNumber",
+        "primaryPocEmailEnabled", "primaryPocStatus",
+        "contactPerson", phone, "collectionPocs"
       ) VALUES (
         ${id}, ${email}, ${hashed}, ${companyName}, 'Active', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
-        0, 0
+        0, 0,
+        ${primaryPocName || null}, ${primaryPocEmail || email}, ${primaryPocNumber || null},
+        ${true}, ${"Active"},
+        ${primaryPocName || null}, ${primaryPocNumber || null}, ${"[]"}
       )
     `
 
@@ -224,7 +373,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      group: { id, email, companyName, isGroup: true, locations: [] },
+      group: {
+        id,
+        email,
+        companyName,
+        isGroup: true,
+        primaryPocName: primaryPocName || null,
+        primaryPocEmail: primaryPocEmail || email,
+        primaryPocNumber: primaryPocNumber || null,
+        collectionPocs: "[]",
+        locations: [],
+      },
       generatedPassword: password,
       welcomeEmailQueued: true,
     })

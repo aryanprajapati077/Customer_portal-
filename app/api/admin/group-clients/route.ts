@@ -219,23 +219,10 @@ export async function POST(request: NextRequest) {
           : undefined
 
       // Keep group login email in sync with primary POC email when provided.
+      // Shared emails are allowed (same person across locations / group login).
       const loginEmail = primaryPocEmail.includes("@")
         ? primaryPocEmail
         : String((groupRows[0] as { email: string }).email || "").toLowerCase()
-
-      if (primaryPocEmail.includes("@") && loginEmail !== String((groupRows[0] as { email: string }).email || "").toLowerCase()) {
-        const taken = await sql`
-          SELECT id FROM "Customer"
-          WHERE LOWER(email) = ${loginEmail} AND id <> ${groupId}
-          LIMIT 1
-        `
-        if (taken[0]) {
-          return NextResponse.json(
-            { success: false, error: "Primary POC email is already used by another account" },
-            { status: 409 },
-          )
-        }
-      }
 
       await sql`
         UPDATE "Customer"
@@ -397,10 +384,9 @@ export async function POST(request: NextRequest) {
     }
     if (!password) password = generatePortalPassword()
 
-    const existing = await sql`SELECT id FROM "Customer" WHERE LOWER(email) = ${email} LIMIT 1`
-    if (existing[0]) {
-      return NextResponse.json({ success: false, error: "Email already in use" }, { status: 409 })
-    }
+    // Shared login emails are allowed (same person for a location + group portal).
+    await sql.query(`ALTER TABLE "Customer" DROP CONSTRAINT IF EXISTS "Customer_email_key"`)
+    await sql.query(`DROP INDEX IF EXISTS "Customer_email_key"`)
 
     const id = await nextGroupCustomerId()
     const hashed = await hashPassword(password)

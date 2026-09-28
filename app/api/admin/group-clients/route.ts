@@ -10,22 +10,31 @@ import {
   defaultPocStatus,
   normalizeCollectionPocs,
 } from "@/lib/poc-config"
+import { resolveReportRecipients } from "@/lib/report-recipients"
+import { isEmailEnabled } from "@/lib/email-settings"
 
 async function sendGroupWelcomeEmail(options: {
   to: string
+  cc?: string[]
   companyName: string
+  contactName?: string
   customerId: string
   password: string
   locationCount?: number
 }) {
   const { sendNotificationEmail } = await import("@/lib/send-notification-email")
+  const name =
+    options.contactName?.trim().split(" ")[0] ||
+    options.companyName.split(" ")[0] ||
+    "Partner"
   return sendNotificationEmail({
     templateId: "group_portal_welcome",
     to: options.to,
+    cc: options.cc,
     label: "group-welcome",
     otpHighlight: options.password,
     vars: {
-      name: options.companyName.split(" ")[0] || "Partner",
+      name,
       company: options.companyName,
       customerId: options.customerId,
       email: options.to,
@@ -54,23 +63,28 @@ async function ensurePocColumns() {
       ADD COLUMN IF NOT EXISTS "primaryPocDesignation" TEXT,
       ADD COLUMN IF NOT EXISTS "primaryPocEmailEnabled" BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS "primaryPocStatus" TEXT DEFAULT 'Active',
-      ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT
+      ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT,
+      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3)
   `)
 }
+
+const GROUP_SELECT = `
+  id, email, "companyName", "isGroup", "createdAt",
+  "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
+  "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status, "welcomeEmailSentAt"
+`
 
 export async function GET() {
   try {
     await ensureGroupColumns()
     await ensurePocColumns()
 
-    const groups = await sql`
-      SELECT id, email, "companyName", "isGroup", "createdAt",
-             "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-             "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status
+    const groups = await sql.query(`
+      SELECT ${GROUP_SELECT}
       FROM "Customer"
       WHERE "isGroup" = true
       ORDER BY id ASC
-    `
+    `)
 
     const available = await sql`
       SELECT id, "companyName", city, state, email
@@ -96,6 +110,7 @@ export async function GET() {
           primaryPocStatus: string | null
           collectionPocs: string | null
           status: string
+          welcomeEmailSentAt: string | Date | null
         }[]
       ).map(async (g) => ({
         ...g,
@@ -239,14 +254,10 @@ export async function POST(request: NextRequest) {
         WHERE id = ${groupId}
       `
 
-      const updated = await sql`
-        SELECT id, email, "companyName", "isGroup", "createdAt",
-               "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-               "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status
-        FROM "Customer"
-        WHERE id = ${groupId}
-        LIMIT 1
-      `
+      const updated = await sql.query(
+        `SELECT ${GROUP_SELECT} FROM "Customer" WHERE id = $1 LIMIT 1`,
+        [groupId],
+      )
       const locations = await getGroupLocations(groupId)
       return NextResponse.json({
         success: true,
@@ -276,38 +287,83 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, deleted: groupId })
     }
 
-    if (action === "resendWelcome") {
+    if (action === "sendWelcome" || action === "resendWelcome") {
       const groupId = String(body?.groupId || "").trim()
+      const forceResend = Boolean(body?.forceResend) || action === "resendWelcome"
       if (!groupId) {
         return NextResponse.json({ success: false, error: "groupId required" }, { status: 400 })
       }
 
-      const groupRows = await sql`
-        SELECT id, email, "companyName"
-        FROM "Customer"
-        WHERE id = ${groupId} AND "isGroup" = true
-        LIMIT 1
-      `
+      const groupRows = await sql.query(
+        `SELECT ${GROUP_SELECT} FROM "Customer" WHERE id = $1 AND "isGroup" = true LIMIT 1`,
+        [groupId],
+      )
       const group = groupRows[0] as
-        | { id: string; email: string; companyName: string }
+        | {
+            id: string
+            email: string
+            companyName: string
+            primaryPocName: string | null
+            primaryPocEmail: string | null
+            primaryPocEmailEnabled: boolean | null
+            primaryPocStatus: string | null
+            collectionPocs: string | null
+            welcomeEmailSentAt: string | Date | null
+          }
         | undefined
       if (!group) {
         return NextResponse.json({ success: false, error: "Group not found" }, { status: 404 })
       }
 
+      if (!forceResend && group.welcomeEmailSentAt) {
+        return NextResponse.json(
+          {
+            success: false,
+            alreadySent: true,
+            error: "Welcome email already sent. Use Resend to send again with a new password.",
+          },
+          { status: 409 },
+        )
+      }
+
+      if (!(await isEmailEnabled("group_portal_welcome"))) {
+        return NextResponse.json(
+          { success: false, error: "Group portal welcome emails are turned off in Email On/Off." },
+          { status: 403 },
+        )
+      }
+
+      const { to: preferredTo, cc } = resolveReportRecipients(group)
+      const login = String(group.email || "")
+        .toLowerCase()
+        .trim()
+      const welcomeTo = preferredTo.includes("@") ? preferredTo : login
+      if (!welcomeTo.includes("@")) {
+        return NextResponse.json(
+          { success: false, error: "Add a primary POC email before sending welcome." },
+          { status: 400 },
+        )
+      }
+
+      const welcomeCc = cc.filter((email) => email.includes("@") && email !== welcomeTo)
+
       const password = generatePortalPassword()
       const hashed = await hashPassword(password)
       await sql`
         UPDATE "Customer"
-        SET password = ${hashed}, "updatedAt" = CURRENT_TIMESTAMP
+        SET password = ${hashed},
+            "welcomeEmailSentAt" = CURRENT_TIMESTAMP,
+            "updatedAt" = CURRENT_TIMESTAMP
         WHERE id = ${groupId}
       `
 
       const locations = await getGroupLocations(groupId)
-      queueEmail("group-welcome-resend", () =>
+      queueEmail(`group-welcome-${groupId}-${Date.now()}`, () =>
         sendGroupWelcomeEmail({
-          to: group.email,
+          to: welcomeTo,
+          cc: welcomeCc,
           companyName: group.companyName,
+          contactName: group.primaryPocName || undefined,
           customerId: group.id,
           password,
           locationCount: locations.length,
@@ -318,6 +374,10 @@ export async function POST(request: NextRequest) {
         success: true,
         welcomeEmailQueued: true,
         generatedPassword: password,
+        to: welcomeTo,
+        cc: welcomeCc,
+        welcomeEmailSentAt: new Date().toISOString(),
+        message: `Welcome email queued to ${welcomeTo}${welcomeCc.length ? ` (CC: ${welcomeCc.join(", ")})` : ""}.`,
       })
     }
 
@@ -361,16 +421,7 @@ export async function POST(request: NextRequest) {
       )
     `
 
-    queueEmail("group-welcome", () =>
-      sendGroupWelcomeEmail({
-        to: email,
-        companyName,
-        customerId: id,
-        password,
-        locationCount: 0,
-      }),
-    )
-
+    // No welcome email on create — admin sends it from the group sheet (like Customers).
     return NextResponse.json({
       success: true,
       group: {
@@ -382,10 +433,11 @@ export async function POST(request: NextRequest) {
         primaryPocEmail: primaryPocEmail || email,
         primaryPocNumber: primaryPocNumber || null,
         collectionPocs: "[]",
+        welcomeEmailSentAt: null,
         locations: [],
       },
       generatedPassword: password,
-      welcomeEmailQueued: true,
+      welcomeEmailQueued: false,
     })
   } catch (error) {
     console.error("Group clients POST error:", error)

@@ -49,6 +49,7 @@ type GroupRow = {
   primaryPocEmailEnabled?: boolean | null
   primaryPocStatus?: string | null
   collectionPocs?: string | null
+  welcomeEmailSentAt?: string | null
   locations: GroupLocation[]
 }
 
@@ -190,9 +191,7 @@ export default function AdminGroupClientsPage() {
       if (data?.success) {
         if (data.generatedPassword) setLastPassword(data.generatedPassword)
         setEmailNote(
-          data.welcomeEmailQueued
-            ? `Welcome email queued to ${draft.primaryPocEmail.trim()}.`
-            : "Group created. Welcome email was not queued.",
+          "Group created. No welcome email was sent yet — open the group sheet and use Send welcome after POCs are set.",
         )
         setDraft({ companyName: "", primaryPocName: "", primaryPocEmail: "", primaryPocNumber: "", password: "" })
         await load()
@@ -208,21 +207,50 @@ export default function AdminGroupClientsPage() {
     }
   }
 
-  const resendWelcome = async (groupId: string) => {
+  const sendWelcome = async (group: GroupRow, forceResend = false) => {
+    const alreadySent = Boolean(group.welcomeEmailSentAt)
+    const action = forceResend || alreadySent ? "Resend" : "Send"
+    if (
+      !confirm(
+        `${action} group welcome email for ${group.companyName}?\n\nTo: primary POC\nCC: collection POCs\nA new temporary password will be set.`,
+      )
+    ) {
+      return
+    }
     setResending(true)
     setEmailNote(null)
     try {
       const res = await fetch("/api/admin/group-clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "resendWelcome", groupId }),
+        body: JSON.stringify({
+          action: "sendWelcome",
+          groupId: group.id,
+          forceResend: forceResend || alreadySent,
+        }),
       })
       const data = await res.json()
       if (data?.success) {
         if (data.generatedPassword) setLastPassword(data.generatedPassword)
-        setEmailNote("Credentials email resent. Temporary password was rotated.")
+        const sentAt = data.welcomeEmailSentAt || new Date().toISOString()
+        setSelected((prev) =>
+          prev?.id === group.id ? { ...prev, welcomeEmailSentAt: sentAt } : prev,
+        )
+        setGroups((prev) =>
+          prev.map((g) => (g.id === group.id ? { ...g, welcomeEmailSentAt: sentAt } : g)),
+        )
+        setEmailNote(
+          data.message ||
+            `Welcome queued to ${data.to || "primary POC"}${
+              Array.isArray(data.cc) && data.cc.length ? ` (CC: ${data.cc.join(", ")})` : ""
+            }.`,
+        )
+      } else if (data?.alreadySent) {
+        if (confirm("Welcome already sent. Resend with a new password?")) {
+          await sendWelcome(group, true)
+        }
       } else {
-        alert(data?.error || "Failed to resend email")
+        alert(data?.error || "Failed to send welcome email")
       }
     } finally {
       setResending(false)
@@ -383,8 +411,8 @@ export default function AdminGroupClientsPage() {
             Create group client
           </CardTitle>
           <CardDescription>
-            Primary POC email becomes the group portal login. You can add more collection POCs after
-            creation in the group sheet.
+            Primary POC email becomes the group portal login. Welcome email is not sent
+            automatically — use Send welcome after you add POCs (To = primary, CC = other POCs).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -791,22 +819,37 @@ export default function AdminGroupClientsPage() {
                         .join(" · ") || "—"
                     }
                   />
+                  <p className="text-[12px] text-muted-foreground">
+                    Welcome:{" "}
+                    {selected.welcomeEmailSentAt
+                      ? `Sent ${new Date(selected.welcomeEmailSentAt).toLocaleString("en-IN")}`
+                      : "Not sent yet"}
+                  </p>
                   <Button
-                    variant="outline"
                     disabled={resending}
-                    onClick={() => resendWelcome(selected.id)}
-                    className="w-full rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9]"
+                    onClick={() => sendWelcome(selected)}
+                    className="w-full rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
                   >
                     {resending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Mail className="mr-2 h-4 w-4" />
                     )}
-                    Email credentials (welcome template)
+                    {selected.welcomeEmailSentAt ? "Resend welcome" : "Send welcome"}
                   </Button>
                   <p className="text-[11px] text-muted-foreground">
-                    Resends the Group Portal Welcome template and rotates the temporary password.
+                    To = Primary POC · CC = Collection POCs. Sets a new temporary password.
                   </p>
+                  {emailNote && selected ? (
+                    <p className="rounded-xl border border-[#DCE8DC] bg-[#F7FBF7] px-3 py-2 text-[12px] text-[#1B7339]">
+                      {emailNote}
+                    </p>
+                  ) : null}
+                  {lastPassword && (
+                    <p className="rounded-xl border border-[#C8E6C9] bg-[#E8F5E9] px-3 py-2 text-[12px] text-[#1B7339]">
+                      Temporary password: <strong>{lastPassword}</strong>
+                    </p>
+                  )}
                 </AdminSheetSection>
 
                 <AdminSheetSection title="Danger zone">

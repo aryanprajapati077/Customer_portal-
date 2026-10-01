@@ -12,6 +12,8 @@ import {
 } from "@/lib/poc-config"
 import { resolveReportRecipients } from "@/lib/report-recipients"
 import { isEmailEnabled } from "@/lib/email-settings"
+import { saveBase64Image } from "@/lib/upload"
+import { toPortalMediaUrl } from "@/lib/media-url"
 
 async function sendGroupWelcomeEmail(options: {
   to: string
@@ -64,14 +66,16 @@ async function ensurePocColumns() {
       ADD COLUMN IF NOT EXISTS "primaryPocEmailEnabled" BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS "primaryPocStatus" TEXT DEFAULT 'Active',
       ADD COLUMN IF NOT EXISTS "collectionPocs" TEXT,
-      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3)
+      ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "logoUrl" TEXT
   `)
 }
 
 const GROUP_SELECT = `
   id, email, "companyName", "isGroup", "createdAt",
   "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
-  "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status, "welcomeEmailSentAt"
+  "primaryPocEmailEnabled", "primaryPocStatus", "collectionPocs", status, "welcomeEmailSentAt",
+  "logoUrl"
 `
 
 export async function GET() {
@@ -111,9 +115,11 @@ export async function GET() {
           collectionPocs: string | null
           status: string
           welcomeEmailSentAt: string | Date | null
+          logoUrl: string | null
         }[]
       ).map(async (g) => ({
         ...g,
+        logoUrl: toPortalMediaUrl(g.logoUrl) || g.logoUrl,
         locations: await getGroupLocations(g.id),
       })),
     )
@@ -250,6 +256,56 @@ export async function POST(request: NextRequest) {
         success: true,
         group: { ...(updated[0] as object), locations },
       })
+    }
+
+    if (action === "updateLogo") {
+      const groupId = String(body?.groupId || "").trim()
+      if (!groupId) {
+        return NextResponse.json({ success: false, error: "groupId required" }, { status: 400 })
+      }
+      const groupRows = await sql`
+        SELECT id FROM "Customer" WHERE id = ${groupId} AND "isGroup" = true LIMIT 1
+      `
+      if (!groupRows[0]) {
+        return NextResponse.json({ success: false, error: "Group not found" }, { status: 404 })
+      }
+
+      let logoUrl: string | null | undefined
+      if (body?.clearLogo === true) {
+        logoUrl = null
+      } else if (body?.logoBase64 && String(body.logoBase64).startsWith("data:")) {
+        try {
+          const saved = await saveBase64Image(String(body.logoBase64), "logos", `group-${groupId}`)
+          logoUrl = saved.url
+        } catch (logoErr) {
+          console.error("Group logo upload failed:", logoErr)
+          return NextResponse.json(
+            { success: false, error: logoErr instanceof Error ? logoErr.message : "Logo upload failed" },
+            { status: 400 },
+          )
+        }
+      } else {
+        return NextResponse.json({ success: false, error: "logoBase64 or clearLogo required" }, { status: 400 })
+      }
+
+      await sql`
+        UPDATE "Customer"
+        SET "logoUrl" = ${logoUrl},
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ${groupId}
+      `
+
+      const updated = await sql.query(
+        `SELECT ${GROUP_SELECT} FROM "Customer" WHERE id = $1 LIMIT 1`,
+        [groupId],
+      )
+      const locations = await getGroupLocations(groupId)
+      const group = {
+        ...(updated[0] as Record<string, unknown>),
+        logoUrl: toPortalMediaUrl((updated[0] as { logoUrl?: string | null }).logoUrl) || logoUrl,
+        locations,
+      }
+      return NextResponse.json({ success: true, group })
     }
 
     if (action === "deleteGroup") {

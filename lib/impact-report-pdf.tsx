@@ -387,9 +387,72 @@ function Brand({ width = 108 }: { width?: number }) {
     <View style={{ alignItems: "flex-end" }}>
       <Image
         src={asset("buffindia-logo-clear.png")}
-        style={{ width, height: width * 0.34, objectFit: "contain" }}
+        style={{
+          width,
+          height: width * 0.34,
+          objectFit: "contain",
+          objectPositionX: "center",
+          objectPositionY: "center",
+        }}
       />
       <Text style={[styles.brandSub, { marginTop: 2 }]}>CIGARETTE WASTE MANAGEMENT</Text>
+    </View>
+  )
+}
+
+const CLIENT_LOGO_BOX_W = 118
+const CLIENT_LOGO_BOX_H = 66
+const CLIENT_LOGO_PAD = 6
+const CLIENT_LOGO_MAX_W = CLIENT_LOGO_BOX_W - CLIENT_LOGO_PAD * 2
+const CLIENT_LOGO_MAX_H = CLIENT_LOGO_BOX_H - CLIENT_LOGO_PAD * 2
+
+/**
+ * Client logo box — sizes the image to fit (contain) using intrinsic pixels.
+ * Logos are pre-normalized (trim + PNG) in loadLogoForPdf before render.
+ */
+function ClientLogoBox({
+  src,
+  naturalWidth,
+  naturalHeight,
+}: {
+  src?: string | null
+  naturalWidth?: number | null
+  naturalHeight?: number | null
+}) {
+  const hasLogo = Boolean(src)
+  const srcW = Number(naturalWidth) > 0 ? Number(naturalWidth) : 400
+  const srcH = Number(naturalHeight) > 0 ? Number(naturalHeight) : 200
+  const fitted = {
+    width: Math.max(1, Math.round(srcW * Math.min(CLIENT_LOGO_MAX_W / srcW, CLIENT_LOGO_MAX_H / srcH) * 10) / 10),
+    height: Math.max(1, Math.round(srcH * Math.min(CLIENT_LOGO_MAX_W / srcW, CLIENT_LOGO_MAX_H / srcH) * 10) / 10),
+  }
+
+  return (
+    <View
+      style={{
+        width: CLIENT_LOGO_BOX_W,
+        height: CLIENT_LOGO_BOX_H,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: hasLogo ? "#D7E8DC" : "#C5D8C8",
+        borderStyle: hasLogo ? "solid" : "dashed",
+        backgroundColor: "#FFFFFF",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: CLIENT_LOGO_PAD,
+      }}
+    >
+      {hasLogo ? (
+        <Image
+          src={src as string}
+          style={{
+            width: fitted.width,
+            height: fitted.height,
+          }}
+        />
+      ) : (
+        <Text style={{ fontSize: 8, color: "#7A9A82", textAlign: "center" }}>Client logo</Text>
+      )}
     </View>
   )
 }
@@ -677,46 +740,23 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
               marginBottom: 30,
             }}
           >
-            <View
-              style={{
-                width: 88,
-                height: 58,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: data.logoUrl ? "#D7E8DC" : "#C5D8C8",
-                borderStyle: data.logoUrl ? "solid" : "dashed",
-                backgroundColor: GREEN_PALE,
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 6,
-              }}
-            >
-              {data.logoUrl ? (
-                <Image
-                  src={data.logoUrl}
-                  style={{ width: 72, height: 44, objectFit: "contain" }}
-                />
-              ) : (
-                <View style={{ alignItems: "center" }}>
-                  <Text style={{ fontSize: 7, fontWeight: "bold", color: GREEN, letterSpacing: 0.4 }}>
-                    CUSTOMER LOGO
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Brand width={108} />
+            <ClientLogoBox
+              src={data.logoUrl}
+              naturalWidth={data.logoWidth}
+              naturalHeight={data.logoHeight}
+            />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Brand width={118} />
               <View
                 style={{
-                  borderWidth: 1.15,
+                  borderWidth: 1.2,
                   borderColor: GREEN,
                   borderRadius: 5,
-                  paddingHorizontal: 10,
+                  paddingHorizontal: 7,
                   paddingVertical: 4,
                 }}
               >
-                <Text style={{ fontSize: 9, color: GREEN, fontWeight: "bold", letterSpacing: 1.1 }}>
+                <Text style={{ fontSize: 9, fontWeight: 700, color: GREEN, letterSpacing: 0.6 }}>
                   ESG
                 </Text>
               </View>

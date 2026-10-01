@@ -3,7 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer"
 import { prisma } from "@/lib/prisma"
 import { OrderSheetPdf, type OrderSheetData } from "@/lib/order-sheet-pdf"
 import { ensureOrderItemColorColumn } from "@/lib/shop-order-schema"
-import { resolveLogoForPdf } from "@/lib/resolve-logo"
+import { loadLogoForPdf } from "@/lib/resolve-logo"
 
 export async function generateOrderSheetPdf(orderId: string) {
   await ensureOrderItemColorColumn()
@@ -17,7 +17,8 @@ export async function generateOrderSheetPdf(orderId: string) {
 
   if (!order) throw new Error("Order not found")
 
-  const logoImageSrc = resolveLogoForPdf(order.logoUrl)
+  const logo = await loadLogoForPdf(order.logoUrl)
+  const logoImageSrc = logo?.dataUrl || null
 
   const data: OrderSheetData = {
     orderNumber: order.orderNumber,

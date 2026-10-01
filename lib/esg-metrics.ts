@@ -18,6 +18,9 @@ export interface ImpactReportData {
   womenEmployment: number
   /** Optional customer logo (local file path, http(s) URL, or data URL) for cover */
   logoUrl?: string | null
+  /** Intrinsic pixel size of logoUrl — used to fit without clipping in PDF */
+  logoWidth?: number | null
+  logoHeight?: number | null
 }
 
 interface CollectionForTotals {
@@ -139,6 +142,8 @@ export function computeImpactReportData(
     waterResourcesProtectedL,
     kraftrebornCredits: Number(customer.kraftrebornCredits) || 0,
     logoUrl: null,
+    logoWidth: null,
+    logoHeight: null,
     ...PAN_INDIA_SOCIAL,
   }
 }

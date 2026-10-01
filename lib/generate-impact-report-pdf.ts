@@ -2,7 +2,6 @@ import { resolveReportDateWindow } from "@/lib/report-date-range"
 import { sql } from "@/lib/db"
 import { computeImpactReportData } from "@/lib/esg-metrics"
 import { ImpactReportPdfDocument } from "@/lib/impact-report-pdf"
-import { resolveLogoForPdf } from "@/lib/resolve-logo"
 import { earliestServiceStartIso, fetchReportCollections, serviceStartIso } from "@/lib/report-collections"
 import { resolveReportScope } from "@/lib/group-customer-access"
 import React from "react"
@@ -110,8 +109,19 @@ export async function generateImpactReportPdf(
   )
 
   reportData.reportingPeriod = window.label
-  reportData.logoUrl =
-    resolveLogoForPdf(options?.logoUrl) || resolveLogoForPdf(customer.logoUrl as string | null)
+  const { loadLogoForPdf } = await import("@/lib/resolve-logo")
+  const logo =
+    (await loadLogoForPdf(options?.logoUrl)) ||
+    (await loadLogoForPdf(customer.logoUrl as string | null))
+  if (logo) {
+    reportData.logoUrl = logo.dataUrl
+    reportData.logoWidth = logo.width
+    reportData.logoHeight = logo.height
+  } else {
+    reportData.logoUrl = null
+    reportData.logoWidth = null
+    reportData.logoHeight = null
+  }
 
   const pdfBuffer = await renderToBuffer(
     React.createElement(ImpactReportPdfDocument, { data: reportData }) as any,

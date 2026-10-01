@@ -50,6 +50,7 @@ type GroupRow = {
   primaryPocStatus?: string | null
   collectionPocs?: string | null
   welcomeEmailSentAt?: string | null
+  logoUrl?: string | null
   locations: GroupLocation[]
 }
 
@@ -87,6 +88,12 @@ export default function AdminGroupClientsPage() {
   const [resending, setResending] = useState(false)
   const [pocOk, setPocOk] = useState(false)
   const [pocError, setPocError] = useState<string | null>(null)
+  const [logoPreview, setLogoPreview] = useState("")
+  const [logoBase64, setLogoBase64] = useState<string | null>(null)
+  const [clearLogo, setClearLogo] = useState(false)
+  const [savingLogo, setSavingLogo] = useState(false)
+  const [logoNote, setLogoNote] = useState<string | null>(null)
+  const [logoError, setLogoError] = useState<string | null>(null)
 
   const [pocDraft, setPocDraft] = useState({
     companyName: "",
@@ -136,6 +143,11 @@ export default function AdminGroupClientsPage() {
     setCollectionPocs(parseCollectionPocForms(selected.collectionPocs))
     setPocOk(false)
     setPocError(null)
+    setLogoPreview(selected.logoUrl || "")
+    setLogoBase64(null)
+    setClearLogo(false)
+    setLogoNote(null)
+    setLogoError(null)
     setSheetTab("locations")
     setPickCustomerId("")
     setLocationSearch("")
@@ -352,6 +364,49 @@ export default function AdminGroupClientsPage() {
       setPocError("Network error while saving POCs")
     } finally {
       setSavingPocs(false)
+    }
+  }
+
+  const saveLogo = async () => {
+    if (!selected) return
+    if (!logoBase64 && !clearLogo) {
+      setLogoError("Choose a logo file or remove the current one first")
+      return
+    }
+    setSavingLogo(true)
+    setLogoNote(null)
+    setLogoError(null)
+    try {
+      const res = await fetch("/api/admin/group-clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateLogo",
+          groupId: selected.id,
+          ...(logoBase64 ? { logoBase64 } : {}),
+          ...(clearLogo ? { clearLogo: true } : {}),
+        }),
+      })
+      const data = await res.json()
+      if (!data?.success) {
+        setLogoError(data?.error || "Failed to save logo")
+        return
+      }
+      const nextUrl = clearLogo ? "" : String(data.group?.logoUrl || logoPreview || "")
+      setLogoPreview(nextUrl)
+      setLogoBase64(null)
+      setClearLogo(false)
+      setLogoNote(clearLogo ? "Logo removed" : "Logo saved for ESG reports")
+      if (data.group) {
+        setSelected(data.group)
+        setGroups((prev) => prev.map((g) => (g.id === data.group.id ? data.group : g)))
+      } else {
+        await load()
+      }
+    } catch {
+      setLogoError("Network error while saving logo")
+    } finally {
+      setSavingLogo(false)
     }
   }
 
@@ -850,6 +905,82 @@ export default function AdminGroupClientsPage() {
                       Temporary password: <strong>{lastPassword}</strong>
                     </p>
                   )}
+                </AdminSheetSection>
+
+                <AdminSheetSection title="Report logo">
+                  <p className="text-[12px] text-muted-foreground">
+                    Shown on the group ESG Impact Report cover (top left). PNG, JPG, or WebP · max 2MB.
+                  </p>
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="rounded-xl border-[#E5E5E5]"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 2 * 1024 * 1024) {
+                        setLogoError("Logo must be under 2MB")
+                        return
+                      }
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        const result = String(reader.result || "")
+                        setLogoBase64(result)
+                        setLogoPreview(result)
+                        setClearLogo(false)
+                        setLogoError(null)
+                        setLogoNote(null)
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                  {logoPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoPreview}
+                      alt="Group logo preview"
+                      className="h-16 w-auto max-w-[200px] rounded-lg border border-[#DCE8DC] bg-white object-contain p-2"
+                    />
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">No logo uploaded yet.</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      disabled={savingLogo || (!logoBase64 && !clearLogo)}
+                      onClick={() => saveLogo()}
+                      className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                    >
+                      {savingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {savingLogo ? "Saving…" : "Save logo"}
+                    </Button>
+                    {logoPreview || selected.logoUrl ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={savingLogo}
+                        className="rounded-full"
+                        onClick={() => {
+                          setLogoPreview("")
+                          setLogoBase64(null)
+                          setClearLogo(true)
+                          setLogoNote(null)
+                          setLogoError(null)
+                        }}
+                      >
+                        Remove logo
+                      </Button>
+                    ) : null}
+                  </div>
+                  {logoNote ? (
+                    <p className="rounded-xl border border-[#DCE8DC] bg-[#F7FBF7] px-3 py-2 text-[12px] text-[#1B7339]">
+                      {logoNote}
+                    </p>
+                  ) : null}
+                  {logoError ? (
+                    <p className="rounded-xl border border-[#F0D0D0] bg-[#FFF5F5] px-3 py-2 text-[12px] text-[#C62828]">
+                      {logoError}
+                    </p>
+                  ) : null}
                 </AdminSheetSection>
 
                 <AdminSheetSection title="Danger zone">

@@ -5,7 +5,7 @@ import { syncServiceCertificate } from "@/lib/sync-certificates"
 import { CertificateOfServicesPdf } from "@/lib/certificate-of-services-pdf"
 import { getIndianFiscalYear } from "@/lib/kraftreborn"
 import { parseLocation, formatInstallDate, formatCustomerCode } from "@/lib/esg-metrics"
-import { resolveLogoForPdf } from "@/lib/resolve-logo"
+import { loadLogoForPdf } from "@/lib/resolve-logo"
 import { absoluteUrl } from "@/lib/site-config"
 
 export async function generateServiceCertificatePdf(customerId: string, certificateId?: string) {
@@ -79,6 +79,7 @@ export async function generateServiceCertificatePdf(customerId: string, certific
   }
   if (/^lifetime$/i.test(validTill)) validTill = "1 year"
 
+  const logo = await loadLogoForPdf(customer.logoUrl)
   const data = {
     certificateNumber,
     companyName: customer.companyName?.trim() || customer.tradeName?.trim() || "Partner Organization",
@@ -92,7 +93,7 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     issueDate,
     validTill,
     customerId: formatCustomerCode(customer.id) || customer.id,
-    logoUrl: resolveLogoForPdf(customer.logoUrl),
+    logoUrl: logo?.dataUrl || null,
     verifyUrl,
     phone: customer.phone || "+91 63595 66528",
   }

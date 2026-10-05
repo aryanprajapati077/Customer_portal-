@@ -278,7 +278,8 @@ export async function generateImpactReportExcel(
     ["Location", parseLocation(customer.address as string | null)],
     ["Service Start Date", formatInstallDate((customer.serviceStartDate || customer.joinDate) as string | Date | null)],
     ["Number of Kiosks / Disposal Units", reportData.disposalUnitsInstalled],
-    ["Reporting Period", reportData.reportingPeriodRange],
+    ["Reporting Period", reportData.reportingPeriodLabel || window.label],
+    ["Period Dates", reportData.reportingPeriodRange || window.label],
     ["Report Generated On", formatDateCell(new Date())],
     ["Collection Frequency", estimateFrequency(collections)],
   ]
@@ -295,11 +296,14 @@ export async function generateImpactReportExcel(
   })
 
   // ── 2. IMPACT SUMMARY ──
-  const summaryStart = 11
+  const summaryStart = 2 + customerDetails.length + 1
+  const periodHeading = reportData.reportingPeriodRange
+    ? `${window.label} · ${reportData.reportingPeriodRange}`
+    : window.label
   sheet.mergeCells(`A${summaryStart}:D${summaryStart}`)
   styleHeader(sheet.getCell(`A${summaryStart}`), "FFBDD7EE")
   sheet.getCell(`A${summaryStart}`).value = useWindowStart
-    ? `2. IMPACT SUMMARY (${window.label})`
+    ? `2. IMPACT SUMMARY (${periodHeading})`
     : "2. IMPACT SUMMARY (CUMULATIVE FROM SERVICE START)"
   sheet.getRow(summaryStart).height = 22
 
@@ -340,7 +344,7 @@ export async function generateImpactReportExcel(
   sheet.mergeCells(`A${monthStart}:H${monthStart}`)
   styleHeader(sheet.getCell(`A${monthStart}`), "FFFFF2CC")
   sheet.getCell(`A${monthStart}`).value = useWindowStart
-    ? `3. MONTH-WISE IMPACT DETAILS (${window.label})`
+    ? `3. MONTH-WISE IMPACT DETAILS (${periodHeading})`
     : "3. MONTH-WISE IMPACT DETAILS (FROM SERVICE START)"
   sheet.getRow(monthStart).height = 22
 
@@ -455,7 +459,10 @@ export async function generateImpactReportExcel(
   })
 
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer())
-  const filename = `${reportData.customerId}-Impact-Report-${reportData.reportingPeriod.replace(" ", "-")}.xlsx`
+  const filename = `${reportData.customerId}-Impact-Report-${String(reportData.reportingPeriod || window.label)
+    .replace(/\s+/g, "-")
+    .replace(/–/g, "-")
+    .replace(/[^a-zA-Z0-9._-]/g, "")}.xlsx`
 
   return {
     buffer,

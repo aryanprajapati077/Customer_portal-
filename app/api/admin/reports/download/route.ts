@@ -58,7 +58,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const reportOptions = { period, range: "month" as const }
+    // YYYY-MM monthly reports: cumulative from installation through that month (same as email).
+    const reportOptions = { period }
 
     if (format === "excel") {
       const { buffer, filename } = await generateImpactReportExcel(customerId, reportOptions)

@@ -112,14 +112,17 @@ export function resolveReportDateWindow(options: {
     }
   }
 
-  // YYYY-MM period without explicit range = that calendar month only (email / admin monthly)
-  if (options.period && /^\d{4}-\d{2}$/.test(options.period)) {
+  // Monthly email: period only — cumulative from installation through end of that month
+  if (options.period && /^\d{4}-\d{2}$/.test(options.period) && !options.range) {
     const [py, pm] = options.period.split("-").map(Number)
+    const monthLabel = new Date(py, pm - 1, 1).toLocaleDateString("en-GB", {
+      month: "long",
+      year: "numeric",
+    })
     return {
-      startDate: new Date(py, pm - 1, 1, 0, 0, 0, 0),
       endDate: endOfMonth(py, pm - 1),
       period: options.period,
-      label: new Date(py, pm - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+      label: `${monthLabel} (Cumulative from installation)`,
     }
   }
 

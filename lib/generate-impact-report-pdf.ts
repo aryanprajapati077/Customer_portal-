@@ -1,4 +1,5 @@
-import { formatWindowRangeText, resolveReportDateWindow } from "@/lib/report-date-range"
+import { resolveReportDateWindow } from "@/lib/report-date-range"
+import { applyReportPeriodLabels } from "@/lib/report-period-labels"
 import { sql } from "@/lib/db"
 import { computeImpactReportData } from "@/lib/esg-metrics"
 import { ImpactReportPdfDocument } from "@/lib/impact-report-pdf"
@@ -118,13 +119,12 @@ export async function generateImpactReportPdf(
     window.endDate,
   )
 
-  reportData.reportingPeriod = window.label
-  reportData.reportingPeriodLabel = window.label
-  const rangeStart =
-    window.startDate ||
-    (cumulativeStart ? new Date(cumulativeStart) : undefined)
-  reportData.reportingPeriodRange =
-    formatWindowRangeText(rangeStart, window.endDate) || window.label
+  applyReportPeriodLabels(reportData, window, {
+    period: options?.period,
+    range: options?.range,
+    useWindowStart,
+    cumulativeStart,
+  })
   const { loadLogoForPdf } = await import("@/lib/resolve-logo")
   const logo =
     (await loadLogoForPdf(options?.logoUrl)) ||

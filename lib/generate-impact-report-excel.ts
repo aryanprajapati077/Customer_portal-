@@ -115,7 +115,8 @@ export async function generateImpactReportExcel(
   const scopeIds = await resolveReportScope(customerId, options?.scopeCustomerIds)
   const isAggregate = scopeIds.length > 1
 
-  const { resolveReportDateWindow, formatWindowRangeText } = await import("@/lib/report-date-range")
+  const { resolveReportDateWindow } = await import("@/lib/report-date-range")
+  const { applyReportPeriodLabels, isCumulativeEmailReport } = await import("@/lib/report-period-labels")
   const window = resolveReportDateWindow({
     range: options?.range,
     period: options?.period,
@@ -199,12 +200,13 @@ export async function generateImpactReportExcel(
     collections,
     asOfDate,
   )
-  reportData.reportingPeriod = window.label
-  reportData.reportingPeriodLabel = window.label
-  const rangeStart =
-    window.startDate || (cumulativeStart ? new Date(cumulativeStart) : undefined)
-  reportData.reportingPeriodRange =
-    formatWindowRangeText(rangeStart, window.endDate) || window.label
+  applyReportPeriodLabels(reportData, window, {
+    period: options?.period,
+    range: options?.range,
+    useWindowStart,
+    cumulativeStart,
+  })
+  const isEmailCumulative = isCumulativeEmailReport(options)
 
   // Month-wise aggregation
   const byMonth = new Map<

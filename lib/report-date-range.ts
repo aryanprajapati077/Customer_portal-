@@ -112,17 +112,18 @@ export function resolveReportDateWindow(options: {
     }
   }
 
-  // Monthly email: period only — cumulative from installation through end of that month
+  // Monthly email / admin Quick Report: period only (no portal range).
+  // Cover shows the calendar month; generators treat this as cumulative from installation → month end.
   if (options.period && /^\d{4}-\d{2}$/.test(options.period) && !options.range) {
     const [py, pm] = options.period.split("-").map(Number)
-    const monthLabel = new Date(py, pm - 1, 1).toLocaleDateString("en-GB", {
-      month: "long",
-      year: "numeric",
-    })
     return {
+      // No startDate → collections stay cumulative from installation; endDate caps at month end.
       endDate: endOfMonth(py, pm - 1),
       period: options.period,
-      label: `${monthLabel} (Cumulative from installation)`,
+      label: new Date(py, pm - 1, 1).toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric",
+      }),
     }
   }
 

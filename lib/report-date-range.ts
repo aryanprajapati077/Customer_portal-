@@ -12,6 +12,7 @@ export interface ReportDateWindow {
   endDate?: Date
   /** YYYY-MM used by legacy period-as-of filtering when only end bound matters */
   period?: string
+  /** Short title shown as the main reporting-period heading */
   label: string
 }
 
@@ -25,6 +26,28 @@ function endOfDay(d: Date) {
 
 function endOfMonth(year: number, monthIndex: number) {
   return new Date(year, monthIndex + 1, 0, 23, 59, 59, 999)
+}
+
+export function formatWindowDay(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+/** Calendar line under the reporting-period title, e.g. "01 Oct 2026 to 05 Oct 2026". */
+export function formatWindowRangeText(start?: Date | null, end?: Date | null): string {
+  if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+    return `${formatWindowDay(start)} to ${formatWindowDay(end)}`
+  }
+  if (end && !Number.isNaN(end.getTime())) {
+    return `Till ${formatWindowDay(end)}`
+  }
+  if (start && !Number.isNaN(start.getTime())) {
+    return `From ${formatWindowDay(start)}`
+  }
+  return ""
 }
 
 export function resolveReportDateWindow(options: {
@@ -49,7 +72,7 @@ export function resolveReportDateWindow(options: {
     }
     const label =
       start && end
-        ? `${start.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} – ${end.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`
+        ? `${formatWindowDay(start)} – ${formatWindowDay(end)}`
         : "Custom range"
     return { startDate: start, endDate: end, label }
   }
@@ -59,18 +82,19 @@ export function resolveReportDateWindow(options: {
       startDate: new Date(y, 0, 1, 0, 0, 0, 0),
       endDate: endOfDay(now),
       period: `${y}-12`,
-      label: `Jan–${now.toLocaleDateString("en-GB", { month: "short" })} ${y}`,
+      label: `Current Year ${y}`,
     }
   }
 
   if (range === "quarterly") {
     const qStartMonth = Math.floor(m / 3) * 3
     const qEndMonth = qStartMonth + 2
+    const q = Math.floor(m / 3) + 1
     return {
       startDate: new Date(y, qStartMonth, 1, 0, 0, 0, 0),
       endDate: endOfDay(now),
       period: `${y}-${String(qEndMonth + 1).padStart(2, "0")}`,
-      label: `Q${Math.floor(m / 3) + 1} ${y} to date`,
+      label: `Q${q} ${y} to date`,
     }
   }
 
@@ -88,7 +112,7 @@ export function resolveReportDateWindow(options: {
     }
   }
 
-  // YYYY-MM period without explicit range = that calendar month only (admin monthly reports)
+  // YYYY-MM period without explicit range = that calendar month only (email / admin monthly)
   if (options.period && /^\d{4}-\d{2}$/.test(options.period)) {
     const [py, pm] = options.period.split("-").map(Number)
     return {

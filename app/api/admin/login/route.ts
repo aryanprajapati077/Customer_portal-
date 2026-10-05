@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyPassword } from "@/lib/password"
+import { verifyPassword, normalizePasswordInput } from "@/lib/password"
 import { verifyTotp } from "@/lib/admin-totp"
 import {
   ADMIN_PENDING_COOKIE,
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = String(email || "")
       .toLowerCase()
       .trim()
-    const pass = String(password || "")
+    const pass = normalizePasswordInput(password)
 
     if (!normalizedEmail || !pass) {
       return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })

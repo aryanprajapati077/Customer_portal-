@@ -118,7 +118,7 @@ export function buildWelcomeEmailHtml(options: {
                     <p style="margin:0 0 4px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B6B6B;">
                       Temporary password
                     </p>
-                    <p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0.08em;color:#141414;background:#ffffff;border:1px dashed #C8E6D4;border-radius:10px;padding:12px 14px;display:inline-block;">
+                    <p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:20px;font-weight:700;letter-spacing:0;color:#141414;background:#ffffff;border:1px dashed #C8E6D4;border-radius:10px;padding:12px 14px;display:inline-block;-webkit-user-select:all;user-select:all;">
                       ${password}
                     </p>
                   </td>

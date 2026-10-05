@@ -155,8 +155,18 @@ export async function generateImpactReportExcel(
         customer.joinDate as string | Date | null,
       )
 
+  // Portal ranges (month / quarterly / this-year / custom) use the selected window.
+  // Email sends { period } with no range — stay cumulative from service start.
+  const useWindowStart =
+    Boolean(options?.range) &&
+    options?.range !== "installation" &&
+    Boolean(window.startDate)
+  const startIso = useWindowStart
+    ? window.startDate!.toISOString()
+    : cumulativeStart
+
   const collectionRows = await fetchReportCollections(scopeIds, {
-    startIso: cumulativeStart,
+    startIso,
     endIso,
     withMeta: true,
   })
@@ -209,17 +219,22 @@ export async function generateImpactReportExcel(
     byMonth.set(key, cur)
   }
 
-  // All months from service start through report as-of date
+  // All months in the report window (selected range, or service start → as-of for cumulative)
   const end = asOfDate ?? new Date()
-  const serviceStart = isAggregate
-    ? cumulativeStart
-      ? new Date(cumulativeStart)
-      : end
-    : ((customer.serviceStartDate || customer.joinDate) as string | Date | null)
-  let start = serviceStart ? new Date(serviceStart) : end
-  if (collections.length > 0) {
-    const first = new Date(collections[0].date as string | Date)
-    if (!Number.isNaN(first.getTime()) && first < start) start = first
+  let start: Date
+  if (useWindowStart && window.startDate) {
+    start = new Date(window.startDate)
+  } else {
+    const serviceStart = isAggregate
+      ? cumulativeStart
+        ? new Date(cumulativeStart)
+        : end
+      : ((customer.serviceStartDate || customer.joinDate) as string | Date | null)
+    start = serviceStart ? new Date(serviceStart) : end
+    if (collections.length > 0) {
+      const first = new Date(collections[0].date as string | Date)
+      if (!Number.isNaN(first.getTime()) && first < start) start = first
+    }
   }
   start = new Date(start.getFullYear(), start.getMonth(), 1)
   const monthKeys: string[] = []
@@ -280,7 +295,9 @@ export async function generateImpactReportExcel(
   const summaryStart = 11
   sheet.mergeCells(`A${summaryStart}:D${summaryStart}`)
   styleHeader(sheet.getCell(`A${summaryStart}`), "FFBDD7EE")
-  sheet.getCell(`A${summaryStart}`).value = "2. IMPACT SUMMARY (CUMULATIVE FROM SERVICE START)"
+  sheet.getCell(`A${summaryStart}`).value = useWindowStart
+    ? `2. IMPACT SUMMARY (${window.label})`
+    : "2. IMPACT SUMMARY (CUMULATIVE FROM SERVICE START)"
   sheet.getRow(summaryStart).height = 22
 
   const summaryHeader = summaryStart + 1
@@ -319,7 +336,9 @@ export async function generateImpactReportExcel(
   const monthStart = summaryHeader + summaryRows.length + 2
   sheet.mergeCells(`A${monthStart}:H${monthStart}`)
   styleHeader(sheet.getCell(`A${monthStart}`), "FFFFF2CC")
-  sheet.getCell(`A${monthStart}`).value = "3. MONTH-WISE IMPACT DETAILS (FROM SERVICE START)"
+  sheet.getCell(`A${monthStart}`).value = useWindowStart
+    ? `3. MONTH-WISE IMPACT DETAILS (${window.label})`
+    : "3. MONTH-WISE IMPACT DETAILS (FROM SERVICE START)"
   sheet.getRow(monthStart).height = 22
 
   const monthHeaderRow = monthStart + 1

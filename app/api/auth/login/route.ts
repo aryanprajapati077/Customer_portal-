@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sql } from "@/lib/db"
-import { hashPassword, verifyPassword, isPasswordHashed } from "@/lib/password"
+import { hashPassword, verifyPassword, isPasswordHashed, normalizePasswordInput } from "@/lib/password"
 import { CUSTOMER_COOKIE, customerSessionCookieOptions, signCustomerSession } from "@/lib/auth-session"
 import {
   PORTAL_SESSION_COOKIE,
@@ -75,6 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim()
+    const normalizedPassword = normalizePasswordInput(password)
+    if (!normalizedPassword) {
+      return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
+    }
     const ip = clientIpFromRequest(request)
     const limited = consumeRateLimit(`login:${ip}:${normalizedEmail}`, 8, 60_000)
     if (!limited.ok) {
@@ -120,14 +124,14 @@ export async function POST(request: NextRequest) {
     // Prefer Active; if shared email, accept the first account whose password matches.
     let customer = null as (typeof customers)[number] | null
     for (const candidate of customers) {
-      if (await verifyPassword(password, candidate.password)) {
+      if (await verifyPassword(normalizedPassword, candidate.password)) {
         customer = candidate
         break
       }
     }
     // Keep timing similar when none matched but email exists
     if (!customer && customers.length > 0) {
-      await verifyPassword(password, "")
+      await verifyPassword(normalizedPassword, "")
       return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
@@ -136,7 +140,7 @@ export async function POST(request: NextRequest) {
         await prisma.customer
           .update({
             where: { id: customer.id },
-            data: { password: await hashPassword(password) },
+            data: { password: await hashPassword(normalizedPassword) },
           })
           .catch((err) => console.error("Password upgrade failed:", err))
       }
@@ -171,14 +175,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Keep timing similar when email unknown
-    await verifyPassword(password, "")
+    await verifyPassword(normalizedPassword, "")
 
     const portalUser = await findPortalUser(normalizedEmail)
     if (!portalUser) {
       return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }
 
-    const validPortal = await verifyPassword(password, portalUser.password)
+    const validPortal = await verifyPassword(normalizedPassword, portalUser.password)
     if (!validPortal) {
       return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 })
     }

@@ -118,7 +118,7 @@ export function computeImpactReportData(
     collections?.reduce((sum, c) => sum + (Number(c.weight) || 0), 0) ?? 0
 
   const totalWasteKg =
-    collections && collections.length > 0
+    collections != null
       ? collectionsTotalWasteKg
       : Number(customer.totalWasteCollected) || 0
 

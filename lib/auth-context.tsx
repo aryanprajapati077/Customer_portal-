@@ -209,7 +209,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: String(email || "").trim(),
+          // Strip invisible chars email clients insert on copy-paste
+          password: String(password || "")
+            .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
+            .replace(/[\u2028\u2029]/g, "")
+            .replace(/\u00A0/g, " ")
+            .trim(),
+        }),
       })
 
       const data = await response.json()

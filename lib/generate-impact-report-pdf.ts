@@ -75,8 +75,18 @@ export async function generateImpactReportPdf(
         customer.joinDate as string | Date | null,
       )
 
+  // Portal ranges (month / quarterly / this-year / custom) use the selected window.
+  // Email sends { period } with no range — stay cumulative from service start.
+  const useWindowStart =
+    Boolean(options?.range) &&
+    options?.range !== "installation" &&
+    Boolean(window.startDate)
+  const startIso = useWindowStart
+    ? window.startDate!.toISOString()
+    : cumulativeStart
+
   const collectionRows = await fetchReportCollections(scopeIds, {
-    startIso: cumulativeStart,
+    startIso,
     endIso,
   })
 

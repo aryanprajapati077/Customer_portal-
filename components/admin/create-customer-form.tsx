@@ -52,6 +52,8 @@ export type CreateCustomerFormState = {
   collectionFrequency: string
   kraftrebornCredits: string
   gstin: string
+  latitude: string
+  longitude: string
   logoBase64: string
   logoPreview: string
 }
@@ -81,6 +83,8 @@ export const EMPTY_CREATE_CUSTOMER_FORM: CreateCustomerFormState = {
   collectionFrequency: "",
   kraftrebornCredits: "",
   gstin: "",
+  latitude: "",
+  longitude: "",
   logoBase64: "",
   logoPreview: "",
 }
@@ -282,7 +286,7 @@ export function CreateCustomerForm({
       </div>
       </FormSection>
 
-      <FormSection title="Location" description="State and city for collections routing.">
+      <FormSection title="Location" description="State, city, and map coordinates for collections routing.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Req>State</Req>
@@ -320,6 +324,28 @@ export function CreateCustomerForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Latitude</Label>
+          <Input
+            type="number"
+            step="any"
+            value={form.latitude}
+            onChange={(e) => setForm((p) => ({ ...p, latitude: e.target.value }))}
+            placeholder="e.g. 12.9716"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Longitude</Label>
+          <Input
+            type="number"
+            step="any"
+            value={form.longitude}
+            onChange={(e) => setForm((p) => ({ ...p, longitude: e.target.value }))}
+            placeholder="e.g. 77.5946"
+          />
         </div>
       </div>
       </FormSection>

@@ -46,6 +46,8 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "collectionFrequency" TEXT,
       ADD COLUMN IF NOT EXISTS "gstin" TEXT,
       ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
+      ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION,
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
       ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3),
@@ -184,6 +186,7 @@ export async function GET(request: NextRequest) {
     const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : ""
     const query = `
       SELECT id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+             latitude, longitude,
              "lsuName", "lsuTechnicianName", "operationsIncharge",
              "contactPerson", phone, address, status,
              "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
@@ -233,6 +236,13 @@ export async function POST(request: NextRequest) {
     const num = (v: unknown, def = 0) =>
       v != null && Number.isFinite(Number(v)) ? Number(v) : def
     const int = (v: unknown, def = 0) => Math.floor(num(v, def))
+    const optionalCoord = (v: unknown): number | null => {
+      if (v == null || v === "") return null
+      const n = Number(v)
+      return Number.isFinite(n) ? n : null
+    }
+    const latitude = optionalCoord(body.latitude)
+    const longitude = optionalCoord(body.longitude)
 
     const noOfKiosk = int(body.noOfKiosk)
     const noOfBasicKiosk = int(body.noOfBasicKiosk)
@@ -368,6 +378,7 @@ export async function POST(request: NextRequest) {
     const rows = await sql`
       INSERT INTO "Customer" (
         id, email, password, "companyName", "tradeName", city, state, gstin, "logoUrl",
+        latitude, longitude,
         "lsuName", "lsuTechnicianName", "operationsIncharge",
         "primaryPocName", "primaryPocEmail", "primaryPocNumber", "primaryPocDesignation",
         "collectionPocs", "serviceStartDate", "contractEndDate",
@@ -386,6 +397,8 @@ export async function POST(request: NextRequest) {
         ${state},
         ${gstin || null},
         ${logoUrl},
+        ${latitude},
+        ${longitude},
         ${lsuName},
         ${lsuTechnicianName},
         ${operationsIncharge},
@@ -416,6 +429,7 @@ export async function POST(request: NextRequest) {
         ${now}
       )
       RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+                latitude, longitude,
                 "primaryPocName", "primaryPocEmail", "primaryPocNumber",
                 "collectionFrequency", "noOfKiosk", "kraftrebornCredits", "serviceStartDate", "contractEndDate",
                 "contactPerson", phone, address, status,
@@ -586,6 +600,24 @@ export async function PATCH(request: NextRequest) {
     }
     if (body?.city !== undefined) setText("city", body.city)
     if (body?.state !== undefined) setText("state", body.state)
+    if (body?.latitude !== undefined) {
+      const raw = body.latitude
+      const n = raw == null || raw === "" ? null : Number(raw)
+      if (n != null && !Number.isFinite(n)) {
+        return NextResponse.json({ success: false, error: "Invalid latitude" }, { status: 400 })
+      }
+      updates.push(`latitude = $${i++}`)
+      values.push(n)
+    }
+    if (body?.longitude !== undefined) {
+      const raw = body.longitude
+      const n = raw == null || raw === "" ? null : Number(raw)
+      if (n != null && !Number.isFinite(n)) {
+        return NextResponse.json({ success: false, error: "Invalid longitude" }, { status: 400 })
+      }
+      updates.push(`longitude = $${i++}`)
+      values.push(n)
+    }
     if (body?.lsuName !== undefined) setText("lsuName", body.lsuName)
     if (body?.lsuTechnicianName !== undefined) setText("lsuTechnicianName", body.lsuTechnicianName)
     if (body?.operationsIncharge !== undefined) setText("operationsIncharge", body.operationsIncharge)
@@ -647,7 +679,9 @@ export async function PATCH(request: NextRequest) {
       UPDATE "Customer"
       SET ${updates.join(", ")}
       WHERE id = $${i}
-      RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl", "contactPerson", phone, address, status,
+      RETURNING id, email, "companyName", "tradeName", city, state, gstin, "logoUrl",
+                latitude, longitude,
+                "contactPerson", phone, address, status,
                 "primaryPocEmail",
                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
                 "kraftrebornCredits", "updatedAt",

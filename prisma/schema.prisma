@@ -40,6 +40,10 @@ model Customer {
   gstin   String?
   logoUrl String?
 
+  /** Map coordinates (decimal degrees) */
+  latitude  Float?
+  longitude Float?
+
   contactPerson String?
   phone         String?
   address       String?

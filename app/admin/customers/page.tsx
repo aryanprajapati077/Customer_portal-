@@ -66,6 +66,8 @@ type CustomerRow = {
   state?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   lsuName?: string | null
   lsuTechnicianName?: string | null
   operationsIncharge?: string | null
@@ -104,6 +106,8 @@ const SHEET_COLUMNS: { key: keyof CustomerRow | "collectionPocSummary"; label: s
   { key: "gstin", label: "GSTIN", width: 140 },
   { key: "state", label: "State", width: 120 },
   { key: "city", label: "City", width: 110 },
+  { key: "latitude", label: "Latitude", width: 110 },
+  { key: "longitude", label: "Longitude", width: 110 },
   { key: "lsuName", label: "LSU Name", width: 140 },
   { key: "lsuTechnicianName", label: "LSU Technician", width: 140 },
   { key: "operationsIncharge", label: "Ops Incharge", width: 130 },
@@ -155,6 +159,8 @@ function EditableCustomerSheet({
     gstin: customer.gstin || "",
     state: customer.state || "",
     city: customer.city || "",
+    latitude: customer.latitude != null ? String(customer.latitude) : "",
+    longitude: customer.longitude != null ? String(customer.longitude) : "",
     lsuName: customer.lsuName || "",
     lsuTechnicianName: customer.lsuTechnicianName || "",
     operationsIncharge: customer.operationsIncharge || "",
@@ -197,6 +203,8 @@ function EditableCustomerSheet({
       gstin: customer.gstin || "",
       state: customer.state || "",
       city: customer.city || "",
+      latitude: customer.latitude != null ? String(customer.latitude) : "",
+      longitude: customer.longitude != null ? String(customer.longitude) : "",
       lsuName: customer.lsuName || "",
       lsuTechnicianName: customer.lsuTechnicianName || "",
       operationsIncharge: customer.operationsIncharge || "",
@@ -259,6 +267,8 @@ function EditableCustomerSheet({
         gstin: draft.gstin.trim(),
         state: draft.state.trim(),
         city: draft.city.trim(),
+        latitude: draft.latitude.trim() === "" ? null : Number(draft.latitude),
+        longitude: draft.longitude.trim() === "" ? null : Number(draft.longitude),
         lsuName: draft.lsuName.trim(),
         lsuTechnicianName: draft.lsuTechnicianName.trim(),
         operationsIncharge: draft.operationsIncharge.trim(),
@@ -427,6 +437,28 @@ function EditableCustomerSheet({
           {row(
             "City",
             <Input className={inputClass} value={draft.city} onChange={(e) => set("city", e.target.value)} />,
+          )}
+          {row(
+            "Latitude",
+            <Input
+              className={inputClass}
+              type="number"
+              step="any"
+              value={draft.latitude}
+              onChange={(e) => set("latitude", e.target.value)}
+              placeholder="e.g. 12.9716"
+            />,
+          )}
+          {row(
+            "Longitude",
+            <Input
+              className={inputClass}
+              type="number"
+              step="any"
+              value={draft.longitude}
+              onChange={(e) => set("longitude", e.target.value)}
+              placeholder="e.g. 77.5946"
+            />,
           )}
           {row(
             "LSU Name",
@@ -948,6 +980,8 @@ export default function AdminCustomersPage() {
           collectionFrequency: createForm.collectionFrequency,
           kraftrebornCredits: Number(createForm.kraftrebornCredits),
           gstin: createForm.gstin.trim() || undefined,
+          latitude: createForm.latitude.trim() === "" ? undefined : Number(createForm.latitude),
+          longitude: createForm.longitude.trim() === "" ? undefined : Number(createForm.longitude),
           logoBase64: createForm.logoBase64 || undefined,
         }),
       })

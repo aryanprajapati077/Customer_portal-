@@ -519,14 +519,6 @@ export type CollectionUncheckedUpdateManyWithoutCustomerNestedInput = {
   deleteMany?: Prisma.CollectionScalarWhereInput | Prisma.CollectionScalarWhereInput[]
 }
 
-export type NullableFloatFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type CollectionCreateWithoutCustomerInput = {
   id?: string
   date?: Date | string

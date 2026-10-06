@@ -32,6 +32,8 @@ export type CustomerAvgAggregateOutputType = {
   noOfAdvanceKiosk: number | null
   noOfPanVendorKiosk: number | null
   noOfWallMountKiosk: number | null
+  latitude: number | null
+  longitude: number | null
   employeeCount: number | null
   disposalUnitInstalled: number | null
   totalWasteCollected: number | null
@@ -52,6 +54,8 @@ export type CustomerSumAggregateOutputType = {
   noOfAdvanceKiosk: number | null
   noOfPanVendorKiosk: number | null
   noOfWallMountKiosk: number | null
+  latitude: number | null
+  longitude: number | null
   employeeCount: number | null
   disposalUnitInstalled: number | null
   totalWasteCollected: number | null
@@ -93,6 +97,8 @@ export type CustomerMinAggregateOutputType = {
   collectionFrequency: string | null
   gstin: string | null
   logoUrl: string | null
+  latitude: number | null
+  longitude: number | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -148,6 +154,8 @@ export type CustomerMaxAggregateOutputType = {
   collectionFrequency: string | null
   gstin: string | null
   logoUrl: string | null
+  latitude: number | null
+  longitude: number | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -203,6 +211,8 @@ export type CustomerCountAggregateOutputType = {
   collectionFrequency: number
   gstin: number
   logoUrl: number
+  latitude: number
+  longitude: number
   contactPerson: number
   phone: number
   address: number
@@ -239,6 +249,8 @@ export type CustomerAvgAggregateInputType = {
   noOfAdvanceKiosk?: true
   noOfPanVendorKiosk?: true
   noOfWallMountKiosk?: true
+  latitude?: true
+  longitude?: true
   employeeCount?: true
   disposalUnitInstalled?: true
   totalWasteCollected?: true
@@ -259,6 +271,8 @@ export type CustomerSumAggregateInputType = {
   noOfAdvanceKiosk?: true
   noOfPanVendorKiosk?: true
   noOfWallMountKiosk?: true
+  latitude?: true
+  longitude?: true
   employeeCount?: true
   disposalUnitInstalled?: true
   totalWasteCollected?: true
@@ -300,6 +314,8 @@ export type CustomerMinAggregateInputType = {
   collectionFrequency?: true
   gstin?: true
   logoUrl?: true
+  latitude?: true
+  longitude?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -355,6 +371,8 @@ export type CustomerMaxAggregateInputType = {
   collectionFrequency?: true
   gstin?: true
   logoUrl?: true
+  latitude?: true
+  longitude?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -410,6 +428,8 @@ export type CustomerCountAggregateInputType = {
   collectionFrequency?: true
   gstin?: true
   logoUrl?: true
+  latitude?: true
+  longitude?: true
   contactPerson?: true
   phone?: true
   address?: true
@@ -552,6 +572,8 @@ export type CustomerGroupByOutputType = {
   collectionFrequency: string | null
   gstin: string | null
   logoUrl: string | null
+  latitude: number | null
+  longitude: number | null
   contactPerson: string | null
   phone: string | null
   address: string | null
@@ -630,6 +652,8 @@ export type CustomerWhereInput = {
   collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
   gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
   logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -692,6 +716,8 @@ export type CustomerOrderByWithRelationInput = {
   collectionFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
   gstin?: Prisma.SortOrderInput | Prisma.SortOrder
   logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   contactPerson?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -757,6 +783,8 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
   gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
   logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -819,6 +847,8 @@ export type CustomerOrderByWithAggregationInput = {
   collectionFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
   gstin?: Prisma.SortOrderInput | Prisma.SortOrder
   logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   contactPerson?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -882,6 +912,8 @@ export type CustomerScalarWhereWithAggregatesInput = {
   collectionFrequency?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   gstin?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   logoUrl?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  latitude?: Prisma.FloatNullableWithAggregatesFilter<"Customer"> | number | null
+  longitude?: Prisma.FloatNullableWithAggregatesFilter<"Customer"> | number | null
   contactPerson?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   address?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
@@ -937,6 +969,8 @@ export type CustomerCreateInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -998,6 +1032,8 @@ export type CustomerUncheckedCreateInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1059,6 +1095,8 @@ export type CustomerUpdateInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1120,6 +1158,8 @@ export type CustomerUncheckedUpdateInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1181,6 +1221,8 @@ export type CustomerCreateManyInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1236,6 +1278,8 @@ export type CustomerUpdateManyMutationInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1290,6 +1334,8 @@ export type CustomerUncheckedUpdateManyInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1360,6 +1406,8 @@ export type CustomerCountOrderByAggregateInput = {
   collectionFrequency?: Prisma.SortOrder
   gstin?: Prisma.SortOrder
   logoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -1394,6 +1442,8 @@ export type CustomerAvgOrderByAggregateInput = {
   noOfAdvanceKiosk?: Prisma.SortOrder
   noOfPanVendorKiosk?: Prisma.SortOrder
   noOfWallMountKiosk?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
   employeeCount?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   totalWasteCollected?: Prisma.SortOrder
@@ -1435,6 +1485,8 @@ export type CustomerMaxOrderByAggregateInput = {
   collectionFrequency?: Prisma.SortOrder
   gstin?: Prisma.SortOrder
   logoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -1490,6 +1542,8 @@ export type CustomerMinOrderByAggregateInput = {
   collectionFrequency?: Prisma.SortOrder
   gstin?: Prisma.SortOrder
   logoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
   contactPerson?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
@@ -1524,6 +1578,8 @@ export type CustomerSumOrderByAggregateInput = {
   noOfAdvanceKiosk?: Prisma.SortOrder
   noOfPanVendorKiosk?: Prisma.SortOrder
   noOfWallMountKiosk?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
   employeeCount?: Prisma.SortOrder
   disposalUnitInstalled?: Prisma.SortOrder
   totalWasteCollected?: Prisma.SortOrder
@@ -1581,6 +1637,14 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type IntFieldUpdateOperationsInput = {
   set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
   increment?: number
   decrement?: number
   multiply?: number
@@ -1746,6 +1810,8 @@ export type CustomerCreateWithoutChildCustomersInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1806,6 +1872,8 @@ export type CustomerUncheckedCreateWithoutChildCustomersInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1871,6 +1939,8 @@ export type CustomerCreateWithoutParentCustomerInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -1931,6 +2001,8 @@ export type CustomerUncheckedCreateWithoutParentCustomerInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2012,6 +2084,8 @@ export type CustomerUpdateWithoutChildCustomersInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2072,6 +2146,8 @@ export type CustomerUncheckedUpdateWithoutChildCustomersInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2151,6 +2227,8 @@ export type CustomerScalarWhereInput = {
   collectionFrequency?: Prisma.StringNullableFilter<"Customer"> | string | null
   gstin?: Prisma.StringNullableFilter<"Customer"> | string | null
   logoUrl?: Prisma.StringNullableFilter<"Customer"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
   contactPerson?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   address?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -2206,6 +2284,8 @@ export type CustomerCreateWithoutNotificationsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2266,6 +2346,8 @@ export type CustomerUncheckedCreateWithoutNotificationsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2342,6 +2424,8 @@ export type CustomerUpdateWithoutNotificationsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2402,6 +2486,8 @@ export type CustomerUncheckedUpdateWithoutNotificationsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2462,6 +2548,8 @@ export type CustomerCreateWithoutCollectionsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2522,6 +2610,8 @@ export type CustomerUncheckedCreateWithoutCollectionsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2598,6 +2688,8 @@ export type CustomerUpdateWithoutCollectionsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2658,6 +2750,8 @@ export type CustomerUncheckedUpdateWithoutCollectionsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2718,6 +2812,8 @@ export type CustomerCreateWithoutCertificatesInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2778,6 +2874,8 @@ export type CustomerUncheckedCreateWithoutCertificatesInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -2854,6 +2952,8 @@ export type CustomerUpdateWithoutCertificatesInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2914,6 +3014,8 @@ export type CustomerUncheckedUpdateWithoutCertificatesInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2974,6 +3076,8 @@ export type CustomerCreateWithoutReportsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -3034,6 +3138,8 @@ export type CustomerUncheckedCreateWithoutReportsInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -3110,6 +3216,8 @@ export type CustomerUpdateWithoutReportsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3170,6 +3278,8 @@ export type CustomerUncheckedUpdateWithoutReportsInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3230,6 +3340,8 @@ export type CustomerCreateWithoutShopOrdersInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -3290,6 +3402,8 @@ export type CustomerUncheckedCreateWithoutShopOrdersInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -3366,6 +3480,8 @@ export type CustomerUpdateWithoutShopOrdersInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3426,6 +3542,8 @@ export type CustomerUncheckedUpdateWithoutShopOrdersInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3486,6 +3604,8 @@ export type CustomerCreateManyParentCustomerInput = {
   collectionFrequency?: string | null
   gstin?: string | null
   logoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
   contactPerson?: string | null
   phone?: string | null
   address?: string | null
@@ -3540,6 +3660,8 @@ export type CustomerUpdateWithoutParentCustomerInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3600,6 +3722,8 @@ export type CustomerUncheckedUpdateWithoutParentCustomerInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3660,6 +3784,8 @@ export type CustomerUncheckedUpdateManyWithoutParentCustomerInput = {
   collectionFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   contactPerson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3790,6 +3916,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   collectionFrequency?: boolean
   gstin?: boolean
   logoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -3853,6 +3981,8 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   collectionFrequency?: boolean
   gstin?: boolean
   logoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -3909,6 +4039,8 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   collectionFrequency?: boolean
   gstin?: boolean
   logoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -3965,6 +4097,8 @@ export type CustomerSelectScalar = {
   collectionFrequency?: boolean
   gstin?: boolean
   logoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
   contactPerson?: boolean
   phone?: boolean
   address?: boolean
@@ -3993,7 +4127,7 @@ export type CustomerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "primaryPocEmailEnabled" | "primaryPocStatus" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "serviceStatus" | "contractEndDate" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "companyName" | "tradeName" | "city" | "state" | "lsuName" | "lsuTechnicianName" | "operationsIncharge" | "primaryPocName" | "primaryPocEmail" | "primaryPocNumber" | "primaryPocDesignation" | "collectionPocs" | "primaryPocEmailEnabled" | "primaryPocStatus" | "serviceStartDate" | "noOfKiosk" | "noOfBasicKiosk" | "noOfAdvanceKiosk" | "noOfPanVendorKiosk" | "noOfWallMountKiosk" | "collectionFrequency" | "gstin" | "logoUrl" | "latitude" | "longitude" | "contactPerson" | "phone" | "address" | "industry" | "employeeCount" | "joinDate" | "status" | "serviceStatus" | "contractEndDate" | "disposalUnitInstalled" | "isGroup" | "parentCustomerId" | "totalWasteCollected" | "cigaretteButtsCollected" | "microplasticsUpcycled" | "waterResourcesProtected" | "pendingCollection" | "certificatesEarned" | "co2Saved" | "kraftrebornCredits" | "treesEquivalent" | "monthlyTarget" | "profileImageUrl" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentCustomer?: boolean | Prisma.Customer$parentCustomerArgs<ExtArgs>
   childCustomers?: boolean | Prisma.Customer$childCustomersArgs<ExtArgs>
@@ -4049,6 +4183,11 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     collectionFrequency: string | null
     gstin: string | null
     logoUrl: string | null
+    /**
+     * * Map coordinates (decimal degrees)
+     */
+    latitude: number | null
+    longitude: number | null
     contactPerson: string | null
     phone: string | null
     address: string | null
@@ -4534,6 +4673,8 @@ export interface CustomerFieldRefs {
   readonly collectionFrequency: Prisma.FieldRef<"Customer", 'String'>
   readonly gstin: Prisma.FieldRef<"Customer", 'String'>
   readonly logoUrl: Prisma.FieldRef<"Customer", 'String'>
+  readonly latitude: Prisma.FieldRef<"Customer", 'Float'>
+  readonly longitude: Prisma.FieldRef<"Customer", 'Float'>
   readonly contactPerson: Prisma.FieldRef<"Customer", 'String'>
   readonly phone: Prisma.FieldRef<"Customer", 'String'>
   readonly address: Prisma.FieldRef<"Customer", 'String'>

@@ -1669,6 +1669,8 @@ export const CustomerScalarFieldEnum = {
   collectionFrequency: 'collectionFrequency',
   gstin: 'gstin',
   logoUrl: 'logoUrl',
+  latitude: 'latitude',
+  longitude: 'longitude',
   contactPerson: 'contactPerson',
   phone: 'phone',
   address: 'address',

@@ -280,8 +280,16 @@ export async function generateImpactReportExcel(
     ["Location", parseLocation(customer.address as string | null)],
     ["Service Start Date", formatInstallDate((customer.serviceStartDate || customer.joinDate) as string | Date | null)],
     ["Number of Kiosks / Disposal Units", reportData.disposalUnitsInstalled],
-    ["Reporting Period", reportData.reportingPeriodLabel || window.label],
-    ["Period Dates", reportData.reportingPeriodRange || window.label],
+    [
+      isEmailCumulative ? "Latest Month Report" : "Reporting Period",
+      reportData.reportingPeriodLabel || window.label,
+    ],
+    ...(isEmailCumulative
+      ? []
+      : ([["Period Dates", reportData.reportingPeriodRange || window.label]] as [
+          string,
+          string | number,
+        ][])),
     ["Report Generated On", formatDateCell(new Date())],
     ["Collection Frequency", estimateFrequency(collections)],
   ]

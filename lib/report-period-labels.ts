@@ -36,11 +36,26 @@ export function applyReportPeriodLabels(
 ) {
   reportData.reportingPeriod = window.label
   reportData.reportingPeriodLabel = window.label
+  reportData.reportingPeriodCaption = "REPORTING PERIOD"
+  reportData.showReportingPeriodRange = true
 
-  // Email / admin monthly: keep cover as that month (image style), data is still cumulative.
+  // Email / admin monthly only: "Latest Month Report" + month/year (portal unchanged).
   if (isCumulativeMonthlyReport(options) && options.period) {
-    reportData.reportingPeriodRange =
-      formatCalendarMonthRange(options.period) || window.label
+    const monthLabel =
+      window.label ||
+      (() => {
+        const match = options.period!.match(/^(\d{4})-(\d{2})$/)
+        if (!match) return options.period!
+        return new Date(Number(match[1]), Number(match[2]) - 1, 1).toLocaleDateString("en-GB", {
+          month: "long",
+          year: "numeric",
+        })
+      })()
+    reportData.reportingPeriod = monthLabel
+    reportData.reportingPeriodLabel = monthLabel
+    reportData.reportingPeriodCaption = "LATEST MONTH REPORT"
+    reportData.reportingPeriodRange = monthLabel
+    reportData.showReportingPeriodRange = false
     return
   }
 

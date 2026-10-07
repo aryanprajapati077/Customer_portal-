@@ -7,6 +7,10 @@ export interface ImpactReportData {
   reportingPeriod: string
   reportingPeriodLabel: string
   reportingPeriodRange: string
+  /** Cover eyebrow for the period card; defaults to "REPORTING PERIOD" */
+  reportingPeriodCaption?: string | null
+  /** When false, hide the calendar date-range row under the period title */
+  showReportingPeriodRange?: boolean
   totalWasteKg: number
   cigaretteButts: number
   totalWasteRecycledKg: number

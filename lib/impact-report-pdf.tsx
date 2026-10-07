@@ -603,7 +603,11 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
     { label: "CUSTOMER ID", value: data.customerId, icon: <IdCard size={13} /> },
     { label: "UNITS INSTALLED", value: String(data.disposalUnitsInstalled), icon: <Building size={13} /> },
     { label: "INSTALLATION DATE", value: data.installationDate, icon: <Calendar size={13} /> },
-    { label: "REPORTING PERIOD", value: data.reportingPeriodRange, icon: <Calendar size={13} /> },
+    {
+      label: data.reportingPeriodCaption || "REPORTING PERIOD",
+      value: data.reportingPeriodLabel || data.reportingPeriodRange,
+      icon: <Calendar size={13} />,
+    },
   ]
 
   const benefits = [
@@ -917,18 +921,30 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
               }}
             >
               <Text style={{ fontSize: 6.5, fontWeight: "bold", color: MUTED, letterSpacing: 0.7 }}>
-                REPORTING PERIOD
+                {data.reportingPeriodCaption || "REPORTING PERIOD"}
               </Text>
-              <Text style={{ fontSize: 15, fontWeight: "bold", color: DARK, marginTop: 5, marginBottom: 10 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  color: DARK,
+                  marginTop: 5,
+                  marginBottom: data.showReportingPeriodRange === false ? 0 : 10,
+                }}
+              >
                 {data.reportingPeriodLabel}
               </Text>
-              <View style={{ height: 1, backgroundColor: "#E5E7EB", marginBottom: 10 }} />
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Calendar size={12} />
-                <Text style={{ fontSize: 10, fontWeight: "bold", color: DARK }}>
-                  {data.reportingPeriodRange}
-                </Text>
-              </View>
+              {data.showReportingPeriodRange === false ? null : (
+                <>
+                  <View style={{ height: 1, backgroundColor: "#E5E7EB", marginBottom: 10 }} />
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Calendar size={12} />
+                    <Text style={{ fontSize: 10, fontWeight: "bold", color: DARK }}>
+                      {data.reportingPeriodRange}
+                    </Text>
+                  </View>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -1741,7 +1757,10 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
               <Text style={{ fontSize: 7, color: MUTED }}>www.buffindia.com</Text>
             </View>
             <Text style={{ fontSize: 7, color: MUTED }}>
-              Customer ID: {data.customerId}  ·  Reporting Period: {data.reportingPeriodRange}
+              Customer ID: {data.customerId}  ·{" "}
+              {data.reportingPeriodCaption === "LATEST MONTH REPORT"
+                ? `Latest Month Report: ${data.reportingPeriodLabel}`
+                : `Reporting Period: ${data.reportingPeriodRange}`}
             </Text>
           </View>
           <View

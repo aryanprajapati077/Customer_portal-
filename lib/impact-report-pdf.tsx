@@ -1758,8 +1758,8 @@ export function ImpactReportPdfDocument({ data }: { data: ImpactReportData }) {
             </View>
             <Text style={{ fontSize: 7, color: MUTED }}>
               Customer ID: {data.customerId}  ·{" "}
-              {data.reportingPeriodCaption === "LATEST MONTH REPORT"
-                ? `Latest Month Report: ${data.reportingPeriodLabel}`
+              {data.reportingPeriodCaption === "LATEST COLLECTION MONTH"
+                ? `Latest Collection Month: ${data.reportingPeriodLabel}`
                 : `Reporting Period: ${data.reportingPeriodRange}`}
             </Text>
           </View>

@@ -281,7 +281,7 @@ export async function generateImpactReportExcel(
     ["Service Start Date", formatInstallDate((customer.serviceStartDate || customer.joinDate) as string | Date | null)],
     ["Number of Kiosks / Disposal Units", reportData.disposalUnitsInstalled],
     [
-      isEmailCumulative ? "Latest Month Report" : "Reporting Period",
+      isEmailCumulative ? "Latest Collection Month" : "Reporting Period",
       reportData.reportingPeriodLabel || window.label,
     ],
     ...(isEmailCumulative

@@ -39,7 +39,7 @@ export function applyReportPeriodLabels(
   reportData.reportingPeriodCaption = "REPORTING PERIOD"
   reportData.showReportingPeriodRange = true
 
-  // Email / admin monthly only: "Latest Month Report" + month/year (portal unchanged).
+  // Email / admin monthly only: "Latest Collection Month" + month/year (portal unchanged).
   if (isCumulativeMonthlyReport(options) && options.period) {
     const monthLabel =
       window.label ||
@@ -53,7 +53,7 @@ export function applyReportPeriodLabels(
       })()
     reportData.reportingPeriod = monthLabel
     reportData.reportingPeriodLabel = monthLabel
-    reportData.reportingPeriodCaption = "LATEST MONTH REPORT"
+    reportData.reportingPeriodCaption = "LATEST COLLECTION MONTH"
     reportData.reportingPeriodRange = monthLabel
     reportData.showReportingPeriodRange = false
     return

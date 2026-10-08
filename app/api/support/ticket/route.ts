@@ -155,13 +155,22 @@ export async function POST(request: Request) {
 
     const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_FROM
     const resendKey = process.env.RESEND_API_KEY
-    if (resendKey && adminEmail) {
+    const campaignEmail = "campaign@buffindia.com"
+    const isProposal =
+      category === "proposal" || source === "landing" || /proposal/i.test(subject)
+    const isInquiry = source === "contact" || category === "contact" || category === "inquiry"
+    const recipients = [adminEmail, isProposal || isInquiry ? campaignEmail : ""]
+      .map((addr) => String(addr || "").trim())
+      .filter(Boolean)
+      .filter((addr, i, all) => all.findIndex((a) => a.toLowerCase() === addr.toLowerCase()) === i)
+
+    if (resendKey && recipients.length) {
       const resend = new Resend(resendKey)
       const from = process.env.RESEND_FROM || "Buffindia Portal <onboarding@resend.dev>"
       await resend.emails
         .send({
           from,
-          to: adminEmail,
+          to: recipients,
           replyTo: email,
           subject: source === "contact" ? `[Contact] ${subject}` : `[Support] ${subject}`,
           text: `New support ticket (#${ticketId})\n\nFrom: ${name} <${email}>\nCategory: ${category}\nSource: ${source}\nAttachment: ${attachmentUrl ? "Yes" : "No"}\n\n${message}`,

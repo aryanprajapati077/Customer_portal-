@@ -137,6 +137,7 @@ export function CreateCustomerForm({
   const cities = useMemo(() => getCitiesForState(form.state), [form.state])
   const [lsuTeams, setLsuTeams] = useState<{ lsuName: string; technicianName: string }[]>([])
   const [opsManagers, setOpsManagers] = useState<string[]>([])
+  const [lsuManagers, setLsuManagers] = useState<Record<string, string>>({})
   const [dropdownsLoading, setDropdownsLoading] = useState(true)
 
   useEffect(() => {
@@ -144,12 +145,14 @@ export function CreateCustomerForm({
     ;(async () => {
       setDropdownsLoading(true)
       try {
-        const [teamsRes, managersRes] = await Promise.all([
+        const [teamsRes, managersRes, assignRes] = await Promise.all([
           fetch("/api/admin/lsu-teams"),
           fetch("/api/admin/operations-managers"),
+          fetch("/api/admin/lsu-assignments"),
         ])
         const teamsData = await teamsRes.json()
         const managersData = await managersRes.json()
+        const assignData = await assignRes.json()
         if (cancelled) return
         setLsuTeams(
           (teamsData.teams || []).map((t: { lsuName: string; technicianName: string }) => ({
@@ -160,6 +163,11 @@ export function CreateCustomerForm({
         setOpsManagers(
           (managersData.managers || []).map((m: { name: string }) => m.name).filter(Boolean),
         )
+        const map: Record<string, string> = {}
+        for (const row of assignData.assignments || []) {
+          if (row.lsuName && row.operationsManagerName) map[row.lsuName] = row.operationsManagerName
+        }
+        setLsuManagers(map)
       } catch {
         if (!cancelled) {
           setLsuTeams([])
@@ -180,6 +188,7 @@ export function CreateCustomerForm({
       ...p,
       lsuName,
       lsuTechnicianName: team?.technicianName || "",
+      operationsIncharge: lsuManagers[lsuName] || p.operationsIncharge,
     }))
   }
 

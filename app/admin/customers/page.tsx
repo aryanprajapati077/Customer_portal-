@@ -240,6 +240,60 @@ function EditableCustomerSheet({
   const set = (key: keyof typeof draft, value: string) =>
     setDraft((d) => ({ ...d, [key]: value }))
 
+  const [lsuTeams, setLsuTeams] = useState<{ lsuName: string; technicianName: string }[]>([])
+  const [opsManagers, setOpsManagers] = useState<string[]>([])
+  const [lsuManagers, setLsuManagers] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const [teamsRes, managersRes, assignRes] = await Promise.all([
+          fetch("/api/admin/lsu-teams"),
+          fetch("/api/admin/operations-managers"),
+          fetch("/api/admin/lsu-assignments"),
+        ])
+        const teamsData = await teamsRes.json()
+        const managersData = await managersRes.json()
+        const assignData = await assignRes.json()
+        if (cancelled) return
+        setLsuTeams(
+          (teamsData.teams || []).map((t: { lsuName: string; technicianName: string }) => ({
+            lsuName: t.lsuName,
+            technicianName: t.technicianName,
+          })),
+        )
+        setOpsManagers(
+          (managersData.managers || []).map((m: { name: string }) => m.name).filter(Boolean),
+        )
+        const map: Record<string, string> = {}
+        for (const row of assignData.assignments || []) {
+          if (row.lsuName && row.operationsManagerName) map[row.lsuName] = row.operationsManagerName
+        }
+        setLsuManagers(map)
+      } catch {
+        if (!cancelled) {
+          setLsuTeams([])
+          setOpsManagers([])
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const selectLsu = (lsuName: string) => {
+    const team = lsuTeams.find((t) => t.lsuName === lsuName)
+    const assignedManager = lsuManagers[lsuName]
+    setDraft((d) => ({
+      ...d,
+      lsuName,
+      lsuTechnicianName: team?.technicianName || d.lsuTechnicianName,
+      operationsIncharge: assignedManager || d.operationsIncharge,
+    }))
+  }
+
   const updatePoc = (index: number, patch: Partial<CollectionPocForm>) => {
     setCollectionPocs((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
   }
@@ -462,23 +516,51 @@ function EditableCustomerSheet({
           )}
           {row(
             "LSU Name",
-            <Input className={inputClass} value={draft.lsuName} onChange={(e) => set("lsuName", e.target.value)} />,
+            <Select value={draft.lsuName || undefined} onValueChange={selectLsu}>
+              <SelectTrigger className="h-9 rounded-md border-[#D8D8D8] bg-white text-[13px]">
+                <SelectValue placeholder="Select LSU" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {draft.lsuName && !lsuTeams.some((t) => t.lsuName === draft.lsuName) ? (
+                  <SelectItem value={draft.lsuName}>{draft.lsuName}</SelectItem>
+                ) : null}
+                {lsuTeams.map((team) => (
+                  <SelectItem key={team.lsuName} value={team.lsuName}>
+                    {team.lsuName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>,
           )}
           {row(
             "LSU Technician",
             <Input
               className={inputClass}
+              readOnly
               value={draft.lsuTechnicianName}
-              onChange={(e) => set("lsuTechnicianName", e.target.value)}
+              placeholder="Filled from the selected LSU"
             />,
           )}
           {row(
-            "Operations Incharge",
-            <Input
-              className={inputClass}
-              value={draft.operationsIncharge}
-              onChange={(e) => set("operationsIncharge", e.target.value)}
-            />,
+            "Operations manager",
+            <Select
+              value={draft.operationsIncharge || undefined}
+              onValueChange={(v) => set("operationsIncharge", v)}
+            >
+              <SelectTrigger className="h-9 rounded-md border-[#D8D8D8] bg-white text-[13px]">
+                <SelectValue placeholder="Select operations manager" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {draft.operationsIncharge && !opsManagers.includes(draft.operationsIncharge) ? (
+                  <SelectItem value={draft.operationsIncharge}>{draft.operationsIncharge}</SelectItem>
+                ) : null}
+                {opsManagers.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>,
           )}
           {row(
             "Collection Frequency",

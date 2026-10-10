@@ -38,6 +38,7 @@ import {
   ChevronRight,
   Search,
   Zap,
+  MapPinned,
   type LucideIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -92,7 +93,19 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Operations",
     items: [
       { href: "/admin/collections", label: "Collections", icon: Package },
+      {
+        href: "/admin/reverify-collections",
+        label: "Reverify Collections",
+        icon: ShieldCheck,
+        keywords: ["verify", "verification", "reverify", "operations", "pending"],
+      },
       { href: "/admin/pending-collections", label: "Pending Collections", icon: ClipboardList },
+      {
+        href: "/admin/lsu-assign",
+        label: "LSU Assign",
+        icon: MapPinned,
+        keywords: ["lsu", "assign", "operations", "manager"],
+      },
       { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
       {
         href: "/admin/renewal-responses",

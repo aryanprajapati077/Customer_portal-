@@ -207,7 +207,7 @@ export default function AdminCollectionsPage() {
     customerId: "",
     weight: 1,
     location: "",
-    status: "Completed",
+    status: "Pending verification",
     date: new Date().toISOString().slice(0, 10),
     collectionMonth: new Date().toISOString().slice(0, 7),
   })
@@ -607,16 +607,12 @@ export default function AdminCollectionsPage() {
               <Label className="text-xs font-semibold uppercase tracking-wide text-[#1B7339]">
                 Status
               </Label>
-              <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
-                <SelectTrigger className="h-11 rounded-xl border-[#D5E5D9] bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Scheduled">Scheduled</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex h-11 items-center rounded-xl border border-[#D5E5D9] bg-[#F7FBF7] px-3 text-sm text-[#1B7339]">
+                Pending verification
+              </div>
+              <p className="text-[11px] text-[#7A7A7A]">
+                An operations manager confirms this on Reverify Collections before it counts as final.
+              </p>
             </div>
             {monthCollectionMode ? (
               <div className="space-y-1.5">
@@ -803,6 +799,7 @@ export default function AdminCollectionsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Completed">Completed</SelectItem>
+                            <SelectItem value="Pending verification">Pending verification</SelectItem>
                             <SelectItem value="Pending">Pending</SelectItem>
                             <SelectItem value="Scheduled">Scheduled</SelectItem>
                           </SelectContent>
@@ -887,6 +884,7 @@ export default function AdminCollectionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Pending verification">Pending verification</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Scheduled">Scheduled</SelectItem>
                   </SelectContent>

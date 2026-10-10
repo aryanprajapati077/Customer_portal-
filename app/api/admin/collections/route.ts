@@ -1,25 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-
-async function refreshCustomerWaste(customerId: string) {
-  await sql`
-    UPDATE "Customer"
-    SET "totalWasteCollected" = (
-          SELECT COALESCE(SUM(weight), 0) FROM "Collection" WHERE "customerId" = ${customerId}
-        ),
-        "cigaretteButtsCollected" = ROUND((
-          SELECT COALESCE(SUM(weight), 0) FROM "Collection" WHERE "customerId" = ${customerId}
-        ) * 3000),
-        "microplasticsUpcycled" = ROUND(((
-          SELECT COALESCE(SUM(weight), 0) FROM "Collection" WHERE "customerId" = ${customerId}
-        ) * 0.8)::numeric, 2),
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE id = ${customerId}
-  `
-}
+import {
+  PENDING_VERIFICATION_STATUS,
+  ensureCollectionVerificationColumns,
+  refreshCustomerWaste,
+} from "@/lib/collection-verification"
 
 export async function GET(request: NextRequest) {
   try {
+    await ensureCollectionVerificationColumns()
     const customerId = request.nextUrl.searchParams.get("customerId")
     const month = request.nextUrl.searchParams.get("month")
     const lsu = request.nextUrl.searchParams.get("lsu")
@@ -98,11 +87,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureCollectionVerificationColumns()
     const body = await request.json()
     const customerId = String(body?.customerId || "")
     const weight = Number(body?.weight)
     const location = body?.location ? String(body.location) : null
-    const status = body?.status ? String(body.status) : "Completed"
+    // New entries stay pending until an operations manager verifies them.
+    const status = PENDING_VERIFICATION_STATUS
     const collectionDate = body?.date ? String(body.date) : null
     const notes = body?.notes != null ? String(body.notes) : null
 
@@ -114,54 +105,14 @@ export async function POST(request: NextRequest) {
     const dateValue = collectionDate ? new Date(collectionDate).toISOString() : new Date().toISOString()
 
     const rows = await sql`
-      INSERT INTO "Collection" (id, "customerId", date, weight, location, status, notes)
-      VALUES (${id}, ${customerId}, ${dateValue}, ${weight}, ${location}, ${status}, ${notes})
+      INSERT INTO "Collection" (
+        id, "customerId", date, weight, location, status, notes, "verificationStatus"
+      )
+      VALUES (
+        ${id}, ${customerId}, ${dateValue}, ${weight}, ${location}, ${status}, ${notes}, 'pending'
+      )
       RETURNING *
     `
-
-    await refreshCustomerWaste(customerId)
-
-    if (String(status).toLowerCase() === "completed") {
-      try {
-        const customerRows = await sql`
-          SELECT id, email, "primaryPocEmail", "companyName", "contactPerson"
-          FROM "Customer" WHERE id = ${customerId} LIMIT 1
-        `
-        const customer = customerRows[0] as
-          | {
-              id: string
-              email: string
-              primaryPocEmail?: string | null
-              companyName: string
-              contactPerson?: string | null
-            }
-          | undefined
-        if (customer) {
-          const d = new Date(dateValue)
-          const month = d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
-          const to = String(customer.primaryPocEmail || customer.email || "")
-            .toLowerCase()
-            .trim()
-          if (to.includes("@")) {
-            const { sendNotificationEmail } = await import("@/lib/send-notification-email")
-            await sendNotificationEmail({
-              templateId: "collection_completed",
-              to,
-              vars: {
-                name: customer.contactPerson?.split(" ")[0] || customer.companyName || "Partner",
-                company: customer.companyName,
-                month,
-                weight: String(Number(weight).toFixed(2)),
-                location: location || "",
-                customerId: customer.id,
-              },
-            })
-          }
-        }
-      } catch (err) {
-        console.error("Collection completed email failed:", err)
-      }
-    }
 
     return NextResponse.json({ success: true, collection: rows?.[0] || null })
   } catch (error) {
@@ -172,12 +123,13 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    await ensureCollectionVerificationColumns()
     const body = await request.json()
     const id = String(body?.id || "")
     if (!id) return NextResponse.json({ success: false, error: "Collection id required" }, { status: 400 })
 
     const existing = await sql`
-      SELECT id, "customerId", date, weight, location, status, notes
+      SELECT id, "customerId", date, weight, location, status, notes, "verificationStatus"
       FROM "Collection" WHERE id = ${id} LIMIT 1
     `
     if (!existing?.[0]) {
@@ -191,6 +143,7 @@ export async function PATCH(request: NextRequest) {
       location: string | null
       status: string
       notes: string | null
+      verificationStatus?: string | null
     }
 
     const weight =
@@ -204,7 +157,17 @@ export async function PATCH(request: NextRequest) {
           ? String(body.location)
           : null
         : row.location
-    const status = body?.status !== undefined ? String(body.status) : row.status
+    let status = body?.status !== undefined ? String(body.status) : row.status
+    if (
+      status.toLowerCase() === "completed" &&
+      row.verificationStatus !== "verified" &&
+      String(row.status).toLowerCase() !== "completed"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Verify this collection on Reverify Collections before it becomes final." },
+        { status: 400 },
+      )
+    }
     const notes =
       body?.notes !== undefined ? (body.notes == null || body.notes === "" ? null : String(body.notes)) : row.notes
     const dateValue =

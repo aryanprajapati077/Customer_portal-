@@ -253,18 +253,18 @@ export default function LoginPage() {
             www.buffindia.com
           </a>
           <a
-            href="mailto:info@buffindia.com"
+            href="mailto:campaign@buffindia.com"
             className="inline-flex items-center gap-1.5 hover:text-[#1B7339]"
           >
             <Mail className="h-3.5 w-3.5" />
-            info@buffindia.com
+            campaign@buffindia.com
           </a>
           <a
-            href="tel:+916359566528"
+            href="tel:+919512120366"
             className="inline-flex items-center gap-1.5 hover:text-[#1B7339]"
           >
             <Phone className="h-3.5 w-3.5" />
-            +91 63595 66528
+            +91 9512120366
           </a>
         </div>
       </footer>

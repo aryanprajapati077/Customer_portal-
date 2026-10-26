@@ -95,7 +95,7 @@ export async function generateServiceCertificatePdf(customerId: string, certific
     customerId: formatCustomerCode(customer.id) || customer.id,
     logoUrl: logo?.dataUrl || null,
     verifyUrl,
-    phone: customer.phone || "+91 63595 66528",
+    phone: customer.phone || "+91 9512120366",
   }
 
   const pdfBuffer = await renderToBuffer(

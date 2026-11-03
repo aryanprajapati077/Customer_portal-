@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, Loader2, Search, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Loader2, Pencil, Search, ShieldCheck, X } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/admin-list-card"
 
 type Row = {
@@ -25,6 +25,13 @@ type Row = {
   verifiedAt?: string | null
 }
 
+type EditDraft = {
+  id: string
+  weight: string
+  location: string
+  date: string
+}
+
 function monthOptions(count = 18) {
   const opts: { value: string; label: string }[] = []
   const now = new Date()
@@ -34,6 +41,22 @@ function monthOptions(count = 18) {
     opts.push({ value, label: d.toLocaleDateString("en-IN", { month: "long", year: "numeric" }) })
   }
   return opts
+}
+
+/** Show weight with up to 3 digits after the decimal. */
+function formatWeight(raw: number | string | null | undefined) {
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return "—"
+  return n.toLocaleString("en-IN", {
+    maximumFractionDigits: 3,
+    minimumFractionDigits: 0,
+  })
+}
+
+function toDateInput(raw: string) {
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toISOString().slice(0, 10)
 }
 
 function formatWhen(raw?: string | null) {
@@ -63,6 +86,8 @@ export default function ReverifyCollectionsPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [lsuOptions, setLsuOptions] = useState<string[]>([])
   const [managerOptions, setManagerOptions] = useState<string[]>([])
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -146,6 +171,54 @@ export default function ReverifyCollectionsPage() {
 
   const toggle = (id: string) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const startEdit = (row: Row) => {
+    const w = Number(row.weight)
+    const rounded = Number.isFinite(w) ? Math.round(w * 1000) / 1000 : 0
+    setEditDraft({
+      id: row.id,
+      weight: String(rounded),
+      location: row.location || "",
+      date: toDateInput(row.date),
+    })
+    setError("")
+  }
+
+  const cancelEdit = () => {
+    setEditDraft(null)
+  }
+
+  const saveEdit = async () => {
+    if (!editDraft) return
+    const weight = Number(editDraft.weight)
+    if (!Number.isFinite(weight) || weight < 0) {
+      setError("Enter a valid weight (kg), up to 3 decimal places.")
+      return
+    }
+    const rounded = Math.round(weight * 1000) / 1000
+    setSavingEdit(true)
+    setError("")
+    try {
+      const res = await fetch("/api/admin/collections", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editDraft.id,
+          weight: rounded,
+          location: editDraft.location.trim() || null,
+          date: editDraft.date || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.success) throw new Error(data?.error || "Could not save changes")
+      setEditDraft(null)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save changes")
+    } finally {
+      setSavingEdit(false)
+    }
   }
 
   return (
@@ -295,6 +368,7 @@ export default function ReverifyCollectionsPage() {
               ) : (
                 rows.map((row) => {
                   const verified = row.verificationStatus === "verified"
+                  const editing = editDraft?.id === row.id
                   return (
                     <tr key={row.id} className="border-t border-[#f0eee9]">
                       <td className="px-3 py-2">
@@ -302,7 +376,7 @@ export default function ReverifyCollectionsPage() {
                           type="checkbox"
                           aria-label={`Select ${row.customerId}`}
                           checked={selected.includes(row.id)}
-                          disabled={verified}
+                          disabled={verified || editing}
                           onChange={() => toggle(row.id)}
                         />
                       </td>
@@ -317,16 +391,58 @@ export default function ReverifyCollectionsPage() {
                         </div>
                       </td>
                       <td className="px-3 py-2">
-                        {new Date(row.date).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                        {row.location ? (
-                          <div className="text-[12px] text-[#6B6B6B]">{row.location}</div>
-                        ) : null}
+                        {editing && editDraft ? (
+                          <div className="space-y-1.5">
+                            <Input
+                              type="date"
+                              value={editDraft.date}
+                              onChange={(e) =>
+                                setEditDraft((d) => (d ? { ...d, date: e.target.value } : d))
+                              }
+                              className="h-8 w-[150px] bg-white text-[13px]"
+                            />
+                            <Input
+                              value={editDraft.location}
+                              onChange={(e) =>
+                                setEditDraft((d) => (d ? { ...d, location: e.target.value } : d))
+                              }
+                              placeholder="Location"
+                              className="h-8 w-[160px] bg-white text-[13px]"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            {new Date(row.date).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                            {row.location ? (
+                              <div className="text-[12px] text-[#6B6B6B]">{row.location}</div>
+                            ) : null}
+                          </>
+                        )}
                       </td>
-                      <td className="px-3 py-2">{Number(row.weight).toFixed(2)} kg</td>
+                      <td className="px-3 py-2">
+                        {editing && editDraft ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              value={editDraft.weight}
+                              onChange={(e) =>
+                                setEditDraft((d) => (d ? { ...d, weight: e.target.value } : d))
+                              }
+                              className="h-8 w-[110px] bg-white text-[13px]"
+                              aria-label="Weight kg"
+                            />
+                            <span className="text-[12px] text-[#6B6B6B]">kg</span>
+                          </div>
+                        ) : (
+                          <span>{formatWeight(row.weight)} kg</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2">
                         {verified ? (
                           <Badge className="bg-[#E8F6EC] text-[#1B7339] hover:bg-[#E8F6EC]">
@@ -349,23 +465,57 @@ export default function ReverifyCollectionsPage() {
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
-                        {verified ? (
-                          <span className="inline-flex items-center gap-1 text-[12px] text-[#1B7339]">
-                            <CheckCircle2 className="h-4 w-4" /> Final
-                          </span>
+                        {editing ? (
+                          <div className="inline-flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                              disabled={savingEdit}
+                              onClick={() => void saveEdit()}
+                            >
+                              {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full"
+                              disabled={savingEdit}
+                              onClick={cancelEdit}
+                              aria-label="Cancel edit"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         ) : (
-                          <Button
-                            size="sm"
-                            className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
-                            disabled={verifying === row.id}
-                            onClick={() => verify([row.id])}
-                          >
-                            {verifying === row.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                          <div className="inline-flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full"
+                              onClick={() => startEdit(row)}
+                            >
+                              <Pencil className="mr-1 h-3.5 w-3.5" />
+                              Edit
+                            </Button>
+                            {verified ? (
+                              <span className="inline-flex items-center gap-1 text-[12px] text-[#1B7339]">
+                                <CheckCircle2 className="h-4 w-4" /> Final
+                              </span>
                             ) : (
-                              "Verify"
+                              <Button
+                                size="sm"
+                                className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+                                disabled={verifying === row.id}
+                                onClick={() => verify([row.id])}
+                              >
+                                {verifying === row.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  "Verify"
+                                )}
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         )}
                       </td>
                     </tr>

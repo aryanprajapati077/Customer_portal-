@@ -1,9 +1,9 @@
-import { mkdir, writeFile } from "fs/promises"
+import { mkdir, readFile, unlink, writeFile } from "fs/promises"
 import path from "path"
 import { randomBytes } from "crypto"
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 
-export type UploadFolder = "products" | "logos" | "attachments"
+export type UploadFolder = "products" | "logos" | "attachments" | "presets" | "preset-logos" | "preset-history"
 
 const LOCAL_UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads")
 
@@ -51,11 +51,11 @@ function getR2Client(config: NonNullable<ReturnType<typeof getR2Config>>) {
   return g.__buffR2
 }
 
-function buildObjectKey(folder: UploadFolder, filename: string) {
-  return `${trimSlashes(folder)}/${sanitizeSegment(filename)}`
+function buildObjectKey(folder: string, filename: string) {
+  return `${sanitizeSegment(trimSlashes(folder))}/${sanitizeSegment(filename)}`
 }
 
-async function saveBufferLocally(buffer: Buffer, folder: UploadFolder, filename: string) {
+async function saveBufferLocally(buffer: Buffer, folder: string, filename: string) {
   const dir = path.join(LOCAL_UPLOAD_ROOT, folder)
   await mkdir(dir, { recursive: true })
   const filepath = path.join(dir, filename)
@@ -69,7 +69,8 @@ export function isObjectStorageConfigured() {
 
 export async function saveBufferToStorage(options: {
   buffer: Buffer
-  folder: UploadFolder
+  /** A known upload folder, or a custom one such as a client ID ("BIS1234"). */
+  folder: UploadFolder | (string & {})
   filenameBase: string
   extension: string
   contentType?: string
@@ -79,12 +80,13 @@ export async function saveBufferToStorage(options: {
   const base = sanitizeSegment(options.filenameBase) || "file"
   const filename = `${base}-${randomBytes(6).toString("hex")}${ext.toLowerCase()}`
   const config = getR2Config()
+  const folder = sanitizeSegment(trimSlashes(String(options.folder)))
 
   if (!config) {
-    return saveBufferLocally(options.buffer, options.folder, filename)
+    return saveBufferLocally(options.buffer, folder, filename)
   }
 
-  const key = buildObjectKey(options.folder, filename)
+  const key = buildObjectKey(folder, filename)
   const client = getR2Client(config)
   await client.send(
     new PutObjectCommand({
@@ -102,4 +104,32 @@ export async function saveBufferToStorage(options: {
     key,
     storage: "r2" as const,
   }
+}
+
+export async function readStoredObject(key: string): Promise<Buffer> {
+  const cleaned = key.replace(/^\/+/, "")
+  const localPath = path.join(LOCAL_UPLOAD_ROOT, cleaned)
+  try {
+    return await readFile(localPath)
+  } catch {
+    /* fall through to R2 */
+  }
+
+  const config = getR2Config()
+  if (!config) throw new Error("Stored file not found")
+  const client = getR2Client(config)
+  const result = await client.send(new GetObjectCommand({ Bucket: config.bucket, Key: cleaned }))
+  const bytes = await result.Body?.transformToByteArray()
+  if (!bytes) throw new Error("Stored file is empty")
+  return Buffer.from(bytes)
+}
+
+export async function deleteStoredObject(key: string) {
+  const cleaned = key.replace(/^\/+/, "")
+  const localPath = path.join(LOCAL_UPLOAD_ROOT, cleaned)
+  await unlink(localPath).catch(() => undefined)
+  const config = getR2Config()
+  if (!config) return
+  const client = getR2Client(config)
+  await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: cleaned })).catch(() => undefined)
 }

@@ -1,6 +1,6 @@
 import { SITE_URL } from "@/lib/site-config"
 
-const ALLOWED_FOLDERS = new Set(["products", "logos", "attachments"])
+const ALLOWED_FOLDERS = new Set(["products", "logos", "attachments", "presets", "preset-logos", "preset-history"])
 
 /** Known Cloudflare R2 public host used for Buffindia product assets. */
 const R2_PUBLIC_HOST_RE = /^https:\/\/pub-[a-f0-9]+\.r2\.dev\/(.+)$/i

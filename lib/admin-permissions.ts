@@ -24,6 +24,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "shop-products", label: "Shop Products", href: "/admin/shop/products" },
   { key: "shop-orders", label: "Shop Orders", href: "/admin/shop/orders" },
   { key: "certificates", label: "Certificates", href: "/admin/certificates" },
+  { key: "presets", label: "Presets", href: "/admin/presets" },
   { key: "notifications", label: "Notifications", href: "/admin/notifications" },
   { key: "proposals", label: "Proposal Leads", href: "/admin/proposals" },
   { key: "contact", label: "Contact Us", href: "/admin/contact" },

@@ -39,6 +39,7 @@ import {
   Search,
   Zap,
   MapPinned,
+  Images,
   type LucideIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -114,6 +115,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         keywords: ["renew", "response", "interest", "renew now"],
       },
       { href: "/admin/certificates", label: "Certificates", icon: Award },
+      {
+        href: "/admin/presets",
+        label: "Presets",
+        icon: Images,
+        keywords: ["preset", "poster", "logo", "sign", "template"],
+      },
     ],
   },
   {

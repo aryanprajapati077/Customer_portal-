@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireCustomerSession } from "@/lib/customer-api-auth"
 import { getGroupLocations, sumKrCreditsForReadableScope } from "@/lib/group-customer-access"
+import { ensureKrCreditsLockColumns } from "@/lib/kr-credits-lock"
 
 /** Safe portal profile fields — never select password or secrets. */
 const PROFILE_SELECT = `
@@ -13,7 +14,9 @@ const PROFILE_SELECT = `
   "noOfKiosk", "noOfBasicKiosk", "noOfAdvanceKiosk", "noOfPanVendorKiosk", "noOfWallMountKiosk",
   "totalWasteCollected", "cigaretteButtsCollected", "microplasticsUpcycled",
   "waterResourcesProtected", "pendingCollection", "certificatesEarned",
-  "co2Saved", "kraftrebornCredits", "treesEquivalent", "monthlyTarget",
+  "co2Saved", "kraftrebornCredits",
+  COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
+  "treesEquivalent", "monthlyTarget",
   "disposalUnitInstalled", "joinDate", "lastCollection", industry, "employeeCount",
   "isGroup", "parentCustomerId", "updatedAt"
 `
@@ -26,6 +29,7 @@ export async function GET(request: NextRequest) {
     const customerId = session.customerId
     const locationId = request.nextUrl.searchParams.get("locationId")
 
+    await ensureKrCreditsLockColumns()
     const result = await sql.query(
       `SELECT ${PROFILE_SELECT} FROM "Customer" WHERE id = $1 LIMIT 1`,
       [customerId],

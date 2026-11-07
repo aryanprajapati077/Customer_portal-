@@ -40,6 +40,7 @@ import {
   Zap,
   MapPinned,
   Images,
+  FileText,
   type LucideIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -86,6 +87,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: "/admin/customers", label: "Customers", icon: Users },
       { href: "/admin/group-clients", label: "Group Clients", icon: UsersRound },
       { href: "/admin/kr-credits", label: "KR Credits", icon: Coins },
+      {
+        href: "/admin/kr-credits/unlock-requests",
+        label: "KR Support",
+        icon: LifeBuoy,
+        keywords: ["kr", "unlock", "lock", "payment", "credits", "kraftreborn"],
+      },
       { href: "/admin/customer-pocs", label: "Customer POCs", icon: Contact },
       { href: "/admin/dropdowns", label: "Dropdowns", icon: ListTree },
     ],
@@ -151,6 +158,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/notifications", label: "Notifications", icon: Bell },
       { href: "/admin/proposals", label: "Proposal Leads", icon: Calculator },
+      { href: "/admin/quotations", label: "Quotations", icon: FileText },
+      { href: "/admin/preservice-proposals", label: "Pre-Service Proposal", icon: FileText },
       { href: "/admin/contact", label: "Contact Us", icon: MessageSquare },
       { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
     ],

@@ -16,10 +16,11 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Sparkles, ShieldCheck, Upload, Wallet, CheckCircle2, AlertCircle, Building2, Stamp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { OrderReceiptAnimation } from "@/components/dashboard/shop/order-receipt-animation"
+import { KrCreditsLockedDialog } from "@/components/dashboard/shop/kr-credits-locked-dialog"
 
 export default function CheckoutPage() {
   const { customer, refreshCustomerData } = useAuth()
-  const { credits: liveCredits, refresh: refreshCredits } = useLiveKrCredits()
+  const { credits: liveCredits, locked: krLocked, refresh: refreshCredits } = useLiveKrCredits()
   const { lines, subtotal, itemCount, clearCart } = useCart()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [logoFileName, setLogoFileName] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<{
     orderNumber: string
@@ -89,6 +91,11 @@ export default function CheckoutPage() {
       return
     }
 
+    if (krLocked) {
+      setLockDialogOpen(true)
+      return
+    }
+
     if (!canPayWithCredits) {
       setError(`Insufficient rupee amount. You need ${formatInr(subtotal)} but have ${formatInr(credits)}.`)
       return
@@ -125,6 +132,11 @@ export default function CheckoutPage() {
 
       const data = await res.json()
       if (!data.success) {
+        if (data.code === "KR_CREDITS_LOCKED" || res.status === 403) {
+          setLockDialogOpen(true)
+          setSubmitting(false)
+          return
+        }
         setError(data.error || "Checkout failed")
         setSubmitting(false)
         return
@@ -197,6 +209,23 @@ export default function CheckoutPage() {
           void finishOrder()
         }}
       />
+
+      <KrCreditsLockedDialog open={lockDialogOpen} onOpenChange={setLockDialogOpen} />
+
+      {krLocked ? (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#FFE0B2] bg-[#FFF8E7] px-4 py-3">
+          <p className="text-[13px] text-[#9A3412]">
+            KR credits are locked — service payment pending. You can still browse, but redemption is paused.
+          </p>
+          <Button
+            size="sm"
+            className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+            onClick={() => setLockDialogOpen(true)}
+          >
+            Payment done? Notify us
+          </Button>
+        </div>
+      ) : null}
 
       <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
         <div className="space-y-6">
@@ -522,12 +551,22 @@ export default function CheckoutPage() {
                 size="lg"
                 className="w-full rounded-full h-12 bg-[#1B7339] hover:bg-[#145a2c] shadow-[0_6px_24px_rgba(27,115,57,0.3)]"
                 onClick={handlePlaceOrder}
-                disabled={submitting || !useKrCredits || !canPayWithCredits || receiptOpen}
+                disabled={
+                  submitting ||
+                  !useKrCredits ||
+                  (!krLocked && !canPayWithCredits) ||
+                  receiptOpen
+                }
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Placing order...
+                  </>
+                ) : krLocked ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Credits locked — view details
                   </>
                 ) : (
                   <>

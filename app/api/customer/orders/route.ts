@@ -6,6 +6,11 @@ import { formatOrderNumber } from "@/lib/shop-constants"
 import { saveBase64Image } from "@/lib/upload"
 import { assertCustomerAccess, requireCustomerSession, resolveCustomerId } from "@/lib/customer-api-auth"
 import { ensureOrderItemColorColumn } from "@/lib/shop-order-schema"
+import {
+  ensureKrCreditsLockColumns,
+  isCustomerKrCreditsLocked,
+  KR_CREDITS_LOCKED_MESSAGE,
+} from "@/lib/kr-credits-lock"
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,6 +67,18 @@ export async function POST(request: NextRequest) {
     const customer = await prisma.customer.findUnique({ where: { id: customerId } })
     if (!customer) {
       return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 })
+    }
+
+    await ensureKrCreditsLockColumns()
+    if (useKrCredits && (await isCustomerKrCreditsLocked(customerId))) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: KR_CREDITS_LOCKED_MESSAGE,
+          code: "KR_CREDITS_LOCKED",
+        },
+        { status: 403 },
+      )
     }
 
     // Resolve catalog prices server-side; drop invalid FK productIds (showcase/local ids)

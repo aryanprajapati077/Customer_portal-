@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Coins, Loader2, Plus, RefreshCw, Pencil } from "lucide-react"
+import { Coins, Loader2, Lock, LockOpen, Plus, RefreshCw, Pencil } from "lucide-react"
 import {
   AdminListCard,
   AdminListRow,
@@ -26,6 +26,9 @@ type CustomerRow = {
   companyName: string
   email: string
   kraftrebornCredits?: number
+  krCreditsLocked?: boolean
+  krCreditsLockedAt?: string | null
+  krCreditsLockedReason?: string | null
   updatedAt?: string
 }
 
@@ -40,6 +43,8 @@ export default function AdminKrCreditsPage() {
   const [selected, setSelected] = useState<CustomerRow | null>(null)
   const [sheetAmount, setSheetAmount] = useState("")
   const [sheetMode, setSheetMode] = useState<"add" | "set">("add")
+  const [lockingId, setLockingId] = useState<string | null>(null)
+  const [listFilter, setListFilter] = useState<"all" | "locked" | "unlocked">("all")
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -61,9 +66,11 @@ export default function AdminKrCreditsPage() {
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
-    const list = [...customers].sort(
+    let list = [...customers].sort(
       (a, b) => Number(b.kraftrebornCredits || 0) - Number(a.kraftrebornCredits || 0),
     )
+    if (listFilter === "locked") list = list.filter((c) => c.krCreditsLocked)
+    if (listFilter === "unlocked") list = list.filter((c) => !c.krCreditsLocked)
     if (!s) return list
     return list.filter(
       (c) =>
@@ -71,7 +78,64 @@ export default function AdminKrCreditsPage() {
         c.email.toLowerCase().includes(s) ||
         c.id.toLowerCase().includes(s),
     )
-  }, [customers, q])
+  }, [customers, q, listFilter])
+
+  const lockedCount = useMemo(
+    () => customers.filter((c) => c.krCreditsLocked).length,
+    [customers],
+  )
+
+  const setLock = async (row: CustomerRow, locked: boolean) => {
+    setLockingId(row.id)
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: row.id,
+          krCreditsLocked: locked,
+          krCreditsLockedReason: locked ? "Service payment pending" : null,
+        }),
+      })
+      const data = await res.json()
+      if (!data?.success) {
+        alert(data?.error || "Could not update lock")
+        return
+      }
+      const nextLocked = Boolean(data.customer?.krCreditsLocked ?? locked)
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === row.id
+            ? {
+                ...c,
+                krCreditsLocked: nextLocked,
+                krCreditsLockedAt: data.customer?.krCreditsLockedAt ?? null,
+                krCreditsLockedReason: data.customer?.krCreditsLockedReason ?? null,
+              }
+            : c,
+        ),
+      )
+      setSelected((s) =>
+        s?.id === row.id
+          ? {
+              ...s,
+              krCreditsLocked: nextLocked,
+              krCreditsLockedAt: data.customer?.krCreditsLockedAt ?? null,
+              krCreditsLockedReason: data.customer?.krCreditsLockedReason ?? null,
+            }
+          : s,
+      )
+      if (!locked) {
+        await fetch("/api/admin/kr-unlock-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerId: row.id, unlock: true }),
+        }).catch(() => null)
+      }
+    } finally {
+      setLockingId(null)
+    }
+  }
 
   const draftCustomer = customers.find((c) => c.id === customerId)
 
@@ -176,7 +240,7 @@ export default function AdminKrCreditsPage() {
       <AdminPageHeader
         icon={<Coins className="h-6 w-6 text-primary" />}
         title="KR Credits"
-        description="Give extra KraftReborn rupee amount — click a row to open the client sheet"
+        description="Assign KR balance and lock / unlock redemption when service payment is pending"
         search={
           <AdminSearchInput
             value={q}
@@ -185,6 +249,42 @@ export default function AdminKrCreditsPage() {
           />
         }
       />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={listFilter === "all" ? "default" : "outline"}
+          className={listFilter === "all" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+          onClick={() => setListFilter("all")}
+        >
+          All
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={listFilter === "locked" ? "default" : "outline"}
+          className={listFilter === "locked" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+          onClick={() => setListFilter("locked")}
+        >
+          Locked ({lockedCount})
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={listFilter === "unlocked" ? "default" : "outline"}
+          className={listFilter === "unlocked" ? "rounded-full bg-[#1B7339] hover:bg-[#145a2c]" : "rounded-full"}
+          onClick={() => setListFilter("unlocked")}
+        >
+          Unlocked
+        </Button>
+        <Link
+          href="/admin/kr-credits/unlock-requests"
+          className="ml-auto inline-flex items-center rounded-full border border-[#ebe9e4] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#1B7339] hover:bg-[#F7FBF7]"
+        >
+          KR Support / Unlock requests →
+        </Link>
+      </div>
 
       <Card className="glass border-border/50">
         <CardHeader className="pb-3">
@@ -314,14 +414,50 @@ export default function AdminKrCreditsPage() {
                   <Badge variant="outline" className="bg-muted/30">
                     {row.id}
                   </Badge>
+                  {row.krCreditsLocked ? (
+                    <Badge className="bg-[#FFF4E5] text-[#C2410C] hover:bg-[#FFF4E5]">
+                      Locked
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-[#E8F6EC] text-[#1B7339] hover:bg-[#E8F6EC]">
+                      Unlocked
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">{row.email}</p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-foreground">
-                  ₹{Math.floor(Number(row.kraftrebornCredits) || 0)}
-                </p>
-                <p className="text-xs text-muted-foreground">KR balance</p>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-lg font-bold text-foreground">
+                    ₹{Math.floor(Number(row.kraftrebornCredits) || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">KR balance</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={lockingId === row.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void setLock(row, !row.krCreditsLocked)
+                  }}
+                >
+                  {lockingId === row.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : row.krCreditsLocked ? (
+                    <>
+                      <LockOpen className="mr-1 h-3.5 w-3.5" />
+                      Unlock
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-1 h-3.5 w-3.5" />
+                      Lock
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </AdminListRow>
@@ -354,6 +490,44 @@ export default function AdminKrCreditsPage() {
                   </span>
                 }
               />
+              <AdminSheetField
+                label="Redemption"
+                value={
+                  selected.krCreditsLocked ? (
+                    <Badge className="bg-[#FFF4E5] text-[#C2410C] hover:bg-[#FFF4E5]">
+                      Locked — payment pending
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-[#E8F6EC] text-[#1B7339] hover:bg-[#E8F6EC]">Unlocked</Badge>
+                  )
+                }
+              />
+            </AdminSheetSection>
+
+            <AdminSheetSection title="Lock / unlock KR credits">
+              <p className="mb-3 text-[12px] text-muted-foreground">
+                Locking keeps the balance visible but blocks shop redemption until payment is cleared.
+              </p>
+              <Button
+                type="button"
+                className={
+                  selected.krCreditsLocked
+                    ? "w-full rounded-lg bg-[#1B7339] hover:bg-[#145a2c]"
+                    : "w-full rounded-lg"
+                }
+                variant={selected.krCreditsLocked ? "default" : "outline"}
+                disabled={lockingId === selected.id}
+                onClick={() => void setLock(selected, !selected.krCreditsLocked)}
+              >
+                {lockingId === selected.id ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : selected.krCreditsLocked ? (
+                  <LockOpen className="mr-2 h-4 w-4" />
+                ) : (
+                  <Lock className="mr-2 h-4 w-4" />
+                )}
+                {selected.krCreditsLocked ? "Unlock KR credits" : "Lock KR credits"}
+              </Button>
             </AdminSheetSection>
 
             <AdminSheetSection title="Update KR balance">

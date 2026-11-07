@@ -32,15 +32,18 @@
   max-width: 100%;
 }
 
-/* Hide Next.js floating "N" badge so it doesn't sit on the sidebar card */
+/* Next.js floating "N" badge — keep fully visible on the right, never half-cut on the left */
 .portal-root ~ nextjs-portal,
+body > nextjs-portal,
 nextjs-portal {
-  z-index: 99999 !important;
-}
-/* Push Next.js badge away from sidebar bottom */
-body > nextjs-portal {
+  position: fixed !important;
+  inset: auto 16px 16px auto !important;
   left: auto !important;
   right: 16px !important;
+  bottom: 16px !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 2147483000 !important;
 }
 
 .portal-card {

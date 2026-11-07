@@ -19,6 +19,7 @@ export function useLiveKrCredits(locationId?: string | null) {
   const [credits, setCredits] = useState<number | null>(
     customer?.kraftrebornCredits != null ? Number(customer.kraftrebornCredits) : null,
   )
+  const [locked, setLocked] = useState<boolean>(Boolean(customer?.krCreditsLocked))
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
@@ -34,9 +35,11 @@ export function useLiveKrCredits(locationId?: string | null) {
       const data = await res.json()
       if (!data?.success) return
       const next = Math.max(0, Math.floor(Number(data.kraftrebornCredits) || 0))
+      const nextLocked = Boolean(data.krCreditsLocked)
       setCredits(next)
-      if (Number(current.kraftrebornCredits) !== next) {
-        syncRef.current({ ...current, kraftrebornCredits: next })
+      setLocked(nextLocked)
+      if (Number(current.kraftrebornCredits) !== next || Boolean(current.krCreditsLocked) !== nextLocked) {
+        syncRef.current({ ...current, kraftrebornCredits: next, krCreditsLocked: nextLocked })
       }
     } catch {
       /* ignore transient network errors */
@@ -48,6 +51,7 @@ export function useLiveKrCredits(locationId?: string | null) {
   useEffect(() => {
     if (!customer?.id) {
       setCredits(null)
+      setLocked(false)
       setLoading(false)
       return
     }
@@ -74,8 +78,14 @@ export function useLiveKrCredits(locationId?: string | null) {
     setCredits(Math.max(0, Math.floor(Number(customer.kraftrebornCredits) || 0)))
   }, [customer?.kraftrebornCredits])
 
+  useEffect(() => {
+    if (customer?.krCreditsLocked == null) return
+    setLocked(Boolean(customer.krCreditsLocked))
+  }, [customer?.krCreditsLocked])
+
   return {
     credits: credits ?? Math.max(0, Math.floor(Number(customer?.kraftrebornCredits) || 0)),
+    locked,
     loading,
     refresh,
   }

@@ -51,7 +51,10 @@ async function ensureCustomerColumns() {
       ADD COLUMN IF NOT EXISTS "serviceStatus" TEXT DEFAULT 'ACTIVE',
       ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
       ADD COLUMN IF NOT EXISTS "welcomeEmailSentAt" TIMESTAMP(3),
-      ADD COLUMN IF NOT EXISTS "kraftrebornCredits" DOUBLE PRECISION DEFAULT 0
+      ADD COLUMN IF NOT EXISTS "kraftrebornCredits" DOUBLE PRECISION DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS "krCreditsLocked" BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS "krCreditsLockedAt" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "krCreditsLockedReason" TEXT
   `,
       )
       .then(() =>
@@ -115,12 +118,15 @@ export async function GET(request: NextRequest) {
     const offset = Math.max(0, Number(request.nextUrl.searchParams.get("offset") || "0"))
     const q = String(request.nextUrl.searchParams.get("q") || "").trim()
 
-    // Slim dropdown payload — skip DDL and heavy columns
+    // Slim dropdown payload — skip full DDL and heavy columns
     if (fields === "options") {
+      await ensureCustomerColumns()
       const pattern = q ? `%${q}%` : null
       const rows = pattern
         ? await sql`
-            SELECT id, email, "companyName", status, "kraftrebornCredits"
+            SELECT id, email, "companyName", status, "kraftrebornCredits",
+                   COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
+                   "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"
             WHERE id ILIKE ${pattern}
                OR email ILIKE ${pattern}
@@ -129,7 +135,9 @@ export async function GET(request: NextRequest) {
             LIMIT ${take}
           `
         : await sql`
-            SELECT id, email, "companyName", status, "kraftrebornCredits"
+            SELECT id, email, "companyName", status, "kraftrebornCredits",
+                   COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
+                   "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"
             ORDER BY "companyName" ASC NULLS LAST, id ASC
             LIMIT ${take}
@@ -508,6 +516,24 @@ export async function PATCH(request: NextRequest) {
       updates.push(`"kraftrebornCredits" = GREATEST(0, COALESCE("kraftrebornCredits", 0) + $${i++})`)
       values.push(delta)
     }
+    if (body?.krCreditsLocked !== undefined) {
+      const locked = Boolean(body.krCreditsLocked)
+      updates.push(`"krCreditsLocked" = $${i++}`)
+      values.push(locked)
+      updates.push(`"krCreditsLockedAt" = $${i++}`)
+      values.push(locked ? new Date().toISOString() : null)
+      if (body?.krCreditsLockedReason !== undefined || locked) {
+        updates.push(`"krCreditsLockedReason" = $${i++}`)
+        values.push(
+          locked
+            ? String(body.krCreditsLockedReason || "Service payment pending").trim() || "Service payment pending"
+            : null,
+        )
+      } else if (!locked) {
+        updates.push(`"krCreditsLockedReason" = $${i++}`)
+        values.push(null)
+      }
+    }
     if (body?.status !== undefined) {
       updates.push(`status = $${i++}`)
       values.push(String(body.status))
@@ -684,7 +710,8 @@ export async function PATCH(request: NextRequest) {
                 "contactPerson", phone, address, status,
                 "primaryPocEmail",
                 "totalWasteCollected", "disposalUnitInstalled", "monthlyTarget",
-                "kraftrebornCredits", "updatedAt",
+                "kraftrebornCredits", "krCreditsLocked", "krCreditsLockedAt", "krCreditsLockedReason",
+                "updatedAt",
                 "isGroup", "parentCustomerId"
     `
     values.push(id)

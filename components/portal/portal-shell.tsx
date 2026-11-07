@@ -33,9 +33,10 @@ export function PortalShell({ customer, loading, children, showCart = false }: P
   }
 
   return (
-    <div className="portal-root min-h-screen flex">
+    <div className="portal-root min-h-screen">
       <PortalPresenceTracker />
-      <div className="hidden lg:block sticky top-0 h-screen">
+      {/* Fixed sidebar — survives dialog scroll-lock / overflow-x clip */}
+      <div className="pointer-events-none fixed inset-y-0 left-0 z-30 hidden w-[var(--p-sidebar-w)] lg:pointer-events-auto lg:block">
         <PortalSidebar />
       </div>
 
@@ -54,7 +55,7 @@ export function PortalShell({ customer, loading, children, showCart = false }: P
         />
         <div
           className={cn(
-            "absolute left-0 top-0 h-full shadow-xl transition-transform bg-white",
+            "absolute left-0 top-0 h-full w-[min(100vw,var(--p-sidebar-w))] overflow-hidden bg-white shadow-xl transition-transform will-change-transform",
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -73,7 +74,7 @@ export function PortalShell({ customer, loading, children, showCart = false }: P
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+      <div className="flex min-h-screen min-w-0 flex-col lg:pl-[var(--p-sidebar-w)]">
         <div className="sticky top-0 z-40 bg-[var(--p-bg)]/95 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-7 pt-3 pb-1">
             <button

@@ -4,6 +4,11 @@ import { generateKraftRebornCertificatePdf } from "@/lib/generate-kraftreborn-ce
 import { syncKraftRebornCertificate } from "@/lib/sync-certificates"
 import { computeKraftRebornImpact, creditsToRupees, generateOrderId } from "@/lib/kraftreborn"
 import { assertCustomerAccess, requireCustomerSession } from "@/lib/customer-api-auth"
+import {
+  ensureKrCreditsLockColumns,
+  isCustomerKrCreditsLocked,
+  KR_CREDITS_LOCKED_MESSAGE,
+} from "@/lib/kr-credits-lock"
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +48,18 @@ export async function POST(request: NextRequest) {
 
     if (!customer) {
       return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 })
+    }
+
+    await ensureKrCreditsLockColumns()
+    if (await isCustomerKrCreditsLocked(customerId)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: KR_CREDITS_LOCKED_MESSAGE,
+          code: "KR_CREDITS_LOCKED",
+        },
+        { status: 403 },
+      )
     }
 
     const creditsAvailable = creditsToRupees(Number(customer.kraftrebornCredits) || 0)

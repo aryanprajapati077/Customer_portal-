@@ -21,6 +21,7 @@ export interface Customer {
   status: string
   co2Saved: number
   kraftrebornCredits?: number
+  krCreditsLocked?: boolean
   treesEquivalent: number
   industry?: string
   employeeCount?: number
@@ -78,10 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json()
       if (!data?.success) return
       const next = Math.max(0, Math.floor(Number(data.kraftrebornCredits) || 0))
+      const nextLocked = Boolean(data.krCreditsLocked)
       setCustomer((prev) => {
         if (!prev) return prev
-        if (Number(prev.kraftrebornCredits) === next) return prev
-        const updated = { ...prev, kraftrebornCredits: next }
+        if (Number(prev.kraftrebornCredits) === next && Boolean(prev.krCreditsLocked) === nextLocked) {
+          return prev
+        }
+        const updated = { ...prev, kraftrebornCredits: next, krCreditsLocked: nextLocked }
         localStorage.setItem("buffindia_customer", JSON.stringify(updated))
         return updated
       })

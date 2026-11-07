@@ -10,6 +10,7 @@ import {
   Heart,
   Leaf,
   Loader2,
+  Lock,
   Package,
   ShoppingBag,
   Sparkles,
@@ -19,7 +20,9 @@ import { PortalShell } from "@/components/portal/portal-shell"
 import { PageHeader } from "@/components/portal/page-header"
 import { WhatsNewBanner } from "@/components/portal/whats-new-banner"
 import { HowItWorksDialog } from "@/components/dashboard/shop/how-it-works-dialog"
+import { KrCreditsLockedDialog } from "@/components/dashboard/shop/kr-credits-locked-dialog"
 import { ProductCard } from "@/components/dashboard/shop/product-card"
+import { Button } from "@/components/ui/button"
 import { usePortalData } from "@/hooks/use-portal-data"
 import type { ShopProduct } from "@/lib/cart-context"
 import { SHOP_FILTER_CATEGORIES, formatInr } from "@/lib/kraftreborn-products"
@@ -36,7 +39,7 @@ const CATEGORIES = [
 
 function ShopContent() {
   const { customer, authLoading, dataLoading, metrics, selectedLocationId } = usePortalData()
-  const { credits: liveCredits } = useLiveKrCredits(selectedLocationId)
+  const { credits: liveCredits, locked: krLocked } = useLiveKrCredits(selectedLocationId)
   const { favouriteIds } = useShopFavourites()
   const searchParams = useSearchParams()
   const orderedId = searchParams.get("ordered")
@@ -47,6 +50,7 @@ function ShopContent() {
   const [ordersInProgress, setOrdersInProgress] = useState(0)
   const [ordersCompleted, setOrdersCompleted] = useState(0)
   const [showOrderedBanner, setShowOrderedBanner] = useState(Boolean(orderedId))
+  const [lockDialogOpen, setLockDialogOpen] = useState(false)
 
   useEffect(() => {
     if (orderedId) setShowOrderedBanner(true)
@@ -98,7 +102,28 @@ function ShopContent() {
 
   return (
     <PortalShell customer={customer} loading={authLoading || (!customer && dataLoading)} showCart>
+      <KrCreditsLockedDialog open={lockDialogOpen} onOpenChange={setLockDialogOpen} />
       <div className="space-y-5">
+        {krLocked ? (
+          <div className="flex flex-col gap-2 rounded-2xl border border-[#FFE0B2] bg-[#FFF8E7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-[#C2410C]" />
+              <div>
+                <p className="text-[14px] font-semibold text-[#141414]">KR credits locked</p>
+                <p className="text-[12px] text-[#9A3412]">
+                  Service payment pending. If payment is done, notify BuffIndia to unlock redemption.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="rounded-full bg-[#1B7339] hover:bg-[#145a2c]"
+              onClick={() => setLockDialogOpen(true)}
+            >
+              Payment done — notify us
+            </Button>
+          </div>
+        ) : null}
         {showOrderedBanner && orderedId ? (
           <div className="flex flex-col gap-2 rounded-2xl border border-[#C8E6D4] bg-[#E8F5E9] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5">

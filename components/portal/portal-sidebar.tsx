@@ -40,7 +40,7 @@ export function PortalSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { logout } = useAuth()
 
   return (
-    <aside className="flex w-[var(--p-sidebar-w)] shrink-0 flex-col border-r border-[#EAEAEA] bg-white h-full">
+    <aside className="flex h-full w-[var(--p-sidebar-w)] max-w-[var(--p-sidebar-w)] shrink-0 flex-col overflow-x-hidden border-r border-[#EAEAEA] bg-white">
       <div className="px-4 pt-4 pb-3">
         <Link href="/dashboard" onClick={onNavigate} className="block group">
           <Image

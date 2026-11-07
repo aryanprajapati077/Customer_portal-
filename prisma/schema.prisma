@@ -71,6 +71,9 @@ model Customer {
   certificatesEarned      Int   @default(0)
   co2Saved                Float @default(0)
   kraftrebornCredits      Float @default(0)
+  krCreditsLocked         Boolean   @default(false)
+  krCreditsLockedAt       DateTime?
+  krCreditsLockedReason   String?
   treesEquivalent         Int   @default(0)
   monthlyTarget           Float @default(0)
 

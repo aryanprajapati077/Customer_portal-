@@ -6,6 +6,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "customers", label: "Customers", href: "/admin/customers" },
   { key: "group-clients", label: "Group Clients", href: "/admin/group-clients" },
   { key: "kr-credits", label: "KR Credits", href: "/admin/kr-credits" },
+  { key: "kr-credits", label: "KR Support", href: "/admin/kr-credits/unlock-requests" },
   { key: "dropdowns", label: "Dropdowns", href: "/admin/dropdowns" },
   { key: "reports", label: "Reports & Email", href: "/admin/reports" },
   { key: "reports", label: "Quick Report", href: "/admin/quick-report" },
@@ -27,6 +28,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "presets", label: "Presets", href: "/admin/presets" },
   { key: "notifications", label: "Notifications", href: "/admin/notifications" },
   { key: "proposals", label: "Proposal Leads", href: "/admin/proposals" },
+  { key: "quotations", label: "Quotations", href: "/admin/quotations" },
   { key: "contact", label: "Contact Us", href: "/admin/contact" },
   { key: "support", label: "Support Tickets", href: "/admin/support" },
 ] as const

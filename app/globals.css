@@ -1,10 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Keep Next.js floating badge off the sidebar card (bottom-left) */
+/* Keep Next.js floating "N" badge fully on-screen (never clipped into the sidebar) */
 nextjs-portal {
-  left: unset !important;
-  right: 12px !important;
+  position: fixed !important;
+  inset: auto 16px 16px auto !important;
+  left: auto !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 2147483000 !important;
 }
 
 /* Prevent slight horizontal scroll on Windows laptops (100vw includes scrollbar gutter) */

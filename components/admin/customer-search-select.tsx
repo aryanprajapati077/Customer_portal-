@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 export type CustomerSearchOption = {
   id: string
   companyName: string
+  tradeName?: string | null
 }
 
 type Props = {
@@ -44,7 +45,8 @@ export function CustomerSearchSelect({
       .filter(
         (c) =>
           c.id.toLowerCase().includes(s) ||
-          c.companyName.toLowerCase().includes(s),
+          c.companyName.toLowerCase().includes(s) ||
+          (c.tradeName ?? "").toLowerCase().includes(s),
       )
       .slice(0, 80)
   }, [customers, q])
@@ -135,6 +137,7 @@ export function CustomerSearchSelect({
                     <span className="min-w-0 flex-1 truncate">
                       <span className="font-medium text-[#141414]">{c.companyName}</span>
                       <span className="ml-1.5 text-[#7A7A7A]">({c.id})</span>
+                      {c.tradeName ? <span className="block truncate text-[11px] text-[#7A7A7A]">{c.tradeName}</span> : null}
                     </span>
                   </button>
                 )

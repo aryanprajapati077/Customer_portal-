@@ -124,18 +124,19 @@ export async function GET(request: NextRequest) {
       const pattern = q ? `%${q}%` : null
       const rows = pattern
         ? await sql`
-            SELECT id, email, "companyName", status, "kraftrebornCredits",
+            SELECT id, email, "companyName", "tradeName", status, "kraftrebornCredits",
                    COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
                    "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"
             WHERE id ILIKE ${pattern}
                OR email ILIKE ${pattern}
                OR "companyName" ILIKE ${pattern}
+               OR "tradeName" ILIKE ${pattern}
             ORDER BY "companyName" ASC NULLS LAST, id ASC
             LIMIT ${take}
           `
         : await sql`
-            SELECT id, email, "companyName", status, "kraftrebornCredits",
+            SELECT id, email, "companyName", "tradeName", status, "kraftrebornCredits",
                    COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
                    "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"

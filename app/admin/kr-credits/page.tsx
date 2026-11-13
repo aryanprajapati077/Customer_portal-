@@ -24,6 +24,7 @@ import { CustomerSearchSelect } from "@/components/admin/customer-search-select"
 type CustomerRow = {
   id: string
   companyName: string
+  tradeName?: string | null
   email: string
   kraftrebornCredits?: number
   krCreditsLocked?: boolean
@@ -75,6 +76,7 @@ export default function AdminKrCreditsPage() {
     return list.filter(
       (c) =>
         c.companyName.toLowerCase().includes(s) ||
+        (c.tradeName ?? "").toLowerCase().includes(s) ||
         c.email.toLowerCase().includes(s) ||
         c.id.toLowerCase().includes(s),
     )
@@ -245,7 +247,7 @@ export default function AdminKrCreditsPage() {
           <AdminSearchInput
             value={q}
             onChange={setQ}
-            placeholder="Search client name or email..."
+            placeholder="Search brand name, trade name or email..."
           />
         }
       />
@@ -411,6 +413,7 @@ export default function AdminKrCreditsPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-sm font-semibold text-foreground">{row.companyName}</p>
+                  {row.tradeName ? <p className="truncate text-xs text-muted-foreground">{row.tradeName}</p> : null}
                   <Badge variant="outline" className="bg-muted/30">
                     {row.id}
                   </Badge>

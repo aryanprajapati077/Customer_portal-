@@ -68,7 +68,7 @@ export default function ProductsPage() {
       title="Waste becomes"
       accent="design"
       subtitle="World's first e-commerce store for sustainable décor & gifting. Handcrafted from recycled cigarette waste—budget-friendly, purposeful, and proof that litter can become design."
-      cta={{ href: "/dashboard/shop", label: "Shop KraftReborn Now" }}
+      cta={{ href: "https://kraftreborn.com", label: "Shop KraftReborn Now" }}
     >
       <section className="mb-14">
         <h2 className="font-[family-name:var(--font-display)] text-[clamp(1.6rem,3.5vw,2.2rem)] tracking-tight text-[#141414]">
@@ -169,7 +169,7 @@ export default function ProductsPage() {
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href="/dashboard/shop"
+            href="https://kraftreborn.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-[#C8F000] px-5 py-2.5 text-[14px] font-semibold text-[#141414] hover:bg-[#d4f53a]"

@@ -64,13 +64,25 @@ export function InspirePage({
                 transition={{ delay: 0.18 }}
                 className="mt-8"
               >
-                <Link
-                  href={cta.href}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#145a2c] transition-colors"
-                >
-                  {cta.label}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                {/^https?:\/\//.test(cta.href) ? (
+                  <a
+                    href={cta.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#145a2c] transition-colors"
+                  >
+                    {cta.label}
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <Link
+                    href={cta.href}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#1B7339] px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#145a2c] transition-colors"
+                  >
+                    {cta.label}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )}
               </motion.div>
             ) : null}
           </div>

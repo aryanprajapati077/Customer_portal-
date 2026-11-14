@@ -114,12 +114,14 @@ export function LandingCalculator() {
       smokingZones: needsZones ? smokingZones : undefined,
       priority: needsPriority ? priority : undefined,
     }
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 55_000)
     try {
       const res = await fetch("/api/proposal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(55_000),
+        signal: controller.signal,
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data?.error || "Could not generate proposal")
@@ -136,7 +138,7 @@ export function LandingCalculator() {
       }
       setDone(true)
     } catch (err) {
-      if (err instanceof Error && err.name === "TimeoutError") {
+      if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
         setError("Request timed out. Please try again — your proposal may still be emailed shortly.")
       } else if (err instanceof TypeError) {
         setError("Network error. Check your connection and try again.")
@@ -144,6 +146,7 @@ export function LandingCalculator() {
         setError(err instanceof Error ? err.message : "Something went wrong")
       }
     } finally {
+      clearTimeout(timer)
       setLoading(false)
     }
   }

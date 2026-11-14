@@ -92,14 +92,7 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join("\n")
 
-    const salesTo = [
-      "aryan@buffindia.com",
-      "campaign@buffindia.com",
-      process.env.SALES_EMAIL?.trim(),
-      process.env.ADMIN_EMAIL?.trim(),
-    ]
-      .filter((addr): addr is string => Boolean(addr))
-      .filter((addr, i, all) => all.findIndex((a) => a.toLowerCase() === addr.toLowerCase()) === i)
+    const salesTo = ["aryan@buffindia.com", "campaign@buffindia.com"]
     const firstName = fullName.split(" ")[0] || "there"
 
     const investmentLine = pricing

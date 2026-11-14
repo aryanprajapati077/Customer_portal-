@@ -5,7 +5,7 @@ import Image from "next/image"
 
 const quickLinks = [
   { name: "Home", href: "/" },
-  { name: "Calculate Impact", href: "/#calculator" },
+  { name: "Get a Proposal", href: "/#calculator" },
   { name: "KraftReborn", href: "/#kraftreborn" },
   { name: "Our Services", href: "/services" },
   { name: "Partner Program", href: "/partner-program" },

@@ -48,11 +48,11 @@ export function LandingHero() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href="#calculator" className="landing-btn-primary">
-              Calculate my impact
+              Get a proposal
               <ArrowRight className="h-4 w-4" />
             </a>
-            <a href="#proposal" className="landing-btn-ghost bg-white/70 backdrop-blur-sm">
-              Get a proposal
+            <a href="#kraftreborn" className="landing-btn-ghost bg-white/70 backdrop-blur-sm">
+              Explore KraftReborn
             </a>
           </div>
 

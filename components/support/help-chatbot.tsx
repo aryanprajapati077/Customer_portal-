@@ -113,7 +113,7 @@ export function HelpChatbot() {
           links: [
             { label: "Chat on WhatsApp", href: WHATSAPP_URL },
             { label: "Request a callback", href: "/contact" },
-            { label: "Impact calculator", href: "/#calculator" },
+            { label: "Get a proposal", href: "/#calculator" },
           ],
         },
       ])

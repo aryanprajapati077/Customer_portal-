@@ -80,7 +80,7 @@ export function Navbar() {
               href="/#calculator"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#1B7339] px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#145a2c]"
             >
-              Calculate impact
+              Get a proposal
               <ArrowRight className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -112,7 +112,7 @@ export function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="mt-1 block rounded-full bg-[#1B7339] px-3 py-2.5 text-center text-[14px] font-semibold text-white"
             >
-              Calculate impact
+              Get a proposal
             </a>
             <Link
               href={customer ? "/dashboard" : "/login"}

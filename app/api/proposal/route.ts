@@ -92,7 +92,14 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join("\n")
 
-    const salesTo = process.env.SALES_EMAIL || process.env.ADMIN_EMAIL
+    const salesTo = [
+      "aryan@buffindia.com",
+      "campaign@buffindia.com",
+      process.env.SALES_EMAIL?.trim(),
+      process.env.ADMIN_EMAIL?.trim(),
+    ]
+      .filter((addr): addr is string => Boolean(addr))
+      .filter((addr, i, all) => all.findIndex((a) => a.toLowerCase() === addr.toLowerCase()) === i)
     const firstName = fullName.split(" ")[0] || "there"
 
     const investmentLine = pricing
@@ -151,7 +158,7 @@ export async function POST(request: Request) {
       })
     })
 
-    if (resend && salesTo) {
+    if (resend && salesTo.length) {
       queueEmail("impact_proposal_sales", async () => {
         await resend!.emails.send({
           from: getResendFrom(),

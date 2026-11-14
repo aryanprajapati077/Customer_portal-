@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar"
 import { LandingHero } from "@/components/landing/hero"
 import { LandingPartners } from "@/components/landing/partners"
-import { LandingCalculator } from "@/components/landing/calculator"
+import { LandingEnquiryForm } from "@/components/landing/enquiry-form"
 import { LandingJourney } from "@/components/landing/journey"
 import { LandingProducts } from "@/components/landing/products"
 import { LandingStatsBar } from "@/components/landing/stats-bar"
@@ -14,7 +14,7 @@ export default function Home() {
       <Navbar />
       <LandingHero />
       <LandingPartners />
-      <LandingCalculator />
+      <LandingEnquiryForm />
       <LandingJourney />
       <LandingProducts />
       <LandingStatsBar />

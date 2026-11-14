@@ -6,9 +6,9 @@
   "regions": ["bom1"],
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/((?!api/).*)",
       "has": [{ "type": "host", "value": "www.buffindia.com" }],
-      "destination": "https://buffindia.com/:path*",
+      "destination": "https://buffindia.com/$1",
       "permanent": true
     }
   ],

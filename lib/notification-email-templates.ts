@@ -14,6 +14,7 @@ export type NotificationTemplateId =
   | "kraftreborn_dispatched"
   | "kraftreborn_delivered"
   | "impact_proposal"
+  | "enquiry_thanks"
   | "group_portal_welcome"
 
 export type NotificationTemplateCopy = {
@@ -279,6 +280,26 @@ export const NOTIFICATION_TEMPLATES: NotificationTemplateMeta[] = [
       signOff: "Team BuffIndia",
       footerLine: "Buffindia Receptacles Pvt. Ltd. · campaign@buffindia.com · www.buffindia.com",
       trigger: "When a visitor submits Get detailed proposal on the Impact Calculator",
+    },
+  },
+  {
+    id: "enquiry_thanks",
+    name: "Enquiry Thank You",
+    description:
+      "Sent to a visitor right after they submit the Get in touch form on the website. Confirms we received their details.",
+    placeholders: ["name", "company", "industry", "city", "state", "phone", "portalUrl"],
+    defaults: {
+      subject: "Thank you for contacting BuffIndia, {{name}}",
+      eyebrow: "BuffIndia · Get in touch",
+      title: "We’ve received your enquiry",
+      intro: "Hi {{name}},",
+      body: "Thank you for reaching out to BuffIndia. We’ve received the details you shared for {{company}} ({{industry}}, {{city}}, {{state}}).\n\nOur team will review your requirements and get back to you shortly on {{phone}} or at this email address with a tailored proposal.\n\nIn the meantime, feel free to explore how BuffIndia turns cigarette waste into measurable impact. If you have anything to add, simply reply to this email.",
+      ctaLabel: "Explore BuffIndia",
+      ctaUrl: "{{portalUrl}}",
+      closing: "Looking forward to building a cleaner India with you,",
+      signOff: "Team BuffIndia",
+      footerLine: "Buffindia Receptacles Pvt. Ltd. · campaign@buffindia.com · www.buffindia.com",
+      trigger: "When a visitor submits the Get in touch form on the website",
     },
   },
   {

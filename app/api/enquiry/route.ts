@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resend, getResendFrom } from "@/lib/resend"
 import { queueEmail } from "@/lib/email-queue"
+import { sendNotificationEmail } from "@/lib/send-notification-email"
 import { verifyTurnstileToken } from "@/lib/turnstile"
 import { INDUSTRIES } from "@/lib/impact-calculator"
 
@@ -62,6 +63,24 @@ export async function POST(request: Request) {
         source: "landing",
         status: "open",
       },
+    })
+
+    queueEmail("landing_enquiry_thanks", async () => {
+      await sendNotificationEmail({
+        templateId: "enquiry_thanks",
+        to: email,
+        queue: false,
+        label: "landing_enquiry_thanks",
+        replyTo: "campaign@buffindia.com",
+        vars: {
+          name: name.split(" ")[0] || "there",
+          company: businessName,
+          industry,
+          city,
+          state,
+          phone,
+        },
+      })
     })
 
     if (resend) {

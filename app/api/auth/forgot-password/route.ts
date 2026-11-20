@@ -2,6 +2,19 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { generateOtp, hashOtp } from "@/lib/auth-session"
 import { sendOtpEmail } from "@/lib/auth-email"
+import { sql } from "@/lib/db"
+
+/** Login emails are no longer unique (one person can cover several locations), so look up by any match. */
+async function accountExists(email: string) {
+  const customer = await prisma.customer.findFirst({ where: { email }, select: { id: true } })
+  if (customer) return true
+  try {
+    const rows = await sql`SELECT 1 FROM "CustomerPortalUser" WHERE lower(email) = ${email} AND active = true LIMIT 1`
+    return rows.length > 0
+  } catch {
+    return false
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,10 +25,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Email required" }, { status: 400 })
     }
 
-    const customer = await prisma.customer.findUnique({ where: { email: normalized } })
-
     // Always return success to prevent email enumeration
-    if (!customer) {
+    if (!(await accountExists(normalized))) {
       return NextResponse.json({
         success: true,
         message: "If an account exists, an OTP has been sent to your email.",

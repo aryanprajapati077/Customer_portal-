@@ -28,6 +28,10 @@ export type QuotationItem = {
   sac: string
   /** net follows the standard rate until the user edits it */
   auto: boolean
+  /** Service period for this item, e.g. "12 Months"; empty = the quotation's service duration */
+  period: string
+  /** Extra notes printed under the item description (one line per line break) */
+  notes: string
 }
 
 export type QuotationConfig = {
@@ -65,10 +69,18 @@ export const QUOTATION_PRODUCTS: { slug: string; name: string }[] = [
   { slug: "lunar-glow-candle-stand", name: "Lunar Glow Candle Stand with Tray" },
   { slug: "mobile-stand", name: "Mobile Stand" },
   { slug: "petal-radiance-candle-stand", name: "Petal Radiance Candle Stand with Tray" },
-  { slug: "prestige-pen-holder", name: "Prestige Pen Holder" },
   { slug: "serenity-round-planter", name: "Serenity Round Planter Set" },
   { slug: "test-tube-greenery", name: "Test-tube Greenery Set" },
+  { slug: "deluxe-keyring", name: "Deluxe Keyring Collection (Set of 25)" },
+  { slug: "prestige-pen-holder", name: "Prestige Pen Holder" },
   { slug: "classic-pen-card-holder", name: "Classic Pen & Card Holder" },
+]
+
+/** Products shown by default — the 12 on the standard Kraft Reborn page. */
+export const DEFAULT_PRODUCTS = [
+  "classic-card-keeper", "eco-frame", "ecotime-clock", "elegance-hexa-tray",
+  "harmony-oval-planter", "lunar-glow-candle-stand", "mobile-stand", "petal-radiance-candle-stand",
+  "serenity-round-planter", "test-tube-greenery", "deluxe-keyring", "prestige-pen-holder",
 ]
 
 // ── GSTIN ────────────────────────────────────────────────────────────────
@@ -143,9 +155,12 @@ export function formatInrNumber(n: number): string {
   return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-/** Whole rupees, no decimals, no grouping: "22500" (matches strip style) */
+/** Indian grouping, decimals only when there are paise: "22,500" / "1,15,500.50" */
 export function plainRupees(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2)
+  return n.toLocaleString("en-IN", {
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
@@ -190,6 +205,7 @@ export type ComputedLine = {
   no: number
   name: string
   description: string[]
+  notes: string[]
   sac: string
   qty: number
   rate: number
@@ -197,7 +213,7 @@ export type ComputedLine = {
   cgst: number
   sgst: number
   amount: number // incl. tax
-  image: "basic" | "advance" | null
+  images: ("basic" | "advance")[]
 }
 
 export type TaxType = "IGST" | "CGST_SGST" | "SEZ"
@@ -222,6 +238,8 @@ export type Computed = {
   totalUnits: number
   kioskLabel: string // "Basic" | "Advance" | "Combo" | "Basic + Advance"
   singleType: KioskType | null
+  /** Service duration(s) across kiosk lines, e.g. "12 Months" or "12 Months / 6 Months" */
+  durationLabel: string
 }
 
 const two = (n: number) => String(n).padStart(2, "0")
@@ -231,13 +249,26 @@ export function periodText(duration: string): string {
   return months && months % 12 === 0 ? `${months / 12} year${months > 12 ? "s" : ""}` : duration
 }
 
+/** The service period that applies to an item (its own, else the quotation's). */
+export function itemPeriod(it: QuotationItem, duration: string): string {
+  return it.period.trim() || duration
+}
+
+export function itemNotes(it: QuotationItem): string[] {
+  return it.notes.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+}
+
 function itemDescription(it: QuotationItem, duration: string): string[] {
-  const period = `Service period:${periodText(duration)}`
-  if (it.type === "Combo") {
-    return [`01 set include Combo disposal units (${two(it.units)} Basic & ${two(it.advanceUnits)} Advance kiosks) on annual rent`, period]
+  const period = `Service period: ${periodText(itemPeriod(it, duration))}`
+  if (it.type === "Custom") {
+    // Other items only mention a period when one was set on the item.
+    return it.period.trim() ? [`Service period: ${periodText(it.period.trim())}`] : []
   }
-  if (it.type === "Custom") return []
-  return [`01 set include ${two(it.units)} disposal units (${it.type} kiosks) on annual rent`, period]
+  if (it.type === "Combo") {
+    return [`01 set includes Combo disposal units (${two(it.units)} Basic & ${two(it.advanceUnits)} Advance kiosks) on annual rent`, period]
+  }
+  const kiosk = it.units === 1 ? "kiosk" : "kiosks"
+  return [`01 set includes ${two(it.units)} disposal unit${it.units === 1 ? "" : "s"} (${it.type} ${kiosk}) on annual rent`, period]
 }
 
 export function partyAddress(p: PartyDetails): string {
@@ -251,7 +282,12 @@ export function partyAddress(p: PartyDetails): string {
 
 export function taxTypeFor(c: Pick<QuotationConfig, "sez" | "bill">): TaxType {
   if (c.sez) return "SEZ"
-  return normalizeGstin(c.bill.gstin).slice(0, 2) === SELLER_STATE_CODE ? "CGST_SGST" : "IGST"
+  const g = normalizeGstin(c.bill.gstin)
+  // Unregistered client (no GSTIN): place of supply comes from the billing state.
+  const intraState = g
+    ? g.slice(0, 2) === SELLER_STATE_CODE
+    : c.bill.state.trim().toLowerCase() === GST_STATE_CODES[SELLER_STATE_CODE].toLowerCase()
+  return intraState ? "CGST_SGST" : "IGST"
 }
 
 export function computeQuotation(c: QuotationConfig): Computed {
@@ -277,6 +313,7 @@ export function computeQuotation(c: QuotationConfig): Computed {
         ? it.name || "Additional item"
         : "Buffindia Environmental Services Annual Charges with AMC and Eco-Friendly Products",
       description: itemDescription(it, c.duration),
+      notes: itemNotes(it),
       sac: it.sac || DEFAULT_SAC,
       qty,
       rate,
@@ -284,7 +321,7 @@ export function computeQuotation(c: QuotationConfig): Computed {
       cgst: taxType === "CGST_SGST" ? half(base) : 0,
       sgst: taxType === "CGST_SGST" ? half(base) : 0,
       amount: r2(base * (1 + gstRate)),
-      image: it.type === "Basic" ? "basic" : custom ? null : "advance",
+      images: it.type === "Basic" ? ["basic"] : it.type === "Advance" ? ["advance"] : it.type === "Combo" ? ["basic", "advance"] : [],
     }
   })
 
@@ -295,6 +332,7 @@ export function computeQuotation(c: QuotationConfig): Computed {
   const sgst = cgst
   const igst = taxType === "CGST_SGST" ? r2(cgst + sgst) : r2(taxable * gstRate)
   const grandTotal = r2(taxable + igst)
+  const periods = [...new Set(c.items.filter((it) => it.type !== "Custom").map((it) => itemPeriod(it, c.duration)))]
   return {
     validTill: addDays(c.date, VALID_DAYS),
     gstRate,
@@ -314,6 +352,7 @@ export function computeQuotation(c: QuotationConfig): Computed {
     totalUnits: basicUnits + advanceUnits,
     kioskLabel: kinds.length ? kinds.join(" + ") : "—",
     singleType: kinds.length === 1 ? (kinds[0] as KioskType) : null,
+    durationLabel: periods.length ? periods.join(" / ") : c.duration,
   }
 }
 
@@ -326,6 +365,8 @@ export function newItem(type: LineType = "Basic"): QuotationItem {
     net: type === "Custom" ? 0 : STANDARD_RATE[type],
     sac: DEFAULT_SAC,
     auto: type !== "Custom",
+    period: "",
+    notes: "",
   }
 }
 
@@ -355,7 +396,7 @@ export function defaultQuotation(): QuotationConfig {
     bill: emptyParty(),
     ship: emptyParty(),
     sez: false,
-    complimentaryProducts: QUOTATION_PRODUCTS.map((p) => p.slug),
+    complimentaryProducts: [...DEFAULT_PRODUCTS],
   }
 }
 
@@ -393,6 +434,8 @@ export function coerceQuotation(raw: unknown): QuotationConfig {
         net: num(it.net),
         sac: str(it.sac, DEFAULT_SAC) || DEFAULT_SAC,
         auto: it.auto === true,
+        period: str(it.period).slice(0, 60),
+        notes: str(it.notes).slice(0, 500),
       }
     })
   } else {
@@ -405,11 +448,11 @@ export function coerceQuotation(raw: unknown): QuotationConfig {
     const pkg = b.packageRate === null || b.packageRate === "" || b.packageRate === undefined ? null : num(b.packageRate)
     items = [{
       type: kt, name: "", units: kt === "Advance" ? ak : bk, advanceUnits: kt === "Combo" ? ak : 0,
-      net: pkg ?? bk * br + ak * ar, sac: DEFAULT_SAC, auto: false,
+      net: pkg ?? bk * br + ak * ar, sac: DEFAULT_SAC, auto: false, period: "", notes: "",
     }]
     for (const x of Array.isArray(b.extraItems) ? b.extraItems : []) {
       const it = (x && typeof x === "object" ? x : {}) as Record<string, unknown>
-      items.push({ type: "Custom", name: str(it.name), units: num(it.qty, 1) || 1, advanceUnits: 0, net: num(it.rate), sac: str(it.sac, DEFAULT_SAC) || DEFAULT_SAC, auto: false })
+      items.push({ type: "Custom", name: str(it.name), units: num(it.qty, 1) || 1, advanceUnits: 0, net: num(it.rate), sac: str(it.sac, DEFAULT_SAC) || DEFAULT_SAC, auto: false, period: "", notes: "" })
     }
   }
   const slugs = new Set(QUOTATION_PRODUCTS.map((p) => p.slug))
@@ -432,6 +475,28 @@ export function coerceQuotation(raw: unknown): QuotationConfig {
     complimentaryProducts: (Array.isArray(b.complimentaryProducts) ? b.complimentaryProducts : [])
       .filter((s): s is string => typeof s === "string" && slugs.has(s)),
   }
+}
+
+/** Problems that would make the PDF wrong or meaningless. Empty = OK to save / generate. */
+export function quotationErrors(c: QuotationConfig): string[] {
+  const errs: string[] = []
+  if (!c.clientName.trim()) errs.push("Client name is required")
+  if (!c.piNo.trim()) errs.push("PI number is required")
+  if (!c.bill.name.trim()) errs.push("Billing name is required")
+  c.items.forEach((it, i) => {
+    const n = `Item ${i + 1}`
+    if (it.type === "Custom") {
+      if (!it.name.trim()) errs.push(`${n}: item name is required`)
+      if (it.units < 1) errs.push(`${n}: quantity must be at least 1`)
+      if (it.net <= 0) errs.push(`${n}: rate must be more than 0`)
+      return
+    }
+    if (it.type === "Combo") {
+      if (it.units < 1 || it.advanceUnits < 1) errs.push(`${n}: Combo needs at least 1 Basic and 1 Advance kiosk`)
+    } else if (it.units < 1) errs.push(`${n}: number of kiosks must be at least 1`)
+    if (it.net <= 0) errs.push(`${n}: net value must be more than 0`)
+  })
+  return errs
 }
 
 export type QuotationStatus = "Draft" | "Sent" | "Accepted" | "Rejected"

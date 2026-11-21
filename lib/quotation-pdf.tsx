@@ -12,15 +12,18 @@ import {
   type QuotationConfig,
 } from "@/lib/quotation"
 
+// Layout follows the redesigned Buffindia proposal (A4, points).
 const NAVY = "#22284c"
 const ORANGE = "#d3720f"
-const TINT = "#f6f4f1"
-const HAIR = "#e3e4ea"
-const INK = "#22284c"
-const MUTED = "#6b6f85"
+const TINT = "#f6f4f0"
+const HAIR = "#e2e4e9"
+const GRID = "#aeb3c1"
+const INK = "#1b1d2a"
+const MUTED = "#6b6f80"
 
 const font = (f: string) => path.join(process.cwd(), "public", "fonts", f)
 const asset = (...p: string[]) => path.join(process.cwd(), "public", "quotation-assets", ...p)
+const KIOSK_IMG = { basic: asset("kiosk-basic.jpg"), advance: asset("kiosk-advance.jpg") }
 
 let fontsReady = false
 function registerFonts() {
@@ -46,79 +49,66 @@ const T = (size: number, color = INK, weight: 400 | 500 | 600 | 700 = 400) => ({
   fontWeight: weight,
 })
 
-const MM20 = 56.7
+const PAGE_W = 595.28
+const MARGIN = 57
 const HEADER_H = 66.4
 
 const s = StyleSheet.create({
-  page: { backgroundColor: "#ffffff", paddingTop: HEADER_H + 22, paddingBottom: 58, paddingHorizontal: MM20 },
-  header: { position: "absolute", top: 0, left: 0, width: 595.28, height: HEADER_H },
+  page: { backgroundColor: "#ffffff", paddingTop: 90, paddingBottom: 66, paddingHorizontal: MARGIN },
+  header: { position: "absolute", top: 0, left: 0, width: PAGE_W, height: HEADER_H },
   footer: {
-    position: "absolute", bottom: 22, left: MM20, right: MM20, flexDirection: "row",
-    justifyContent: "space-between", borderTopWidth: 0.5, borderTopColor: HAIR, paddingTop: 6,
+    position: "absolute", bottom: 34, left: MARGIN, right: MARGIN, flexDirection: "row",
+    justifyContent: "space-between", borderTopWidth: 0.6, borderTopColor: HAIR, paddingTop: 9,
   },
-  h1: { ...T(18, NAVY, 700), marginBottom: 3 },
-  sub: { ...T(9.5, MUTED), marginBottom: 6 },
-  rule: { width: 30, height: 2, backgroundColor: ORANGE, marginBottom: 18 },
-  p: { ...T(9, INK), lineHeight: 1.5, marginBottom: 8 },
-  pb: { ...T(9, INK, 700), lineHeight: 1.5 },
-  eyebrow: { ...T(8, ORANGE, 700), letterSpacing: 0.6, marginBottom: 6, marginTop: 8 },
-  hl: { flexDirection: "row", paddingVertical: 5, borderBottomWidth: 0.5, borderBottomColor: HAIR },
-  hlNo: { ...T(8, ORANGE, 700), width: 24 },
-  hlTx: { ...T(9, INK, 700) },
-  // commercials
-  kioskWrap: { flexDirection: "row", gap: 8, width: 210, alignItems: "flex-start" },
-  kioskCard: { backgroundColor: TINT, padding: 6, alignItems: "center" },
-  kioskCap: { ...T(8, ORANGE, 700), marginTop: 5, marginBottom: 1 },
-  dRow: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: HAIR },
-  dLab: { ...T(7.5, MUTED, 700), width: 92 },
-  dVal: { ...T(9, INK), flex: 1 },
-  strip: { flexDirection: "row", borderTopWidth: 2, borderTopColor: ORANGE, backgroundColor: TINT, marginTop: 22 },
-  stripCell: { flex: 1, paddingVertical: 11, paddingHorizontal: 10 },
-  stripLab: { ...T(7, MUTED, 700), marginBottom: 5 },
-  stripVal: { ...T(13, NAVY, 700) },
+  h1: { ...T(19, NAVY, 700), marginBottom: 2 },
+  sub: { ...T(11, MUTED) },
+  rule: { width: 51, height: 2.2, backgroundColor: ORANGE, marginTop: 14, marginBottom: 22 },
+  p: { ...T(10, INK), lineHeight: 1.5, marginBottom: 8 },
+  pb: { ...T(10, INK, 700), lineHeight: 1.5 },
+  eyebrow: { ...T(9, ORANGE, 700), marginTop: 10, marginBottom: 6 },
+  hl: { flexDirection: "row", alignItems: "center", height: 25, borderBottomWidth: 0.5, borderBottomColor: HAIR },
+  hlNo: { ...T(9, ORANGE, 700), width: 31 },
+  hlTx: { ...T(10.5, NAVY, 700) },
+  secT: { ...T(9, ORANGE, 700), paddingBottom: 5, borderBottomWidth: 0.6, borderBottomColor: HAIR, marginBottom: 8 },
+  li: { flexDirection: "row", marginBottom: 3.5 },
+  liNo: { ...T(10.2, INK), width: 17 },
+  liTx: { ...T(10.2, INK), flex: 1, lineHeight: 1.45 },
+  subLi: { flexDirection: "row", marginBottom: 1.5, marginLeft: 17 },
+  subNo: { ...T(10.2, INK), width: 20 },
+  para: { ...T(10.2, INK), lineHeight: 1.45 },
+  dRow: { flexDirection: "row", alignItems: "center", borderBottomWidth: 0.5, borderBottomColor: HAIR },
+  dLab: { ...T(8.5, MUTED, 700), width: 91 },
+  dVal: { ...T(10, INK), flex: 1, lineHeight: 1.4 },
+  kioskCap: { ...T(9.5, ORANGE, 700), marginTop: 7, textAlign: "center" },
+  strip: { flexDirection: "row", borderTopWidth: 2, borderTopColor: ORANGE, backgroundColor: TINT, height: 72 },
+  stripLab: { ...T(7.8, MUTED, 700), marginBottom: 4 },
   special: {
-    flexDirection: "row", alignItems: "center", marginTop: 14, backgroundColor: TINT,
-    borderLeftWidth: 3, borderLeftColor: ORANGE, paddingVertical: 11, paddingHorizontal: 12,
+    flexDirection: "row", alignItems: "center", marginTop: 17, backgroundColor: TINT,
+    borderLeftWidth: 2.2, borderLeftColor: ORANGE, minHeight: 40, paddingVertical: 8, paddingHorizontal: 12,
   },
-  specialLab: { ...T(7.5, ORANGE, 700), width: 100 },
-  specialVal: { ...T(9, INK), flex: 1 },
-  // products
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 9, marginTop: 4 },
-  card: {
-    width: 150, height: 128, borderWidth: 0.6, borderColor: HAIR, borderRadius: 7,
-    backgroundColor: "#fff", alignItems: "center", paddingTop: 8, paddingHorizontal: 6,
-  },
-  cardName: { ...T(7.5, INK, 500), textAlign: "center", marginTop: 4 },
-  // invoice
-  bar: { backgroundColor: NAVY, paddingVertical: 8, alignItems: "center" },
-  box: { borderWidth: 0.6, borderColor: HAIR },
-  cell: { ...T(7.5, INK), lineHeight: 1.4 },
-  cellB: { ...T(7.5, INK, 700), lineHeight: 1.4 },
-  cellM: { ...T(7, MUTED), lineHeight: 1.4 },
-  th: { ...T(7, "#fff", 700) },
-  // text sections
-  secT: { ...T(9, ORANGE, 700), letterSpacing: 0.6, marginTop: 12, marginBottom: 6 },
-  li: { flexDirection: "row", marginBottom: 4 },
-  liNo: { ...T(8.5, ORANGE, 700), width: 18 },
-  liTx: { ...T(8.5, INK), flex: 1, lineHeight: 1.45 },
-  para: { ...T(8.5, INK), lineHeight: 1.45 },
-  subLi: { flexDirection: "row", marginBottom: 3, marginLeft: 18 },
-  sigBox: { flex: 1, borderWidth: 0.6, borderColor: HAIR, padding: 10, minHeight: 112 },
+  cell: { ...T(8.2, INK), lineHeight: 1.4 },
+  cellB: { ...T(8.2, INK, 700), lineHeight: 1.4 },
+  cellM: { ...T(8.2, MUTED), lineHeight: 1.4 },
+  th: { ...T(7.8, "#ffffff", 700) },
+  sigBox: { flex: 1, borderWidth: 0.7, borderColor: HAIR, padding: 9, height: 119 },
 })
 
-function Frame({ children, totalLabel }: { children: React.ReactNode; totalLabel?: string }) {
-  void totalLabel
+function Footer({ dark = false }: { dark?: boolean }) {
+  const color = dark ? "#d1d9e6" : MUTED
+  return (
+    <View fixed style={dark ? { ...s.footer, bottom: 6, borderTopWidth: 0 } : s.footer}>
+      <Text style={T(dark ? 6.8 : 7.4, color)}>www.buffindia.com   ·   accounts@buffindia.com</Text>
+      <Text style={T(dark ? 6.8 : 7.4, color)} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+    </View>
+  )
+}
+
+function Frame({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Image fixed src={asset("header.jpg")} style={s.header} />
       {children}
-      <View fixed style={s.footer}>
-        <Text style={T(7.5, MUTED)}>www.buffindia.com   ·   accounts@buffindia.com</Text>
-        <Text
-          style={T(7.5, MUTED)}
-          render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
-        />
-      </View>
+      <Footer />
     </>
   )
 }
@@ -133,6 +123,10 @@ function Title({ title, sub }: { title: string; sub: string }) {
   )
 }
 
+function Section({ title, first = false }: { title: string; first?: boolean }) {
+  return <Text style={{ ...s.secT, marginTop: first ? 0 : 14 }}>{title}</Text>
+}
+
 function Num({ n, children }: { n: string; children: React.ReactNode }) {
   return (
     <View style={s.li} wrap={false}>
@@ -141,6 +135,8 @@ function Num({ n, children }: { n: string; children: React.ReactNode }) {
     </View>
   )
 }
+
+// ── 1. Cover letter ──────────────────────────────────────────────────────
 
 function Cover({ c }: { c: QuotationConfig }) {
   const hl = [
@@ -152,13 +148,15 @@ function Cover({ c }: { c: QuotationConfig }) {
     "Cost-effective and value-driven sustainability model",
   ]
   return (
-    <Page size="A4" style={s.page}>
+    <Page size="A4" style={{ ...s.page, paddingTop: 92 }}>
       <Frame>
-        <Text style={s.p}>Date: {formatDate(c.date)}</Text>
-        <Text style={{ ...s.p, marginBottom: 2 }}>To</Text>
-        <Text style={{ ...s.pb, marginBottom: 0 }}>{c.clientName}</Text>
-        <Text style={{ ...s.pb, marginBottom: 12 }}>{c.city}</Text>
-        <Text style={{ ...s.pb, marginBottom: 12 }}>Subject: Proforma for Cigarette Waste Management Solution</Text>
+        <Text style={{ ...s.p, marginBottom: 16 }}>Date: {formatDate(c.date)}</Text>
+        <Text style={{ ...s.p, marginBottom: 0 }}>To</Text>
+        <Text style={s.pb}>{c.clientName}</Text>
+        {c.city ? <Text style={s.pb}>{c.city}</Text> : null}
+        <Text style={{ ...T(10, NAVY, 700), marginTop: 16, marginBottom: 16 }}>
+          Subject: Proforma for Cigarette Waste Management Solution
+        </Text>
         <Text style={s.p}>Dear Sustainability Partner,</Text>
         <Text style={s.p}>
           Thank you for your interest in Buffindia’s Cigarette Waste Management Solution — an initiative focused on making
@@ -169,7 +167,7 @@ function Cover({ c }: { c: QuotationConfig }) {
           disposal kiosk.
         </Text>
         <Text style={s.eyebrow}>KEY SOLUTION HIGHLIGHTS</Text>
-        <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: 14 }}>
           {hl.map((t, i) => (
             <View key={t} style={s.hl}>
               <Text style={s.hlNo}>{String(i + 1).padStart(2, "0")}</Text>
@@ -181,8 +179,8 @@ function Cover({ c }: { c: QuotationConfig }) {
           This proposal has been tailored to your site’s requirements. We would be happy to connect and take this forward.
         </Text>
         <Text style={s.p}>We look forward to building a long-term sustainable partnership.</Text>
-        <Text style={{ ...s.p, marginTop: 6, marginBottom: 4 }}>Warm regards,</Text>
-        <Image src={asset("signature.png")} style={{ width: 58, height: 56, marginBottom: 2 }} />
+        <Text style={{ ...s.p, marginTop: 10, marginBottom: 4 }}>Warm regards,</Text>
+        <Image src={asset("signature.png")} style={{ width: 56, height: 55, marginBottom: 4 }} />
         <Text style={s.pb}>Ketan Prajapati</Text>
         <Text style={{ ...s.p, marginBottom: 0 }}>Founding Director</Text>
         <Text style={{ ...s.p, marginBottom: 0 }}>Buffindia Receptacles Pvt Ltd</Text>
@@ -193,6 +191,8 @@ function Cover({ c }: { c: QuotationConfig }) {
   )
 }
 
+// ── 2. Proposed commercials ──────────────────────────────────────────────
+
 function Commercials({ c, k }: { c: QuotationConfig; k: Computed }) {
   const sub =
     k.singleType && k.singleType !== "Combo"
@@ -200,240 +200,344 @@ function Commercials({ c, k }: { c: QuotationConfig; k: Computed }) {
       : "Annual AMC with Disposal Units on Rent"
   const showAdv = k.advanceUnits > 0
   const showBasic = k.basicUnits > 0 || !showAdv
+  const both = showAdv && showBasic
   const rows: [string, string][] = [
     ["Company Name", c.clientName],
-    ["Location", c.city],
+    ["Location", c.city || "—"],
     ["Kiosk Type", k.kioskLabel],
     ["Basic Kiosk", String(k.basicUnits)],
     ["Advance Kiosk", String(k.advanceUnits)],
     ["Total Units", String(k.totalUnits)],
-    ["Service Duration", c.duration],
+    ["Service Duration", k.durationLabel],
   ]
-  const strip: [string, string, boolean][] = [
-    ["Total Cost", `₹${plainRupees(k.totalCost)}`, false],
-    ["Surcharge", `₹${plainRupees(k.surcharge)}`, false],
-    [k.taxType === "SEZ" ? "GST (SEZ 0%)" : "GST (18%)", `₹${plainRupees(k.igst)}`, false],
-    ["Total Amount", `₹${plainRupees(k.grandTotal)}`, true],
-    ["Complimentary", `₹${plainRupees(k.complimentary)}`, false],
+  const strip: [string, string, number][] = [
+    ["Total Cost", `₹${plainRupees(k.totalCost)}`, 88],
+    ["Surcharge", `₹${plainRupees(k.surcharge)}`, 82],
+    [k.taxType === "SEZ" ? "GST (SEZ 0%)" : "GST (18%)", `₹${plainRupees(k.igst)}`, 88],
+    ["Total Amount", `₹${plainRupees(k.grandTotal)}`, 133],
+    ["Complimentary", `₹${plainRupees(k.complimentary)}`, 0],
   ]
+  const panelW = both ? 260 : 226
+  const rowH = both ? 38 : 44
   return (
     <Page size="A4" style={s.page}>
       <Frame>
         <Title title="Proposed Commercials" sub={sub} />
-        <View style={{ flexDirection: "row", gap: 18 }}>
-          <View style={s.kioskWrap}>
+        <View style={{ flexDirection: "row", gap: both ? 17 : 29 }}>
+          <View style={{ width: panelW, alignSelf: "flex-start", backgroundColor: TINT, padding: 7, paddingTop: 10, paddingBottom: 9, flexDirection: "row", justifyContent: "center", gap: 14 }}>
             {showBasic && (
-              <View style={{ ...s.kioskCard, width: showAdv ? 100 : 130 }}>
-                <Image src={asset("kiosk-basic.jpg")} style={{ width: showAdv ? 88 : 118, height: showAdv ? 117 : 157 }} />
+              <View style={{ width: both ? 133 : 213 }}>
+                <Image src={KIOSK_IMG.basic} style={both ? { width: 133, height: 177 } : { width: 213, height: 284 }} />
                 <Text style={s.kioskCap}>Basic Kiosk</Text>
               </View>
             )}
             {showAdv && (
-              <View style={{ ...s.kioskCard, width: showBasic ? 100 : 130 }}>
-                <Image src={asset("kiosk-advance.jpg")} style={{ width: showBasic ? 66 : 88, height: showBasic ? 117 : 157 }} />
+              <View style={{ width: both ? 99 : 160 }}>
+                <Image src={KIOSK_IMG.advance} style={both ? { width: 99, height: 177 } : { width: 160, height: 284 }} />
                 <Text style={s.kioskCap}>Advance Kiosk</Text>
               </View>
             )}
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, borderTopWidth: 0.5, borderTopColor: HAIR }}>
             {rows.map(([l, v]) => (
-              <View key={l} style={s.dRow}>
-                <Text style={s.dLab}>{l.toUpperCase()}</Text>
+              <View key={l} style={{ ...s.dRow, minHeight: rowH, paddingVertical: 6 }}>
+                <Text style={s.dLab}>{l}</Text>
                 <Text style={s.dVal}>{v}</Text>
               </View>
             ))}
           </View>
         </View>
-        <View style={s.strip} wrap={false}>
-          {strip.map(([l, v, hi]) => (
-            <View key={l} style={{ ...s.stripCell, backgroundColor: hi ? NAVY : TINT }}>
-              <Text style={{ ...s.stripLab, color: hi ? "#fff" : MUTED }}>{l}</Text>
-              <Text style={{ ...s.stripVal, color: hi ? "#fff" : NAVY }}>{v}</Text>
-            </View>
-          ))}
+        <View style={{ ...s.strip, marginTop: both ? 37 : 52 }} wrap={false}>
+          {strip.map(([l, v, w], i) => {
+            const hi = i === 3
+            return (
+              <View
+                key={l}
+                style={{
+                  ...(w ? { width: w } : { flex: 1 }),
+                  paddingTop: 14,
+                  paddingHorizontal: 10,
+                  backgroundColor: hi ? NAVY : TINT,
+                  borderRightWidth: i < 2 ? 0.5 : 0,
+                  borderRightColor: HAIR,
+                }}
+              >
+                <Text style={{ ...s.stripLab, color: hi ? "#c9ccdc" : MUTED }}>{l}</Text>
+                <Text style={T(hi ? (v.length > 11 ? 15 : 18) : v.length > 9 ? 12.5 : 16, hi ? "#ffffff" : NAVY, 700)}>{v}</Text>
+              </View>
+            )
+          })}
         </View>
         <View style={s.special} wrap={false}>
-          <Text style={s.specialLab}>SPECIAL CONDITIONS</Text>
-          <Text style={s.specialVal}>{c.specialConditions || "—"}</Text>
+          <Text style={{ ...T(8, ORANGE, 700), width: 136 }}>SPECIAL CONDITIONS</Text>
+          <Text style={{ ...T(10, INK), flex: 1 }}>{c.specialConditions || "—"}</Text>
         </View>
       </Frame>
     </Page>
   )
 }
+
+// ── 3. Kraft Reborn complimentary products ───────────────────────────────
 
 function Complimentary({ c }: { c: QuotationConfig }) {
   const items = QUOTATION_PRODUCTS.filter((p) => c.complimentaryProducts.includes(p.slug))
+  const cols = 4
+  const rowsN = Math.max(1, Math.ceil(items.length / cols))
+  const gap = 6.5
+  const cardW = (537 - gap * (cols - 1)) / cols
+  const cardH = Math.min(136, (421 - gap * (rowsN - 1)) / rowsN)
   return (
-    <Page size="A4" style={s.page}>
-      <Frame>
-        <Title title="Complimentary Products" sub="Eco-friendly recycled products provided as part of the agreed service plan" />
-        <View style={s.grid}>
-          {items.map((p) => (
-            <View key={p.slug} style={s.card} wrap={false}>
-              <Image src={asset("products", `${p.slug}.png`)} style={{ width: 72, height: 90 }} />
-              <Text style={s.cardName}>{p.name}</Text>
-            </View>
-          ))}
-        </View>
-        <Text style={{ ...T(9, INK), textAlign: "center", marginTop: 18 }}>
-          For more products, visit <Text style={T(9, ORANGE, 500)}>kraftreborn.com</Text>
-        </Text>
-      </Frame>
+    <Page size="A4" style={{ position: "relative" }}>
+      <Image src={asset("kraft-reborn-bg.jpg")} style={{ position: "absolute", top: 0, left: 0, width: PAGE_W, height: 841 }} />
+      <View style={{ position: "absolute", top: 190, left: 30, width: 537, flexDirection: "row", flexWrap: "wrap", gap }}>
+        {items.map((p) => (
+          <View
+            key={p.slug}
+            style={{
+              width: cardW, height: cardH, backgroundColor: "#fbfbfb", borderWidth: 0.8, borderColor: "#e3e3e3",
+              borderRadius: 5, alignItems: "center", justifyContent: "space-between", paddingTop: 8, paddingBottom: 10, paddingHorizontal: 6,
+            }}
+          >
+            <Image src={asset("products", `${p.slug}.png`)} style={{ width: cardW - 22, height: cardH - 50, objectFit: "contain" }} />
+            <Text style={{ ...T(9.4, INK, 500), textAlign: "center", lineHeight: 1.25 }}>{p.name}</Text>
+          </View>
+        ))}
+      </View>
+      <Text style={{ position: "absolute", top: 711, left: 0, width: PAGE_W, textAlign: "center", ...T(9.4, NAVY, 500) }}>
+        For more products, visit <Text style={T(9.4, ORANGE, 700)}>kraftreborn.com</Text>
+      </Text>
+      <Footer dark />
     </Page>
   )
 }
 
-const COLS = { no: 22, img: 50, hsn: 44, qty: 26, rate: 52, igst: 40, cgst: 38, amt: 58 }
+// ── 4. Proforma invoice ──────────────────────────────────────────────────
 
-function Party({ label, p }: { label: string; p: QuotationConfig["bill"] }) {
+type Col = { key: string; label: string; w: number; right?: boolean }
+
+function invoiceCols(cgst: boolean): Col[] {
+  return cgst
+    ? [
+        { key: "no", label: "No.", w: 26 }, { key: "img", label: "Image", w: 60 }, { key: "item", label: "Item & Description", w: 134 },
+        { key: "hsn", label: "HSN / SAC", w: 50 }, { key: "qty", label: "Qty", w: 28, right: true }, { key: "rate", label: "Rate (₹)", w: 62, right: true },
+        { key: "cgst", label: "CGST 9%", w: 53, right: true }, { key: "sgst", label: "SGST 9%", w: 53, right: true }, { key: "amt", label: "Amount (₹)", w: 73, right: true },
+      ]
+    : [
+        { key: "no", label: "No.", w: 32 }, { key: "img", label: "Image", w: 76 }, { key: "item", label: "Item & Description", w: 152 },
+        { key: "hsn", label: "HSN / SAC", w: 63 }, { key: "qty", label: "Qty", w: 35, right: true }, { key: "rate", label: "Rate (₹)", w: 67, right: true },
+        { key: "igst", label: "IGST", w: 44, right: true }, { key: "amt", label: "Amount (₹)", w: 70, right: true },
+      ]
+}
+
+const box = { borderWidth: 0.7, borderColor: GRID }
+const vLine = { borderRightWidth: 0.5, borderRightColor: GRID }
+
+function Party({ p }: { p: QuotationConfig["bill"] }) {
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ backgroundColor: TINT, padding: 4, borderBottomWidth: 0.6, borderBottomColor: HAIR }}>
-        <Text style={s.cellB}>{label}</Text>
-      </View>
-      <View style={{ padding: 6 }}>
-        <Text style={s.cellB}>{p.name}</Text>
-        <Text style={s.cellM}>{partyAddress(p)}</Text>
-        {p.gstin ? <Text style={s.cellM}>GSTIN : {p.gstin}</Text> : null}
-      </View>
+    <View style={{ paddingHorizontal: 6, paddingVertical: 5 }}>
+      <Text style={s.cellB}>{p.name}</Text>
+      <Text style={s.cellM}>{partyAddress(p)}</Text>
+      {p.gstin ? <Text style={s.cellM}>GSTIN : {p.gstin}</Text> : null}
     </View>
   )
 }
 
 function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
-  const meta: [string, string][] = [
-    ["PI No.", c.piNo],
-    ["Date", formatDate(c.date)],
-    ["Valid till", formatDate(k.validTill)],
+  const cgst = k.taxType === "CGST_SGST"
+  const cols = invoiceCols(cgst)
+  const meta: [string, string, boolean][] = [
+    ["PI No.", c.piNo, true],
+    ["Date", formatDate(c.date), false],
+    ["Valid till", formatDate(k.validTill), false],
   ]
-  return (
-    <Page size="A4" style={s.page} break>
-      <Frame>
-        <View style={s.bar}>
-          <Text style={T(10, "#fff", 700)}>PROFORMA INVOICE</Text>
-        </View>
-        <View style={{ ...s.box, flexDirection: "row", borderTopWidth: 0 }} wrap={false}>
-          <View style={{ flex: 1, padding: 6 }}>
-            <Text style={{ ...s.cellB, marginBottom: 3 }}>Buffindia Receptacles Private Limited</Text>
-            <Text style={s.cellM}>GSTIN : 24AAICB0616J1ZY</Text>
-            <Text style={s.cellM}>CIN : U36999GJ2018PTC104688</Text>
-            <Text style={s.cellM}>accounts@buffindia.com  ·  9512120366</Text>
-          </View>
-          <View style={{ width: 160, borderLeftWidth: 0.6, borderLeftColor: HAIR }}>
-            {meta.map(([l, v], i) => (
-              <View key={l} style={{ flexDirection: "row", borderTopWidth: i ? 0.6 : 0, borderTopColor: HAIR }}>
-                <Text style={{ ...s.cellM, width: 60, padding: 4 }}>{l}</Text>
-                <Text style={{ ...s.cellB, flex: 1, padding: 4, borderLeftWidth: 0.6, borderLeftColor: HAIR }}>{v}</Text>
-              </View>
+  const cellPad = { paddingHorizontal: 5, paddingVertical: 4 }
+  const lineCell = (key: string, l: Computed["lines"][number]) => {
+    switch (key) {
+      case "no":
+        return <Text style={s.cell}>{l.no}</Text>
+      case "img":
+        return (
+          <View style={{ flexDirection: "row", justifyContent: "center", gap: 3 }}>
+            {l.images.map((im) => (
+              <Image
+                key={im}
+                src={KIOSK_IMG[im]}
+                style={{ width: l.images.length > 1 ? 26 : 54, height: l.images.length > 1 ? 40 : 71, objectFit: "contain" }}
+              />
             ))}
           </View>
-        </View>
-        <View style={{ ...s.box, flexDirection: "row", borderTopWidth: 0 }} wrap={false}>
-          <Party label="Billing Address" p={c.bill} />
-          <View style={{ width: 0.6, backgroundColor: HAIR }} />
-          <Party label="Shipping Address" p={c.ship} />
+        )
+      case "item":
+        return (
+          <View>
+            <Text style={s.cellB}>{l.name}</Text>
+            {l.description.map((d, i) => (
+              <Text key={i} style={s.cellM}>{d}</Text>
+            ))}
+            {l.notes.map((n, i) => (
+              <Text key={`n${i}`} style={{ ...s.cellM, fontStyle: "italic", color: INK }}>{i === 0 ? "Note: " : ""}{n}</Text>
+            ))}
+          </View>
+        )
+      case "hsn":
+        return <Text style={s.cell}>{l.sac}</Text>
+      case "qty":
+        return <Text style={{ ...s.cell, textAlign: "right" }}>{l.qty}</Text>
+      case "rate":
+        return <Text style={{ ...s.cell, textAlign: "right" }}>{formatInrNumber(l.rate)}</Text>
+      case "igst":
+        return <Text style={{ ...s.cell, textAlign: "right" }}>{(k.gstRate * 100).toFixed(2)}%</Text>
+      case "cgst":
+        return <Text style={{ ...s.cell, fontSize: 7.8, textAlign: "right" }}>{formatInrNumber(l.cgst)}</Text>
+      case "sgst":
+        return <Text style={{ ...s.cell, fontSize: 7.8, textAlign: "right" }}>{formatInrNumber(l.sgst)}</Text>
+      default:
+        return <Text style={{ ...T(8.2, NAVY, 700), textAlign: "right" }}>{formatInrNumber(l.amount)}</Text>
+    }
+  }
+  const totals: [string, string][] = [
+    ...(k.surcharge > 0
+      ? ([["Sub Total (₹)", formatInrNumber(k.totalCost)], ["Add Surcharge (₹)", formatInrNumber(k.surcharge)]] as [string, string][])
+      : []),
+    ["Total Amount before Tax (₹)", formatInrNumber(k.taxable)],
+    ...(cgst
+      ? ([["Add CGST 9% (₹)", formatInrNumber(k.cgst)], ["Add SGST 9% (₹)", formatInrNumber(k.sgst)]] as [string, string][])
+      : ([[k.taxType === "SEZ" ? "IGST – SEZ zero-rated (₹)" : "Add IGST (₹)", formatInrNumber(k.igst)]] as [string, string][])),
+  ]
+  const bankW = [127, 174, 143, 95]
+  return (
+    <Page size="A4" style={{ ...s.page, paddingHorizontal: 28, paddingTop: 96 }}>
+      <Frame>
+        <View wrap={false}>
+          <View style={{ backgroundColor: NAVY, height: 32, alignItems: "center", justifyContent: "center" }}>
+            <Text style={T(12, "#ffffff", 700)}>PROFORMA INVOICE</Text>
+          </View>
+          <View style={{ ...box, borderTopWidth: 0, flexDirection: "row" }}>
+            <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 6 }}>
+              <Text style={{ ...T(9, NAVY, 700), marginBottom: 2 }}>Buffindia Receptacles Private Limited</Text>
+              <Text style={s.cellM}>GSTIN : 24AAICB0616J1ZY</Text>
+              <Text style={s.cellM}>CIN : U36999GJ2018PTC104688</Text>
+              <Text style={s.cellM}>accounts@buffindia.com  ·  9512120366</Text>
+            </View>
+            <View style={{ width: 196, borderLeftWidth: 0.5, borderLeftColor: GRID }}>
+              {meta.map(([l, v, b], i) => (
+                <View key={l} style={{ flexDirection: "row", height: 21.7, borderTopWidth: i ? 0.5 : 0, borderTopColor: GRID }}>
+                  <View style={{ width: 69, justifyContent: "center", paddingLeft: 6 }}>
+                    <Text style={s.cellM}>{l}</Text>
+                  </View>
+                  <View style={{ flex: 1, justifyContent: "center", borderLeftWidth: 0.5, borderLeftColor: GRID, paddingLeft: 6 }}>
+                    <Text style={b ? s.cellB : s.cell}>{v}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
         </View>
 
-        {/* items */}
-        <View style={{ marginTop: 8 }}>
-          <View fixed style={{ flexDirection: "row", backgroundColor: NAVY, paddingVertical: 5 }}>
-            <Text style={{ ...s.th, width: COLS.no, paddingLeft: 4 }}>No.</Text>
-            <Text style={{ ...s.th, width: COLS.img }}>Image</Text>
-            <Text style={{ ...s.th, flex: 1 }}>Item & Description</Text>
-            <Text style={{ ...s.th, width: COLS.hsn }}>HSN / SAC</Text>
-            <Text style={{ ...s.th, width: COLS.qty }}>Qty</Text>
-            <Text style={{ ...s.th, width: COLS.rate, textAlign: "right" }}>Rate (₹)</Text>
-            {k.taxType === "CGST_SGST" ? (
-              <>
-                <Text style={{ ...s.th, width: COLS.cgst, textAlign: "right" }}>CGST 9%</Text>
-                <Text style={{ ...s.th, width: COLS.cgst, textAlign: "right" }}>SGST 9%</Text>
-              </>
-            ) : (
-              <Text style={{ ...s.th, width: COLS.igst, textAlign: "right" }}>IGST</Text>
-            )}
-            <Text style={{ ...s.th, width: COLS.amt, textAlign: "right", paddingRight: 4 }}>Amount (₹)</Text>
+        <View style={{ ...box, marginTop: 9 }} wrap={false}>
+          <View style={{ flexDirection: "row", backgroundColor: TINT, borderBottomWidth: 0.5, borderBottomColor: GRID, height: 21 }}>
+            <View style={{ flex: 1, justifyContent: "center", paddingLeft: 6, ...vLine }}>
+              <Text style={T(7.8, NAVY, 700)}>Billing Address</Text>
+            </View>
+            <View style={{ flex: 1, justifyContent: "center", paddingLeft: 6 }}>
+              <Text style={T(7.8, NAVY, 700)}>Shipping Address</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ flex: 1, ...vLine }}>
+              <Party p={c.bill} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Party p={c.ship} />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ ...box, marginTop: 9, borderBottomWidth: 0 }}>
+          <View fixed style={{ flexDirection: "row", backgroundColor: NAVY, minHeight: 23 }}>
+            {cols.map((col, i) => (
+              <View
+                key={col.key}
+                style={{ width: col.w, justifyContent: "center", ...cellPad, borderRightWidth: i < cols.length - 1 ? 0.5 : 0, borderRightColor: "#494f77" }}
+              >
+                <Text style={{ ...s.th, textAlign: col.right ? "right" : "left" }}>{col.label}</Text>
+              </View>
+            ))}
           </View>
           {k.lines.map((l) => (
             <View
               key={l.no}
               wrap={false}
-              style={{ flexDirection: "row", paddingVertical: 5, borderBottomWidth: 0.6, borderBottomColor: HAIR, borderLeftWidth: 0.6, borderRightWidth: 0.6, borderColor: HAIR }}
+              style={{ flexDirection: "row", borderBottomWidth: 0.7, borderBottomColor: GRID, minHeight: l.images.length ? 93 : 26 }}
             >
-              <Text style={{ ...s.cell, width: COLS.no, paddingLeft: 4 }}>{l.no}</Text>
-              <View style={{ width: COLS.img }}>
-                {l.image ? <Image src={asset(l.image === "basic" ? "kiosk-basic.jpg" : "kiosk-advance.jpg")} style={{ width: 38, height: 50, objectFit: "contain" }} /> : null}
-              </View>
-              <View style={{ flex: 1, paddingRight: 4 }}>
-                <Text style={s.cellB}>{l.name}</Text>
-                {l.description.map((d) => (
-                  <Text key={d} style={s.cellM}>{d}</Text>
-                ))}
-              </View>
-              <Text style={{ ...s.cell, width: COLS.hsn }}>{l.sac}</Text>
-              <Text style={{ ...s.cell, width: COLS.qty }}>{l.qty}</Text>
-              <Text style={{ ...s.cell, width: COLS.rate, textAlign: "right" }}>{formatInrNumber(l.rate)}</Text>
-              {k.taxType === "CGST_SGST" ? (
-                <>
-                  <Text style={{ ...s.cell, width: COLS.cgst, textAlign: "right" }}>{formatInrNumber(l.cgst)}</Text>
-                  <Text style={{ ...s.cell, width: COLS.cgst, textAlign: "right" }}>{formatInrNumber(l.sgst)}</Text>
-                </>
-              ) : (
-                <Text style={{ ...s.cell, width: COLS.igst, textAlign: "right" }}>{(k.gstRate * 100).toFixed(2)}%</Text>
-              )}
-              <Text style={{ ...s.cellB, width: COLS.amt, textAlign: "right", paddingRight: 4 }}>{formatInrNumber(l.amount)}</Text>
+              {cols.map((col, i) => (
+                <View key={col.key} style={{ width: col.w, ...cellPad, paddingTop: 5, borderRightWidth: i < cols.length - 1 ? 0.5 : 0, borderRightColor: GRID }}>
+                  {lineCell(col.key, l)}
+                </View>
+              ))}
             </View>
           ))}
         </View>
 
-        {/* totals … signatory: kept together */}
-        <View wrap={false} style={{ marginTop: 8 }}>
-          <View style={{ ...s.box, flexDirection: "row" }}>
-            <View style={{ flex: 1, padding: 6 }}>
+        <View wrap={false}>
+          <View style={{ ...box, marginTop: 9, flexDirection: "row" }}>
+            <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 7 }}>
               <Text style={s.cellM}>Total PI Amount in Words :</Text>
-              <Text style={{ ...s.cellB, marginTop: 3 }}>{k.words}</Text>
-              {k.taxType === "SEZ" && <Text style={{ ...s.cellM, marginTop: 4 }}>Supply to Special Economic Zone (SEZ) - zero-rated, IGST 0%.</Text>}
+              <Text style={{ ...T(9, NAVY, 700), marginTop: 4, lineHeight: 1.35 }}>{k.words}</Text>
+              {k.taxType === "SEZ" && (
+                <Text style={{ ...s.cellM, marginTop: 4 }}>Supply to Special Economic Zone (SEZ) - zero-rated, IGST 0%.</Text>
+              )}
             </View>
-            <View style={{ width: 190, borderLeftWidth: 0.6, borderLeftColor: HAIR }}>
-              {[
-                ["Total Amount before Tax (₹)", formatInrNumber(k.taxable)],
-                ...(k.taxType === "CGST_SGST"
-                  ? [["Add CGST 9% (₹)", formatInrNumber(k.cgst)], ["Add SGST 9% (₹)", formatInrNumber(k.sgst)]]
-                  : [[k.taxType === "SEZ" ? "IGST – SEZ zero-rated (₹)" : "Add IGST (₹)", formatInrNumber(k.igst)]]),
-              ].map(([l, v]) => (
-                <View key={l} style={{ flexDirection: "row", justifyContent: "space-between", padding: 4, borderBottomWidth: 0.6, borderBottomColor: HAIR }}>
-                  <Text style={s.cellM}>{l}</Text>
-                  <Text style={s.cell}>{v}</Text>
+            <View style={{ width: 273, borderLeftWidth: 0.5, borderLeftColor: GRID }}>
+              {totals.map(([l, v]) => (
+                <View key={l} style={{ flexDirection: "row", height: 24, borderBottomWidth: 0.5, borderBottomColor: GRID }}>
+                  <View style={{ width: 153, justifyContent: "center", paddingLeft: 6, ...vLine }}>
+                    <Text style={s.cellM}>{l}</Text>
+                  </View>
+                  <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end", paddingRight: 6 }}>
+                    <Text style={s.cell}>{v}</Text>
+                  </View>
                 </View>
               ))}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 5, backgroundColor: NAVY }}>
-                <Text style={T(8, "#fff", 700)}>Grand Total (₹)</Text>
-                <Text style={T(8, "#fff", 700)}>{formatInrNumber(k.grandTotal)}</Text>
+              <View style={{ flexDirection: "row", height: 28, backgroundColor: NAVY }}>
+                <View style={{ width: 153, justifyContent: "center", paddingLeft: 6, borderRightWidth: 0.5, borderRightColor: "#494f77" }}>
+                  <Text style={T(8.6, "#ffffff", 700)}>Grand Total (₹)</Text>
+                </View>
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end", paddingRight: 6 }}>
+                  <Text style={T(9.4, "#ffffff", 700)}>{formatInrNumber(k.grandTotal)}</Text>
+                </View>
               </View>
             </View>
           </View>
 
-          <Text style={{ ...s.cellB, marginTop: 8, marginBottom: 3 }}>Bank Details :</Text>
-          <View style={s.box}>
-            <View style={{ flexDirection: "row", backgroundColor: TINT }}>
-              {["Bank Name", "Branch", "Account No.", "IFSC"].map((h) => (
-                <Text key={h} style={{ ...s.cellB, flex: 1, padding: 4 }}>{h}</Text>
-              ))}
+          <Text style={{ ...s.cellB, marginTop: 8, marginBottom: 4 }}>Bank Details :</Text>
+          <View style={box}>
+            {[
+              { bg: TINT, st: T(7.8, NAVY, 700), vals: ["Bank Name", "Branch", "Account No.", "IFSC"] },
+              { bg: "#ffffff", st: s.cell, vals: ["HDFC Bank Ltd", "Odhav Kathwada Branch", "50200035165761", "HDFC0004289"] },
+            ].map((r, ri) => (
+              <View key={ri} style={{ flexDirection: "row", backgroundColor: r.bg, height: 21, borderTopWidth: ri ? 0.5 : 0, borderTopColor: GRID }}>
+                {r.vals.map((v, i) => (
+                  <View key={v} style={{ width: bankW[i], justifyContent: "center", paddingLeft: 6, borderRightWidth: i < 3 ? 0.5 : 0, borderRightColor: GRID }}>
+                    <Text style={r.st}>{v}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+
+          <View style={{ ...box, marginTop: 9, flexDirection: "row", minHeight: 24 }}>
+            <View style={{ width: 184, backgroundColor: TINT, justifyContent: "center", paddingLeft: 6, ...vLine }}>
+              <Text style={T(7.8, NAVY, 700)}>Special Conditions (if applicable)</Text>
             </View>
-            <View style={{ flexDirection: "row", borderTopWidth: 0.6, borderTopColor: HAIR }}>
-              {["HDFC Bank Ltd", "Odhav Kathwada Branch", "50200035165761", "HDFC0004289"].map((v) => (
-                <Text key={v} style={{ ...s.cell, flex: 1, padding: 4 }}>{v}</Text>
-              ))}
+            <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 6, paddingVertical: 4 }}>
+              <Text style={s.cell}>{c.specialConditions || "—"}</Text>
             </View>
           </View>
 
-          <View style={{ ...s.box, flexDirection: "row", marginTop: 8 }}>
-            <Text style={{ ...s.cellB, width: 120, padding: 5, backgroundColor: TINT }}>Special Conditions (if applicable)</Text>
-            <Text style={{ ...s.cell, flex: 1, padding: 5 }}>{c.specialConditions || "—"}</Text>
-          </View>
-
-          <View style={{ ...s.box, flexDirection: "row", marginTop: 8 }}>
-            <View style={{ flex: 1, padding: 6 }}>
-              <Text style={{ ...s.cellB, marginBottom: 3 }}>Terms & Conditions :</Text>
+          <View style={{ ...box, marginTop: 9, flexDirection: "row" }}>
+            <View style={{ flex: 1, padding: 6, ...vLine }}>
+              <Text style={{ ...s.cellB, marginBottom: 4 }}>Terms & Conditions :</Text>
               {[
                 "Proforma is valid for 15 days",
                 "Payment: 100% Advance",
@@ -443,17 +547,17 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
                 "Disputes: Raise within 15 Days subject to Ahmedabad jurisdiction.",
                 "We are an MSME registered company. Payments are due within 45 days from the invoice date.",
               ].map((t) => (
-                <Text key={t} style={s.cellM}>•  {t}</Text>
+                <Text key={t} style={T(7.6, MUTED)}>•  {t}</Text>
               ))}
-              <Text style={{ ...s.cellM, marginTop: 5 }}>This is a computer-generated proforma invoice. E. & O. E.</Text>
+              <Text style={{ ...T(7.6, MUTED), marginTop: 8 }}>This is a computer-generated proforma invoice. E. & O. E.</Text>
             </View>
-            <View style={{ width: 170, borderLeftWidth: 0.6, borderLeftColor: HAIR, padding: 6, alignItems: "center" }}>
-              <Text style={{ ...s.cellM, textAlign: "center" }}>For, Buffindia Receptacles Private Limited</Text>
-              <View style={{ flexDirection: "row", marginVertical: 4 }}>
-                <Image src={asset("signature.png")} style={{ width: 46, height: 45 }} />
-                <Image src={asset("stamp.png")} style={{ width: 46, height: 43, marginLeft: 4 }} />
+            <View style={{ width: 184, padding: 6, alignItems: "center" }}>
+              <Text style={{ ...T(7.6, INK), textAlign: "center" }}>For, Buffindia Receptacles Private Limited</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 8 }}>
+                <Image src={asset("signature.png")} style={{ width: 51, height: 50 }} />
+                <Image src={asset("stamp.png")} style={{ width: 50, height: 47, marginLeft: 14 }} />
               </View>
-              <Text style={s.cellB}>Authorised Signatory</Text>
+              <Text style={T(7.6, INK, 700)}>Authorised Signatory</Text>
             </View>
           </View>
         </View>
@@ -461,6 +565,8 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
     </Page>
   )
 }
+
+// ── 5. Scope & responsibilities ──────────────────────────────────────────
 
 const SCOPE = [
   "Installation of cigarette waste disposal units on rental basis",
@@ -478,6 +584,45 @@ const PROVIDER = [
   "The Service Provider shall provide recycled products equivalent to the taxable commercial value, based on mutual agreement with the Client.",
   "In case any kiosk or disposal unit is found missing from the Client’s premises, a charge of ₹10,000 for Advance Kiosk and ₹5,000 for Basic Kiosk will be applicable.",
 ]
+const STEPS: [string, string][] = [
+  ["Install", "Disposal units installed at your premises on a rental basis"],
+  ["Collect", "Cigarette waste collected from your door as per the agreed schedule"],
+  ["Recycle", "Waste processed and recycled into eco-friendly products"],
+  ["Report", "Service impact reports and cigarette waste management certification"],
+]
+
+function Scope() {
+  return (
+    <Page size="A4" style={s.page}>
+      <Frame>
+        <Title title="Scope & Responsibilities" sub="Scope of services and Service Provider responsibilities" />
+        <Section title="SCOPE OF SERVICES" first />
+        {SCOPE.map((t, i) => (
+          <Num key={t} n={`${i + 1}.`}>{t}</Num>
+        ))}
+        <Section title="SERVICE PROVIDER RESPONSIBILITIES" />
+        {PROVIDER.map((t, i) => (
+          <Num key={t} n={`${i + 1}.`}>{t}</Num>
+        ))}
+        <View wrap={false}>
+          <Section title="HOW IT WORKS" />
+          <View style={{ flexDirection: "row", gap: 8.5 }}>
+            {STEPS.map(([title, desc], i) => (
+              <View key={title} style={{ flex: 1, backgroundColor: TINT, borderTopWidth: 2.2, borderTopColor: ORANGE, padding: 9, paddingTop: 7, minHeight: 111 }}>
+                <Text style={T(20, ORANGE, 700)}>{String(i + 1).padStart(2, "0")}</Text>
+                <Text style={{ ...T(10.2, NAVY, 700), marginBottom: 3 }}>{title}</Text>
+                <Text style={{ ...T(8.6, MUTED), lineHeight: 1.45 }}>{desc}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </Frame>
+    </Page>
+  )
+}
+
+// ── 6. Client responsibilities & acknowledgement ─────────────────────────
+
 const CLIENT_A = [
   "The Client’s housekeeping team shall collect and store cigarette waste from disposal units into the provided storage container on a daily basis.",
   "The Client shall allocate designated smoking areas within the premises for certification purposes.",
@@ -495,58 +640,57 @@ const CLIENT_B = [
   "The Client shall make 100% payment within the agreed timeline from the date of installation of services.",
 ]
 
-function Scope() {
-  return (
-    <Page size="A4" style={s.page} break>
-      <Frame>
-        <Title title="Scope & Responsibilities" sub="Scope of services and Service Provider responsibilities" />
-        <Text style={s.secT}>SCOPE OF SERVICES</Text>
-        {SCOPE.map((t, i) => <Num key={t} n={`${i + 1}.`}>{t}</Num>)}
-        <Text style={s.secT}>SERVICE PROVIDER RESPONSIBILITIES</Text>
-        {PROVIDER.map((t, i) => <Num key={t} n={`${i + 1}.`}>{t}</Num>)}
-      </Frame>
-    </Page>
-  )
-}
-
 function ClientPage({ c }: { c: QuotationConfig }) {
+  const line = (label: string) => (
+    <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 5 }}>
+      <Text style={{ ...T(8.4, INK), width: 68 }}>{label}</Text>
+      <View style={{ flex: 1, borderBottomWidth: 0.5, borderBottomColor: MUTED, marginBottom: 2 }} />
+    </View>
+  )
   return (
-    <Page size="A4" style={s.page} break>
+    <Page size="A4" style={s.page}>
       <Frame>
         <Title title="Client Responsibilities & Acknowledgement" sub="Client obligations, liability, ownership and authorised signatures" />
-        <Text style={s.secT}>CLIENT RESPONSIBILITIES</Text>
-        {CLIENT_A.map((t, i) => <Num key={t} n={`${i + 1}.`}>{t}</Num>)}
+        <Section title="CLIENT RESPONSIBILITIES" first />
+        {CLIENT_A.map((t, i) => (
+          <Num key={t} n={`${i + 1}.`}>{t}</Num>
+        ))}
         <Num n="3.">The Client shall provide necessary approvals for:</Num>
         {CLIENT_APPROVALS.map((t, i) => (
           <View key={t} style={s.subLi} wrap={false}>
-            <Text style={s.liNo}>{String.fromCharCode(97 + i)}.</Text>
+            <Text style={s.subNo}>{String.fromCharCode(97 + i)}.</Text>
             <Text style={s.liTx}>{t}</Text>
           </View>
         ))}
-        {CLIENT_B.map((t, i) => <Num key={t} n={`${i + 4}.`}>{t}</Num>)}
-        <Text style={s.secT}>RESPONSIBILITY</Text>
+        {CLIENT_B.map((t, i) => (
+          <Num key={t} n={`${i + 4}.`}>{t}</Num>
+        ))}
+        <Section title="RESPONSIBILITY" />
         <Text style={s.para}>The Client shall be responsible for any fire-related hazards arising from improper use of the disposal units.</Text>
-        <Text style={s.secT}>OWNERSHIP</Text>
+        <Section title="OWNERSHIP" />
         <Text style={s.para}>
           This is a rental-based service, and all installed units and related infrastructure shall remain the property of the Service Provider.
         </Text>
-        <View wrap={false} style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
+        <View wrap={false} style={{ flexDirection: "row", gap: 11, marginTop: 22 }}>
           <View style={s.sigBox}>
-            <Text style={{ ...s.cellB, marginBottom: 4 }}>For Buffindia Receptacles Private Limited</Text>
-            <View style={{ flexDirection: "row" }}>
-              <Image src={asset("signature.png")} style={{ width: 46, height: 45 }} />
-              <Image src={asset("stamp.png")} style={{ width: 46, height: 43, marginLeft: 6 }} />
+            <Text style={{ ...T(8.8, NAVY, 700), marginBottom: 6 }}>For Buffindia Receptacles Private Limited</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Image src={asset("signature.png")} style={{ width: 48, height: 47 }} />
+              <Image src={asset("stamp.png")} style={{ width: 48, height: 45, marginLeft: 14 }} />
             </View>
-            <Text style={s.cellB}>Ketan Prajapati</Text>
-            <Text style={s.cellM}>Founding Director</Text>
-            <Text style={{ ...s.cellM, marginTop: 4 }}>Date: {formatDate(c.date)}</Text>
+            <Text style={{ ...T(8.4, INK, 700), marginTop: 5 }}>Ketan Prajapati</Text>
+            <Text style={T(8.4, INK)}>Founding Director</Text>
+            <Text style={T(8.4, INK)}>Date: {formatDate(c.date)}</Text>
           </View>
           <View style={s.sigBox}>
-            <Text style={{ ...s.cellB, marginBottom: 30 }}>For {c.clientName}</Text>
-            <Text style={s.cellB}>Authorized Signatory</Text>
-            <Text style={{ ...s.cellM, marginTop: 6 }}>Name:</Text>
-            <Text style={{ ...s.cellM, marginTop: 6 }}>Designation:</Text>
-            <Text style={{ ...s.cellM, marginTop: 6 }}>Date:</Text>
+            <Text style={{ ...T(8.8, NAVY, 700), width: 185 }}>For {c.clientName}</Text>
+            <View style={{ width: 185, borderBottomWidth: 0.6, borderBottomColor: INK, marginTop: 10 }} />
+            <Text style={{ ...T(8.4, INK), marginTop: 2 }}>Authorized Signatory</Text>
+            <View style={{ width: 185 }}>
+              {line("Name:")}
+              {line("Designation:")}
+              {line("Date:")}
+            </View>
           </View>
         </View>
       </Frame>
@@ -559,7 +703,7 @@ export function QuotationDocument({ config }: { config: QuotationConfig }) {
   const k = computeQuotation(config)
   if (!config.ship.name && !config.ship.address) config = { ...config, ship: config.bill }
   return (
-    <Document title={`Buffindia Proposal - ${config.clientName}`} author="Buffindia Receptacles Pvt Ltd">
+    <Document title={`Buffindia Proposal - ${config.clientName}`} author="Buffindia Receptacles Private Limited">
       <Cover c={config} />
       <Commercials c={config} k={k} />
       {config.complimentaryProducts.length > 0 && <Complimentary c={config} />}

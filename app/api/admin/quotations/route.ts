@@ -3,7 +3,7 @@ import { randomUUID } from "crypto"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { sql } from "@/lib/db"
-import { QUOTATION_STATUSES, coerceQuotation, computeQuotation, validateGstin } from "@/lib/quotation"
+import { QUOTATION_STATUSES, coerceQuotation, computeQuotation, quotationErrors, validateGstin } from "@/lib/quotation"
 import { ensureQuotationTable, nextPiNo, upsertClientFromConfig } from "@/lib/quotation-store"
 
 async function auth(request: NextRequest) {
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const config = coerceQuotation(body.config)
-    if (!config.clientName) return fail("Client name is required")
-    if (!config.piNo) return fail("PI number is required")
+    const errs = quotationErrors(config)
+    if (errs.length) return fail(errs.join(" · "))
     for (const [label, g] of [["Billing", config.bill.gstin], ["Shipping", config.ship.gstin]] as const) {
       if (g) {
         const r = validateGstin(g)

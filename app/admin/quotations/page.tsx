@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Copy, Download, UserCheck, ExternalLink, Eye, FileText, Loader2, Pencil, Plus, Save, Search, Trash2 } from "lucide-react"
 import {
+  DEFAULT_PRODUCTS,
   GST_STATE_CODES,
   QUOTATION_PRODUCTS,
   emptyParty,
@@ -25,6 +26,7 @@ import {
   formatInrNumber,
   normalizeGstin,
   parseGstPortalText,
+  quotationErrors,
   validateGstin,
   type KioskType,
   type PartyDetails,
@@ -136,6 +138,12 @@ export default function AdminQuotationsPage() {
   const [savingClient, setSavingClient] = useState(false)
 
   const k = useMemo(() => computeQuotation(q), [q])
+  const errors = useMemo(() => quotationErrors(q), [q])
+  const blockIfInvalid = () => {
+    if (!errors.length) return false
+    setMsg({ kind: "err", text: `Fix before continuing: ${errors.join(" · ")}` })
+    return true
+  }
   const set = <K extends keyof QuotationConfig>(key: K, v: QuotationConfig[K]) => setQ((p) => ({ ...p, [key]: v }))
   const setBill = (patch: Partial<PartyDetails>) => setQ((p) => ({ ...p, bill: { ...p.bill, ...patch } }))
   const setShip = (patch: Partial<PartyDetails>) => setQ((p) => ({ ...p, ship: { ...p.ship, ...patch } }))
@@ -153,7 +161,7 @@ export default function AdminQuotationsPage() {
   const changeType = (i: number, type: LineType) =>
     setQ((p) => ({
       ...p,
-      items: p.items.map((x, j) => (j === i ? { ...newItem(type), units: x.units > 0 ? x.units : 1, name: x.name, net: type === "Custom" ? x.net : standardNet({ ...newItem(type), units: x.units > 0 ? x.units : 1 }) } : x)),
+      items: p.items.map((x, j) => (j === i ? { ...newItem(type), units: x.units > 0 ? x.units : 1, name: x.name, period: x.period, notes: x.notes, net: type === "Custom" ? x.net : standardNet({ ...newItem(type), units: x.units > 0 ? x.units : 1 }) } : x)),
     }))
   const addItem = () => setQ((p) => ({ ...p, items: [...p.items, newItem("Basic")] }))
   const removeItem = (i: number) => setQ((p) => ({ ...p, items: p.items.length > 1 ? p.items.filter((_, j) => j !== i) : p.items }))
@@ -260,7 +268,9 @@ export default function AdminQuotationsPage() {
   const openSaved = async (id: string, duplicate = false) => {
     const d = await (await fetch(`/api/admin/quotations?id=${id}`)).json()
     if (!d.success) return setMsg({ kind: "err", text: d.error || "Could not open" })
-    const c = { ...defaultQuotation(), ...d.quotation.config } as QuotationConfig
+    const raw = { ...defaultQuotation(), ...d.quotation.config } as QuotationConfig
+    // Older saved quotations have no per-item period / notes.
+    const c = { ...raw, items: raw.items.map((it) => ({ ...it, period: it.period ?? "", notes: it.notes ?? "" })) }
     if (duplicate) {
       c.piNo = await fetchNextPi()
       c.date = defaultQuotation().date
@@ -275,9 +285,10 @@ export default function AdminQuotationsPage() {
     setMsg(duplicate ? { kind: "info", text: "Duplicated as a new draft with a fresh PI number." } : null)
     setView("form")
   }
-  const saveQuotation = async () => {
+  const saveQuotation = async (quiet = false): Promise<boolean> => {
+    if (blockIfInvalid()) return false
     setSaving(true)
-    setMsg(null)
+    if (!quiet) setMsg(null)
     try {
       const r = await fetch("/api/admin/quotations", {
         method: "POST",
@@ -290,8 +301,10 @@ export default function AdminQuotationsPage() {
       setMsg({ kind: "ok", text: `Saved ${q.piNo}.${d.clientSaved ? " Client details updated by GSTIN." : ""}` })
       loadList()
       if (d.clientSaved) loadClients()
+      return true
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof Error ? e.message : "Save failed" })
+      return false
     } finally {
       setSaving(false)
     }
@@ -366,8 +379,10 @@ export default function AdminQuotationsPage() {
   const payload = (): QuotationConfig => q
 
   async function generate(mode: "preview" | "download") {
+    if (blockIfInvalid()) return
+    // Every downloaded proforma is recorded, so its PI number is never handed out twice.
+    if (mode === "download" && !(await saveQuotation(true))) return
     setBusy(mode)
-    setMsg(null)
     try {
       const res = await fetch(`/api/admin/quotations/pdf${mode === "preview" ? "?inline=1" : ""}`, {
         method: "POST",
@@ -597,7 +612,16 @@ export default function AdminQuotationsPage() {
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Shipping address</p>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setShipOpen((o) => !o)}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      // Closing means "same as billing": drop the old shipping data so the PDF really uses billing.
+                      if (shipOpen) set("ship", emptyParty())
+                      setShipOpen((o) => !o)
+                    }}
+                  >
                     {shipOpen ? "Same as billing" : "Different shipping address"}
                   </Button>
                 </div>
@@ -670,8 +694,28 @@ export default function AdminQuotationsPage() {
                       </Field>
                     )}
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
+                    <Field label="Service period">
+                      <Input
+                        value={it.period}
+                        placeholder={it.type === "Custom" ? "Optional" : q.duration || "12 Months"}
+                        onChange={(e) => setItem(i, { period: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Notes (printed under this item)">
+                      <Textarea
+                        rows={1}
+                        value={it.notes}
+                        placeholder="e.g. Includes installation at 2 towers"
+                        onChange={(e) => setItem(i, { notes: e.target.value })}
+                      />
+                    </Field>
+                  </div>
                   {it.type !== "Custom" && it.auto && (
                     <p className="text-[11px] text-muted-foreground">Standard rate filled in — edit the net value to change it.</p>
+                  )}
+                  {it.type !== "Custom" && !it.period.trim() && (
+                    <p className="text-[11px] text-muted-foreground">Service period left empty uses the quotation’s service duration ({q.duration}).</p>
                   )}
                 </div>
               ))}
@@ -694,7 +738,7 @@ export default function AdminQuotationsPage() {
                 <Field label="Date">
                   <Input type="date" value={q.date} onChange={(e) => set("date", e.target.value)} />
                 </Field>
-                <Field label="Service duration">
+                <Field label="Default service duration">
                   <Input value={q.duration} onChange={(e) => set("duration", e.target.value)} />
                 </Field>
               </div>
@@ -724,6 +768,7 @@ export default function AdminQuotationsPage() {
                 <div className="flex items-center justify-between">
                   <Label>Complimentary products page</Label>
                   <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="ghost" onClick={() => set("complimentaryProducts", [...DEFAULT_PRODUCTS])}>Standard 12</Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => set("complimentaryProducts", QUOTATION_PRODUCTS.map((p) => p.slug))}>All</Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => set("complimentaryProducts", [])}>None (hide page)</Button>
                   </div>
@@ -769,14 +814,19 @@ export default function AdminQuotationsPage() {
                 {k.taxType === "SEZ" ? "SEZ supply: GST 0%" : k.taxType === "CGST_SGST" ? "Gujarat client (intra-state): CGST 9% + SGST 9%" : "Other state (inter-state): IGST 18%"}
               </p>
               <p className="text-xs text-muted-foreground pt-1">{k.words}</p>
-              <p className="text-xs text-muted-foreground">Valid till {k.validTill}</p>
+              <p className="text-xs text-muted-foreground">Valid till {formatDate(k.validTill)}</p>
+              {errors.length > 0 && (
+                <ul className="rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-800 space-y-0.5">
+                  {errors.map((e) => <li key={e}>• {e}</li>)}
+                </ul>
+              )}
               <div className="flex items-center gap-2 pt-3">
                 <Label className="text-xs text-muted-foreground">Status</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as QuotationStatus)}>
                   <SelectTrigger className="h-8 w-[120px]"><SelectValue /></SelectTrigger>
                   <SelectContent>{QUOTATION_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
-                <Button type="button" size="sm" onClick={saveQuotation} disabled={saving || !!busy}>
+                <Button type="button" size="sm" onClick={() => saveQuotation()} disabled={saving || !!busy}>
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   {editId ? "Update" : "Save"}
                 </Button>
@@ -787,8 +837,8 @@ export default function AdminQuotationsPage() {
                   Preview
                 </Button>
                 <Button type="button" onClick={() => generate("download")} disabled={!!busy}>
-                  {busy === "download" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                  Download PDF
+                  {busy === "download" || saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                  Save & Download PDF
                 </Button>
               </div>
             </CardContent>

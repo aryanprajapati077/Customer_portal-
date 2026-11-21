@@ -3,7 +3,7 @@ import React from "react"
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
-import { coerceQuotation, computeQuotation, validateGstin } from "@/lib/quotation"
+import { coerceQuotation, computeQuotation, quotationErrors, validateGstin } from "@/lib/quotation"
 import { QuotationDocument } from "@/lib/quotation-pdf"
 
 export const maxDuration = 60
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const config = coerceQuotation(await request.json())
-    if (!config.clientName) return NextResponse.json({ success: false, error: "Client name is required" }, { status: 400 })
-    if (!config.piNo) return NextResponse.json({ success: false, error: "PI number is required" }, { status: 400 })
+    const errs = quotationErrors(config)
+    if (errs.length) return NextResponse.json({ success: false, error: errs.join(" · ") }, { status: 400 })
     for (const [label, g] of [["Billing", config.bill.gstin], ["Shipping", config.ship.gstin]] as const) {
       if (g && (() => { const r = validateGstin(g); return !r.valid && !r.checksumOnly })()) {
         return NextResponse.json({ success: false, error: `${label} GSTIN is invalid` }, { status: 400 })

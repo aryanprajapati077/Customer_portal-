@@ -232,7 +232,7 @@ export function DownloadImpactReport({
             {format === "pdf"
               ? "PDF uses your saved customer logo and profile details from the admin customer record."
               : format === "location"
-                ? "One column per location with installation date, month-wise collection (kg), location totals and grand total. Always covers all locations in your group."
+                ? "One column per location with installation date, month-wise collection (kg) from installation to the end of the selected period, location totals and grand total. Always covers all locations in your group."
                 : "Excel includes Customer Details, Cumulative Impact Summary, Month-wise Impact Details, and calculation notes."}
           </p>
         </div>

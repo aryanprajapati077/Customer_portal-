@@ -66,8 +66,8 @@ export class NotGroupClientError extends Error {
 
 /**
  * Month × location collection matrix (kg) for a group client, one column per location.
- * Range options match the ESG impact report; a bare `period` (admin/email) means
- * cumulative from the first installation through the end of that month.
+ * Always runs from the group's first installation month; the selected range / period
+ * only decides the last month shown.
  */
 export async function generateLocationWiseExcel(
   groupId: string,
@@ -100,13 +100,13 @@ export async function generateLocationWiseExcel(
     startDate: options?.startDate,
     endDate: options?.endDate,
   })
-  const useWindowStart = Boolean(options?.range) && options?.range !== "installation" && Boolean(window.startDate)
   const end = window.endDate ?? new Date()
   const earliestInstall = [...installed.values()].reduce<Date | null>(
     (min, d) => (!min || d < min ? d : min),
     null,
   )
-  const start = useWindowStart ? window.startDate! : earliestInstall
+  // Always start from the first installation; the selected range only sets the end month.
+  const start = earliestInstall
 
   const values: unknown[] = [ids, end.toISOString()]
   let text = `SELECT "customerId", weight, date FROM "Collection"

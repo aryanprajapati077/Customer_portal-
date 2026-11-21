@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
       const rows = pattern
         ? await sql`
             SELECT id, email, "companyName", "tradeName", status, "kraftrebornCredits",
+                   COALESCE("isGroup", false) AS "isGroup",
                    COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
                    "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"
@@ -137,6 +138,7 @@ export async function GET(request: NextRequest) {
           `
         : await sql`
             SELECT id, email, "companyName", "tradeName", status, "kraftrebornCredits",
+                   COALESCE("isGroup", false) AS "isGroup",
                    COALESCE("krCreditsLocked", false) AS "krCreditsLocked",
                    "krCreditsLockedAt", "krCreditsLockedReason"
             FROM "Customer"

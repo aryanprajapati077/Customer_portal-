@@ -19,7 +19,10 @@ type CustomerOption = {
   companyName: string
   email?: string
   status?: string
+  isGroup?: boolean
 }
+
+type Format = "pdf" | "excel" | "location"
 
 function defaultPeriod() {
   const d = new Date()
@@ -32,7 +35,7 @@ export default function AdminQuickReportPage() {
   const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [customerId, setCustomerId] = useState("")
   const [period, setPeriod] = useState(defaultPeriod)
-  const [downloading, setDownloading] = useState<"pdf" | "excel" | null>(null)
+  const [downloading, setDownloading] = useState<Format | null>(null)
   const [error, setError] = useState("")
   const [clientSearch, setClientSearch] = useState("")
 
@@ -69,7 +72,7 @@ export default function AdminQuickReportPage() {
 
   const selected = customers.find((c) => c.id === customerId)
 
-  const download = async (format: "pdf" | "excel") => {
+  const download = async (format: Format) => {
     if (!customerId || !/^\d{4}-\d{2}$/.test(period)) {
       setError("Select a client and a valid month.")
       return
@@ -88,7 +91,9 @@ export default function AdminQuickReportPage() {
       const match = cd.match(/filename="?([^"]+)"?/i)
       const filename =
         match?.[1] ||
-        `${customerId}-${period}-impact-report.${format === "excel" ? "xlsx" : "pdf"}`
+        (format === "location"
+          ? `${customerId}-${period}-location-wise-collection.xlsx`
+          : `${customerId}-${period}-impact-report.${format === "excel" ? "xlsx" : "pdf"}`)
       const a = document.createElement("a")
       a.href = URL.createObjectURL(blob)
       a.download = filename
@@ -205,11 +210,30 @@ export default function AdminQuickReportPage() {
             )}
             {downloading === "excel" ? "Preparing…" : "Download Excel"}
           </Button>
+          {selected?.isGroup ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => download("location")}
+              disabled={!!downloading || !customerId || !period}
+              className="h-11 rounded-full border-[#DCE8DC] text-[#1B7339] hover:bg-[#E8F5E9] sm:col-span-2"
+            >
+              {downloading === "location" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+              )}
+              {downloading === "location" ? "Preparing…" : "Download Location-wise Collection"}
+            </Button>
+          ) : null}
         </div>
 
         <p className="text-center text-[11px] text-[#8A8A8A]">
           <Download className="mr-1 inline h-3 w-3" />
-          Both formats download the monthly impact report for the selected client.
+          PDF and Excel download the monthly impact report for the selected client.
+          {selected?.isGroup
+            ? " Location-wise collection shows each location's monthly kg from installation to the selected month."
+            : ""}
         </p>
       </div>
     </div>

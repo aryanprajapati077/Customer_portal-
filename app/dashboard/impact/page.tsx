@@ -59,7 +59,7 @@ function ImpactContent() {
                   <Calendar className="w-4 h-4" />
                   This Year
                 </OutlineButton>
-                <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
+                <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId}>
                   <OutlineButton>
                     <Download className="w-4 h-4" />
                     Download Impact Report

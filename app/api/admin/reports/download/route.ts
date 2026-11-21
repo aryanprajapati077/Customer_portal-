@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateImpactReportPdf } from "@/lib/generate-impact-report-pdf"
 import { generateImpactReportExcel } from "@/lib/generate-impact-report-excel"
+import { generateLocationWiseExcel, NotGroupClientError } from "@/lib/generate-location-wise-excel"
 import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { sql } from "@/lib/db"
@@ -53,13 +54,27 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  if (format !== "pdf" && format !== "excel") {
-    return NextResponse.json({ success: false, error: "format must be pdf or excel" }, { status: 400 })
+  if (format !== "pdf" && format !== "excel" && format !== "location") {
+    return NextResponse.json(
+      { success: false, error: "format must be pdf, excel or location" },
+      { status: 400 },
+    )
   }
 
   try {
     // YYYY-MM monthly reports: cumulative from installation through that month (same as email).
     const reportOptions = { period }
+
+    if (format === "location") {
+      const { buffer, filename } = await generateLocationWiseExcel(customerId, reportOptions)
+      return new NextResponse(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+        },
+      })
+    }
 
     if (format === "excel") {
       const { buffer, filename } = await generateImpactReportExcel(customerId, reportOptions)
@@ -81,6 +96,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (error instanceof NotGroupClientError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 })
+    }
     console.error("Admin report download error:", error)
     return NextResponse.json({ success: false, error: "Failed to generate report" }, { status: 500 })
   }

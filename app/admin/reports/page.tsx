@@ -65,6 +65,7 @@ type ReportRow = {
   email: string
   status: string
   collectionKg?: number
+  isGroup?: boolean
 }
 
 type Stats = {
@@ -369,7 +370,7 @@ export default function AdminReportsPage() {
     URL.revokeObjectURL(url)
   }
 
-  const downloadReport = async (r: ReportRow, format: "pdf" | "excel") => {
+  const downloadReport = async (r: ReportRow, format: "pdf" | "excel" | "location") => {
     const period = reportMonthKey(r)
     if (!period) {
       alert("Could not determine report month for this entry.")
@@ -388,9 +389,11 @@ export default function AdminReportsPage() {
       const disposition = res.headers.get("Content-Disposition")
       const filenameMatch = disposition?.match(/filename="(.+)"/)
       const fallback =
-        format === "excel"
-          ? `${r.customerId}-Impact-Report.xlsx`
-          : `${r.customerId}-ESG-Report.pdf`
+        format === "location"
+          ? `${r.customerId}-Location-wise-Collection.xlsx`
+          : format === "excel"
+            ? `${r.customerId}-Impact-Report.xlsx`
+            : `${r.customerId}-ESG-Report.pdf`
       triggerFileDownload(blob, filenameMatch?.[1] || fallback)
     } catch (error) {
       console.error("Report download failed:", error)
@@ -975,6 +978,22 @@ export default function AdminReportsPage() {
                         )}
                         Excel
                       </Button>
+                      {r.isGroup ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={downloadingKey === `${r.id}-location`}
+                          onClick={() => void downloadReport(r, "location")}
+                        >
+                          {downloadingKey === `${r.id}-location` ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                          )}
+                          Location-wise
+                        </Button>
+                      ) : null}
                       <Button
                         size="sm"
                         variant="outline"

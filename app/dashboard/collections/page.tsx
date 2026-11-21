@@ -150,7 +150,7 @@ export default function CollectionsPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
+              <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId}>
                 <OutlineButton>
                   <Download className="w-4 h-4" />
                   Download Collection Report
@@ -285,7 +285,7 @@ export default function CollectionsPage() {
                         {formatKg(Number(c.weight) || 0)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
+                        <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId}>
                           <button type="button" className="portal-btn-outline-green">
                             <Download className="w-4 h-4" />
                             Download Report

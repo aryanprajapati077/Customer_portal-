@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
                 {statusMeta.label}
               </span>
-              <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
+              <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId}>
                 <button type="button" className="portal-btn-outline">
                   <Download className="w-4 h-4" />
                   Download ESG Report
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                       "Auto-generated monthly sustainability and ESG impact summary."}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId} period={reportPeriodKey}>
+                    <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId} period={reportPeriodKey}>
                       <button type="button" className="portal-btn-solid">
                         <Download className="w-4 h-4" />
                         Download Report

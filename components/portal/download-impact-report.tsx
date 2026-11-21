@@ -24,7 +24,7 @@ import { Download, FileSpreadsheet, Loader2 } from "lucide-react"
 import type { ReportRangeKey } from "@/lib/report-date-range"
 
 export type ReportRange = ReportRangeKey
-type ReportFormat = "pdf" | "excel"
+type ReportFormat = "pdf" | "excel" | "location"
 
 interface DownloadImpactReportProps {
   customerId?: string
@@ -33,6 +33,8 @@ interface DownloadImpactReportProps {
   /** YYYY-MM when range is month */
   period?: string
   defaultRange?: ReportRange
+  /** Group clients also get the location-wise collection Excel. */
+  isGroup?: boolean
   children: React.ReactNode
 }
 
@@ -65,6 +67,7 @@ export function DownloadImpactReport({
   locationId,
   period,
   defaultRange = "installation",
+  isGroup = false,
   children,
 }: DownloadImpactReportProps) {
   const [open, setOpen] = useState(false)
@@ -101,6 +104,22 @@ export function DownloadImpactReport({
         range,
         startDate: range === "custom" ? startDate : undefined,
         endDate: range === "custom" ? endDate : undefined,
+      }
+
+      if (format === "location") {
+        const res = await fetch("/api/customer/location-wise-excel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) throw new Error("Failed to generate location-wise Excel")
+        const blob = await res.blob()
+        const disposition = res.headers.get("Content-Disposition")
+        const filenameMatch = disposition?.match(/filename="(.+)"/)
+        const filename = filenameMatch?.[1] || `${customerId}-Location-wise-Collection.xlsx`
+        await triggerDownload(blob, filename)
+        setOpen(false)
+        return
       }
 
       if (format === "excel") {
@@ -162,6 +181,9 @@ export function DownloadImpactReport({
             <SelectContent>
               <SelectItem value="pdf">PDF Report — branded 4-page ESG PDF</SelectItem>
               <SelectItem value="excel">Excel (.xlsx) — customer + month-wise data</SelectItem>
+              {isGroup && (
+                <SelectItem value="location">Location-wise collection (.xlsx) — month × location</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -209,7 +231,9 @@ export function DownloadImpactReport({
           <p className="text-[12px] leading-relaxed text-[#4A4A4A]">
             {format === "pdf"
               ? "PDF uses your saved customer logo and profile details from the admin customer record."
-              : "Excel includes Customer Details, Cumulative Impact Summary, Month-wise Impact Details, and calculation notes."}
+              : format === "location"
+                ? "One column per location with installation date, month-wise collection (kg), location totals and grand total. Always covers all locations in your group."
+                : "Excel includes Customer Details, Cumulative Impact Summary, Month-wise Impact Details, and calculation notes."}
           </p>
         </div>
 
@@ -222,12 +246,12 @@ export function DownloadImpactReport({
           >
             {downloading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : format === "excel" ? (
+            ) : format !== "pdf" ? (
               <FileSpreadsheet className="mr-2 h-4 w-4" />
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
-            {format === "excel" ? "Download Excel" : "Download PDF"}
+            {format === "pdf" ? "Download PDF" : "Download Excel"}
           </Button>
         </DialogFooter>
       </DialogContent>

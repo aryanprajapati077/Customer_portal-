@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         ? sql`
             SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
                    c."companyName", c.email, c.status,
+                   COALESCE(c."isGroup", false) AS "isGroup",
                    COALESCE((
                      SELECT SUM(col.weight)::float
                      FROM "Collection" col
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
         : sql`
             SELECT r.id, r."customerId", r.name, r.date, r.type, r.period, r."generatedBy",
                    c."companyName", c.email, c.status,
+                   COALESCE(c."isGroup", false) AS "isGroup",
                    COALESCE((
                      SELECT SUM(col.weight)::float
                      FROM "Collection" col

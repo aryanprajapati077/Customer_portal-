@@ -74,7 +74,7 @@ export default function ReportsPage() {
           subtitle="Download ESG impact reports and sustainability certificates."
           actions={
             <div className="flex flex-wrap gap-2">
-              <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId} defaultRange="this-year">
+              <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId} defaultRange="this-year">
                 <OutlineButton>
                   <Download className="w-4 h-4" />
                   Download Impact Report
@@ -160,6 +160,7 @@ export default function ReportsPage() {
               <DownloadImpactReport
                 key={period}
                 customerId={customer?.id}
+                isGroup={Boolean(customer?.isGroup)}
                 locationId={selectedLocationId}
                 defaultRange={period}
               >
@@ -226,7 +227,7 @@ export default function ReportsPage() {
                             Download
                           </button>
                         ) : (
-                          <DownloadImpactReport customerId={customer?.id} locationId={selectedLocationId}>
+                          <DownloadImpactReport customerId={customer?.id} isGroup={Boolean(customer?.isGroup)} locationId={selectedLocationId}>
                             <button
                               type="button"
                               className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-[#2E7D32] text-[#2E7D32] text-[13px] font-semibold hover:bg-[#E8F5E9]"

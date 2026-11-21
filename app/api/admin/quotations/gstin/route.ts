@@ -3,6 +3,7 @@ import { requireAdminSession } from "@/lib/admin-auth-server"
 import { hasAdminPermission } from "@/lib/admin-permissions"
 import { sql } from "@/lib/db"
 import { GST_STATE_CODES, normalizeGstin, validateGstin } from "@/lib/quotation"
+import { ensureQuotationClientTable } from "@/lib/quotation-store"
 
 type Found = {
   legalName: string
@@ -14,9 +15,41 @@ type Found = {
   status: string
 }
 
+const pinIn = (s: string) => /\b\d{6}\b/.exec(s)?.[0] ?? ""
+
+/** A client already saved from an earlier quotation (same GSTIN). */
+async function fromSavedQuotationClients(gstin: string): Promise<Found | null> {
+  await ensureQuotationClientTable()
+  const rows = await sql.query<{ brandName: string; tradeName: string | null; data: string }>(
+    `SELECT "brandName","tradeName","data" FROM "QuotationClient" WHERE "gstin" = $1 LIMIT 1`,
+    [gstin],
+  )
+  const r = rows[0]
+  if (!r) return null
+  let bill: Record<string, string> = {}
+  try {
+    bill = (JSON.parse(r.data) as { bill?: Record<string, string> }).bill ?? {}
+  } catch {
+    /* ignore */
+  }
+  if (!bill.address && !bill.name) return null
+  return {
+    legalName: bill.name || r.brandName,
+    tradeName: r.tradeName || "",
+    address: bill.address || "",
+    city: bill.city || "",
+    state: bill.state || "",
+    pincode: bill.pincode || pinIn(bill.address || ""),
+    status: "Saved quotation client",
+  }
+}
+
+/** An existing Buffindia customer with this GSTIN (GSTINs are stored with mixed case / spaces). */
 async function fromPortalCustomers(gstin: string): Promise<Found | null> {
   const rows = await sql.query<{ companyName: string; tradeName: string | null; address: string | null; city: string | null; state: string | null }>(
-    `SELECT "companyName","tradeName","address","city","state" FROM "Customer" WHERE UPPER("gstin") = $1 ORDER BY "createdAt" DESC LIMIT 1`,
+    `SELECT "companyName","tradeName","address","city","state" FROM "Customer"
+     WHERE UPPER(REGEXP_REPLACE(COALESCE("gstin", ''), '[^0-9A-Za-z]', '', 'g')) = $1
+     ORDER BY (NULLIF("address", '') IS NOT NULL) DESC, "createdAt" DESC LIMIT 1`,
     [gstin],
   )
   const r = rows[0]
@@ -27,7 +60,7 @@ async function fromPortalCustomers(gstin: string): Promise<Found | null> {
     address: r.address || "",
     city: r.city || "",
     state: r.state || "",
-    pincode: "",
+    pincode: pinIn(r.address || ""),
     status: "Existing Buffindia customer",
   }
 }
@@ -111,13 +144,14 @@ export async function GET(request: NextRequest) {
   const derived = { state: GST_STATE_CODES[gstin.slice(0, 2)], pan: gstin.slice(2, 12) }
   const warnings: string[] = v.checksumOnly ? ["GSTIN check digit looks wrong — please re-check the number."] : []
   let found: Found | null = null
-  let source: "provider" | "portal" | "none" = "none"
+  let source: "provider" | "portal" | "saved" | "none" = "none"
 
+  // Own records first (instant, free), then the paid GST provider for new clients.
   try {
-    found = await fromGstProvider(gstin)
-    if (found) source = "provider"
+    found = await fromSavedQuotationClients(gstin)
+    if (found) source = "saved"
   } catch (e) {
-    warnings.push(`GST lookup failed: ${e instanceof Error ? e.message : "unknown error"}`)
+    console.error("GSTIN saved-client lookup error:", e)
   }
   if (!found) {
     try {
@@ -125,6 +159,14 @@ export async function GET(request: NextRequest) {
       if (found) source = "portal"
     } catch (e) {
       console.error("GSTIN portal lookup error:", e)
+    }
+  }
+  if (!found) {
+    try {
+      found = await fromGstProvider(gstin)
+      if (found) source = "provider"
+    } catch (e) {
+      warnings.push(`GST lookup failed: ${e instanceof Error ? e.message : "unknown error"}`)
     }
   }
   if (!found && !process.env.GST_API_KEY) {

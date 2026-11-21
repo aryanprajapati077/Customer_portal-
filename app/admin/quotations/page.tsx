@@ -335,9 +335,9 @@ export default function AdminQuotationsPage() {
 
   useEffect(() => () => { if (prevRef.current) URL.revokeObjectURL(prevRef.current) }, [])
 
-  async function lookup(which: "bill" | "ship") {
+  async function lookup(which: "bill" | "ship", typed?: string) {
     const party = which === "bill" ? q.bill : q.ship
-    const g = normalizeGstin(party.gstin)
+    const g = normalizeGstin(typed ?? party.gstin)
     const v = validateGstin(g)
     if (!v.valid && !v.checksumOnly) return setMsg({ kind: "err", text: v.error || "Invalid GSTIN" })
     setBusy(which === "bill" ? "billLookup" : "shipLookup")
@@ -366,7 +366,7 @@ export default function AdminQuotationsPage() {
       setMsg({
         kind: l.details ? "ok" : "info",
         text: l.details
-          ? `Fetched from ${l.source === "portal" ? "Buffindia portal customers" : "GST records"}: ${l.details.legalName}`
+          ? `Fetched from ${l.source === "portal" ? "Buffindia portal customers" : l.source === "saved" ? "saved quotation clients" : "GST records"}: ${l.details.legalName}`
           : `GSTIN is valid (${l.derived.state}, PAN ${l.derived.pan}). Address could not be fetched automatically — use “Paste from GST portal” below or type it, then enter the pincode to fill city and state.`,
       })
     } catch (e) {
@@ -416,7 +416,12 @@ export default function AdminQuotationsPage() {
           value={p.gstin}
           maxLength={15}
           placeholder="e.g. 36AABCT2223L1ZF"
-          onChange={(e) => onChange({ gstin: normalizeGstin(e.target.value) })}
+          onChange={(e) => {
+            const g = normalizeGstin(e.target.value)
+            onChange({ gstin: g })
+            // Fetch automatically as soon as a complete, valid GSTIN is entered.
+            if (g.length === 15 && g !== p.gstin && validateGstin(g).valid) lookup(which, g)
+          }}
         />
         <GstinHint value={p.gstin} />
       </Field>

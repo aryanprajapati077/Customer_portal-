@@ -345,6 +345,10 @@ function Party({ p }: { p: QuotationConfig["bill"] }) {
 function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
   const cgst = k.taxType === "CGST_SGST"
   const cols = invoiceCols(cgst)
+  // Several lines: smaller kiosk photos so the whole invoice fits on one page.
+  const compact = k.lines.length > 1
+  const tight = k.lines.length > 2
+  const lh = compact ? 1.28 : 1.4
   const meta: [string, string, boolean][] = [
     ["PI No.", c.piNo, true],
     ["Date", formatDate(c.date), false],
@@ -362,7 +366,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
               <Image
                 key={im}
                 src={KIOSK_IMG[im]}
-                style={{ width: l.images.length > 1 ? 26 : 54, height: l.images.length > 1 ? 40 : 71, objectFit: "contain" }}
+                style={{ width: l.images.length > 1 ? 26 : tight ? 32 : compact ? 40 : 54, height: l.images.length > 1 ? 40 : tight ? 43 : compact ? 53 : 71, objectFit: "contain" }}
               />
             ))}
           </View>
@@ -370,12 +374,12 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
       case "item":
         return (
           <View>
-            <Text style={s.cellB}>{l.name}</Text>
+            <Text style={{ ...s.cellB, lineHeight: lh }}>{l.name}</Text>
             {l.description.map((d, i) => (
-              <Text key={i} style={s.cellM}>{d}</Text>
+              <Text key={i} style={{ ...s.cellM, lineHeight: lh }}>{d}</Text>
             ))}
             {l.notes.map((n, i) => (
-              <Text key={`n${i}`} style={{ ...s.cellM, fontStyle: "italic", color: INK }}>{i === 0 ? "Note: " : ""}{n}</Text>
+              <Text key={`n${i}`} style={{ ...s.cellM, lineHeight: lh, fontStyle: "italic", color: INK }}>{i === 0 ? "Note: " : ""}{n}</Text>
             ))}
           </View>
         )
@@ -406,7 +410,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
   ]
   const bankW = [127, 174, 143, 95]
   return (
-    <Page size="A4" style={{ ...s.page, paddingHorizontal: 28, paddingTop: 96 }}>
+    <Page size="A4" style={{ ...s.page, paddingHorizontal: 28, paddingTop: 92, paddingBottom: 52 }}>
       <Frame>
         <View wrap={false}>
           <View style={{ backgroundColor: NAVY, height: 32, alignItems: "center", justifyContent: "center" }}>
@@ -434,7 +438,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
           </View>
         </View>
 
-        <View style={{ ...box, marginTop: 9 }} wrap={false}>
+        <View style={{ ...box, marginTop: 7 }} wrap={false}>
           <View style={{ flexDirection: "row", backgroundColor: TINT, borderBottomWidth: 0.5, borderBottomColor: GRID, height: 21 }}>
             <View style={{ flex: 1, justifyContent: "center", paddingLeft: 6, ...vLine }}>
               <Text style={T(7.8, NAVY, 700)}>Billing Address</Text>
@@ -453,7 +457,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
           </View>
         </View>
 
-        <View style={{ ...box, marginTop: 9, borderBottomWidth: 0 }}>
+        <View style={{ ...box, marginTop: 7, borderBottomWidth: 0 }}>
           <View fixed style={{ flexDirection: "row", backgroundColor: NAVY, minHeight: 23 }}>
             {cols.map((col, i) => (
               <View
@@ -468,7 +472,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
             <View
               key={l.no}
               wrap={false}
-              style={{ flexDirection: "row", borderBottomWidth: 0.7, borderBottomColor: GRID, minHeight: l.images.length ? 93 : 26 }}
+              style={{ flexDirection: "row", borderBottomWidth: 0.7, borderBottomColor: GRID, minHeight: l.images.length ? (tight ? 50 : compact ? 58 : 93) : 26 }}
             >
               {cols.map((col, i) => (
                 <View key={col.key} style={{ width: col.w, ...cellPad, paddingTop: 5, borderRightWidth: i < cols.length - 1 ? 0.5 : 0, borderRightColor: GRID }}>
@@ -479,8 +483,10 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
           ))}
         </View>
 
-        <View wrap={false}>
-          <View style={{ ...box, marginTop: 9, flexDirection: "row" }}>
+        {/* Each block below stays whole but can move to the next page on its own,
+            so a long item list never leaves a half-empty page. */}
+        <View>
+          <View wrap={false} style={{ ...box, marginTop: 7, flexDirection: "row" }}>
             <View style={{ flex: 1, paddingHorizontal: 6, paddingVertical: 7 }}>
               <Text style={s.cellM}>Total PI Amount in Words :</Text>
               <Text style={{ ...T(9, NAVY, 700), marginTop: 4, lineHeight: 1.35 }}>{k.words}</Text>
@@ -490,7 +496,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
             </View>
             <View style={{ width: 273, borderLeftWidth: 0.5, borderLeftColor: GRID }}>
               {totals.map(([l, v]) => (
-                <View key={l} style={{ flexDirection: "row", height: 24, borderBottomWidth: 0.5, borderBottomColor: GRID }}>
+                <View key={l} style={{ flexDirection: "row", height: 21, borderBottomWidth: 0.5, borderBottomColor: GRID }}>
                   <View style={{ width: 153, justifyContent: "center", paddingLeft: 6, ...vLine }}>
                     <Text style={s.cellM}>{l}</Text>
                   </View>
@@ -510,6 +516,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
             </View>
           </View>
 
+          <View wrap={false}>
           <Text style={{ ...s.cellB, marginTop: 8, marginBottom: 4 }}>Bank Details :</Text>
           <View style={box}>
             {[
@@ -525,8 +532,9 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
               </View>
             ))}
           </View>
+          </View>
 
-          <View style={{ ...box, marginTop: 9, flexDirection: "row", minHeight: 24 }}>
+          <View wrap={false} style={{ ...box, marginTop: 7, flexDirection: "row", minHeight: 24 }}>
             <View style={{ width: 184, backgroundColor: TINT, justifyContent: "center", paddingLeft: 6, ...vLine }}>
               <Text style={T(7.8, NAVY, 700)}>Special Conditions (if applicable)</Text>
             </View>
@@ -535,7 +543,7 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
             </View>
           </View>
 
-          <View style={{ ...box, marginTop: 9, flexDirection: "row" }}>
+          <View wrap={false} style={{ ...box, marginTop: 7, flexDirection: "row" }}>
             <View style={{ flex: 1, padding: 6, ...vLine }}>
               <Text style={{ ...s.cellB, marginBottom: 4 }}>Terms & Conditions :</Text>
               {[
@@ -549,11 +557,11 @@ function Invoice({ c, k }: { c: QuotationConfig; k: Computed }) {
               ].map((t) => (
                 <Text key={t} style={T(7.6, MUTED)}>•  {t}</Text>
               ))}
-              <Text style={{ ...T(7.6, MUTED), marginTop: 8 }}>This is a computer-generated proforma invoice. E. & O. E.</Text>
+              <Text style={{ ...T(7.6, MUTED), marginTop: 4 }}>This is a computer-generated proforma invoice. E. & O. E.</Text>
             </View>
             <View style={{ width: 184, padding: 6, alignItems: "center" }}>
               <Text style={{ ...T(7.6, INK), textAlign: "center" }}>For, Buffindia Receptacles Private Limited</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 5 }}>
                 <Image src={asset("signature.png")} style={{ width: 51, height: 50 }} />
                 <Image src={asset("stamp.png")} style={{ width: 50, height: 47, marginLeft: 14 }} />
               </View>

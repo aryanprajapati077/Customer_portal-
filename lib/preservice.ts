@@ -43,6 +43,10 @@ export type PreServiceConfig = {
   advancePrice: number | null
   buttsPerYear: number | null // null => auto estimate
   customerLogo: string // data URL, optional
+  /** Comparison page: recommended kiosk counts (null => use the kiosk units above / location totals) */
+  recBasic: number | null
+  recAdvance: number | null
+  showComparison: boolean
 }
 
 export function defaultPreService(): PreServiceConfig {
@@ -52,6 +56,7 @@ export function defaultPreService(): PreServiceConfig {
     occupancy: null, smokers: null, zones: null, kioskType: "Both",
     basicUnits: null, basicPrice: null, advanceUnits: null, advancePrice: null,
     buttsPerYear: null, customerLogo: "",
+    recBasic: null, recAdvance: null, showComparison: true,
   }
 }
 
@@ -93,6 +98,21 @@ export function coercePreService(raw: unknown): PreServiceConfig {
     advancePrice: num(r.advancePrice),
     buttsPerYear: num(r.buttsPerYear),
     customerLogo: logo,
+    recBasic: num(r.recBasic),
+    recAdvance: num(r.recAdvance),
+    showComparison: r.showComparison !== false,
+  }
+}
+
+/** Kiosk counts shown on the comparison page; 0 hides that option. */
+export function comparisonRecommendation(c: PreServiceConfig): { basic: number; advance: number } {
+  if (c.mode === "multi") {
+    const m = computeMulti(c)
+    return { basic: Math.round(c.recBasic ?? m.basic), advance: Math.round(c.recAdvance ?? m.adv) }
+  }
+  return {
+    basic: Math.round(c.recBasic ?? (c.kioskType !== "Advance" ? c.basicUnits ?? 0 : 0)),
+    advance: Math.round(c.recAdvance ?? (c.kioskType !== "Basic" ? c.advanceUnits ?? 0 : 0)),
   }
 }
 

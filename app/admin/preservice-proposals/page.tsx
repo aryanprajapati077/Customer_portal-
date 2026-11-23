@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Copy, Download, Eye, Loader2, Pencil, Plus, Save, Trash2, Upload } from "lucide-react"
 import {
-  PRE_STATUSES, computeMulti, computePreService, emptySite, preTotal, defaultPreService, fmtKg, fmtWater, inr,
+  PRE_STATUSES, comparisonRecommendation, computeMulti, computePreService, emptySite, preTotal, defaultPreService, fmtKg, fmtWater, inr,
   type PreKiosk, type PreServiceConfig, type PreStatus,
 } from "@/lib/preservice"
 
@@ -58,6 +59,7 @@ export default function PreServiceProposalsPage() {
   const total = preTotal(q)
   const mm = computeMulti(q)
   const multi = q.mode === "multi"
+  const autoRec = comparisonRecommendation({ ...q, recBasic: null, recAdvance: null })
   const setSite = (i: number, patch: Partial<(typeof q.sites)[number]>) => set("sites", q.sites.map((x, j) => (j === i ? { ...x, ...patch } : x)))
 
   async function newOne() {
@@ -325,6 +327,23 @@ export default function PreServiceProposalsPage() {
             </Card>
               </>
             )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Recommendation</CardTitle>
+                <CardDescription>Shown on the Basic vs Advance comparison page, e.g. &ldquo;8 Basic Kiosks OR 4 Advance Kiosks&rdquo;. Leave blank to use the kiosk units above; 0 hides that option.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2 max-w-md">
+                  <Field label="Basic kiosks"><Input {...numIn("recBasic")} placeholder={`Auto: ${autoRec.basic}`} disabled={!q.showComparison} /></Field>
+                  <Field label="Advance kiosks"><Input {...numIn("recAdvance")} placeholder={`Auto: ${autoRec.advance}`} disabled={!q.showComparison} /></Field>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={q.showComparison} onCheckedChange={(v) => set("showComparison", v === true)} />
+                  Include Basic vs Advance comparison page
+                </label>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-5">

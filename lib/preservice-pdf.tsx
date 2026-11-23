@@ -1,7 +1,7 @@
 import React from "react"
 import path from "path"
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer"
-import { computeMulti, computePreService, fmtKg, fmtWater, inr, preDate, type PreServiceConfig } from "@/lib/preservice"
+import { comparisonRecommendation, computeMulti, computePreService, fmtKg, fmtWater, inr, preDate, type PreServiceConfig } from "@/lib/preservice"
 import { COLS, LAYOUT, textWidth, type TableLayout } from "@/lib/preservice-multi-layout"
 
 const font = (f: string) => path.join(process.cwd(), "public", "fonts", f)
@@ -133,7 +133,10 @@ function SingleDoc({ c }: { c: PreServiceConfig }) {
         </View>
       </Page>
 
-      {/* 5–7 — Static pages */}
+      {/* 5 — Basic vs Advance comparison */}
+      {comparison(c)}
+
+      {/* Static pages */}
       {["static5.jpg", "static6.jpg", "static7.jpg"].map((f) => (
         <Page key={f} size={[W, H]} style={{ padding: 0 }}>
         <View style={st.page}>
@@ -145,6 +148,128 @@ function SingleDoc({ c }: { c: PreServiceConfig }) {
   )
 }
 
+// ───────────────────────── Basic vs Advance comparison ─────────────────────────
+
+const kioskImg = (f: string) => path.join(process.cwd(), "public", "quotation-assets", f)
+const CARD_BG = "#f2f3f1"
+const DARK = "#1c2b2a"
+const MUTED = "#5f6470"
+const SOFT_GREEN = "#e7f1e2"
+const LEAF = "#6a9a3a"
+
+/** Feature, Basic, Advance — edit here to change the comparison table. */
+const COMPARE: [string, string, string][] = [
+  ["Design", "Functional, standard format", "Premium, contemporary format"],
+  ["Waste capacity", "Approx. 2,000 butts", "Approx. 8,000 butts"],
+  ["Capacity advantage", "Moderate holding capacity", "About 4x Basic capacity"],
+  ["Emptying frequency", "More frequent checks", "Potentially fewer emptying cycles"],
+  ["Housekeeping", "Routine emptying", "Reduced emptying frequency"],
+  ["Branding visibility", "Standard signage / branding", "Prominent front branding"],
+  ["Awareness messaging", "Standard awareness display", "High-visibility messaging"],
+  ["Ideal placement", "Outdoor smoking zones", "Premium / semi-outdoor zones"],
+  ["Usage intensity", "Moderate footfall", "Moderate to high footfall"],
+  ["Deployment", "Compact, flexible setup", "Planned premium installation"],
+  ["Commercial positioning", "Cost-conscious option", "Premium infrastructure option"],
+  ["Collection & recycling", "Included in service", "Included in service"],
+  ["Environmental reporting", "Included in service", "Included in service"],
+]
+
+function ComparisonPage({ c, rec }: { c: PreServiceConfig; rec: { basic: number; advance: number } }) {
+  const L = 36
+  const CW = W - 2 * L
+  const two = (n: number) => String(n).padStart(2, "0")
+  const kiosks = [
+    { name: "BASIC KIOSK", label: "Basic", tag: "Efficient & economical", file: "kiosk-basic.jpg", img: { width: 104, height: 138 }, n: rec.basic },
+    { name: "ADVANCE KIOSK", label: "Advance", tag: "Premium & high-capacity", file: "kiosk-advance.jpg", img: { width: 78, height: 138 }, n: rec.advance },
+  ]
+  const recs = kiosks.filter((k) => k.n > 0)
+  const col = [CW * 0.36, CW * 0.31, CW * 0.33]
+  const P = (size: number, color = INK, weight: 400 | 500 | 700 = 400) => ({ fontFamily: "Poppins", fontSize: size, color, fontWeight: weight })
+  return (
+    <Page size={[W, H]} style={{ padding: 0 }}>
+      <View style={st.page}>
+        <Image src={img("header-strip.jpg")} style={{ position: "absolute", top: 0, left: 0, width: W, height: (W * 250) / 1848 }} />
+        <Logo x={30} y={18} />
+        <View style={{ position: "absolute", top: 92, left: L, width: CW }}>
+          <Text style={P(24, GREEN, 700)}>Basic vs Advance Kiosk</Text>
+          <View style={{ width: 66, height: 3, borderRadius: 2, backgroundColor: ORANGE, marginTop: 6 }} />
+
+          {recs.length > 0 && (
+            <View style={{ marginTop: 14, flexDirection: "row", alignItems: "center", backgroundColor: SOFT_GREEN, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14 }}>
+              <View style={{ width: 150 }}>
+                <Text style={P(7.5, LEAF, 700)}>OUR RECOMMENDATION</Text>
+                <Text style={{ ...P(fit(c.name || "your site", 10, 26), GREEN, 700), marginTop: 1 }}>{`For ${c.name || "your site"}`}</Text>
+              </View>
+              <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                {recs.map((k, i) => (
+                  <React.Fragment key={k.label}>
+                    {i > 0 && (
+                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center", marginHorizontal: 14 }}>
+                        <Text style={P(8.5, GREEN, 700)}>OR</Text>
+                      </View>
+                    )}
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Text style={P(24, ORANGE, 700)}>{two(k.n)}</Text>
+                      <Text style={{ ...P(11, DARK, 500), marginLeft: 6 }}>{`${k.label} ${k.n === 1 ? "Kiosk" : "Kiosks"}`}</Text>
+                    </View>
+                  </React.Fragment>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={{ marginTop: 12, flexDirection: "row", gap: 10 }}>
+            {kiosks.map((k) => (
+              <View key={k.name} style={{ flex: 1, flexDirection: "row", backgroundColor: CARD_BG, borderRadius: 10, padding: 12, height: 162 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={P(13, ORANGE, 700)}>{k.name}</Text>
+                  <Text style={{ ...P(8.5, MUTED), marginTop: 2 }}>{k.tag}</Text>
+                  {k.n > 0 && (
+                    <View style={{ marginTop: "auto" }}>
+                      <Text style={P(7.5, MUTED, 500)}>Recommended</Text>
+                      <Text style={P(20, GREEN, 700)}>
+                        {two(k.n)}
+                        <Text style={P(10, GREEN, 500)}>{k.n === 1 ? " Unit" : " Units"}</Text>
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <Image src={kioskImg(k.file)} style={{ ...k.img, objectFit: "cover", borderRadius: 4 }} />
+              </View>
+            ))}
+          </View>
+
+          <View style={{ marginTop: 12 }}>
+            <View style={{ flexDirection: "row", backgroundColor: DARK, borderRadius: 6, height: 25, alignItems: "center" }}>
+              {["COMPARISON", "BASIC", "ADVANCE"].map((h, i) => (
+                <Text key={h} style={{ ...P(9, "#ffffff", 700), width: col[i], paddingLeft: 12 }}>{h}</Text>
+              ))}
+            </View>
+            {COMPARE.map(([f, b, a], r) => (
+              <View key={f} style={{ flexDirection: "row", alignItems: "center", height: 20.5, backgroundColor: r % 2 === 0 ? CARD_BG : "#ffffff" }}>
+                <Text style={{ ...P(8.5, DARK, 700), width: col[0], paddingLeft: 12 }}>{f}</Text>
+                <Text style={{ ...P(8.3, MUTED), width: col[1], paddingLeft: 12 }}>{b}</Text>
+                <Text style={{ ...P(8.3, DARK), width: col[2], paddingLeft: 12 }}>{a}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={{ marginTop: 12, backgroundColor: SOFT_GREEN, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 12 }}>
+            <Text style={P(9.5, LEAF, 700)}>WHY CONSIDER ADVANCE?</Text>
+            <Text style={{ ...P(9, DARK), marginTop: 3 }}>Greater capacity   |   Fewer emptying cycles   |   Premium corporate presentation</Text>
+          </View>
+
+          <Text style={{ ...P(7.8, MUTED), marginTop: 9, lineHeight: 1.45 }}>
+            {"Both options support Buffindia's end-to-end cigarette waste management service.\nCapacity figures are approximate; actual emptying needs depend on site usage."}
+          </Text>
+        </View>
+        <View style={{ position: "absolute", left: 0, bottom: 0, width: W, height: 9, backgroundColor: GREEN }} />
+      </View>
+    </Page>
+  )
+}
+
+const comparison = (c: PreServiceConfig) => (c.showComparison ? <ComparisonPage c={c} rec={comparisonRecommendation(c)} /> : null)
 
 // ───────────────────────── Multi-location ─────────────────────────
 // Table pages replay the sample PDFs for 2–12 locations: each count has its own background (with the
@@ -458,7 +583,10 @@ function MultiDoc({ c }: { c: PreServiceConfig }) {
         </>
       )))}
 
-      {/* 8–10 — Static pages */}
+      {/* Basic vs Advance comparison */}
+      {comparison(c)}
+
+      {/* Static pages */}
       {["mlstatic8.jpg", "mlstatic9.jpg", "mlstatic10.jpg"].map((f) => bgPage(f, f, null))}
     </Document>
   )

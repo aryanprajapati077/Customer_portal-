@@ -587,7 +587,10 @@ function MultiDoc({ c }: { c: PreServiceConfig }) {
       {comparison(c)}
 
       {/* Static pages */}
-      {["mlstatic8.jpg", "mlstatic9.jpg", "mlstatic10.jpg"].map((f) => bgPage(f, f, null))}
+      {/* The multi-location artwork has no Buffindia logo; place it where the single-location pages (5, 7) have it. */}
+      {bgPage("mlstatic8.jpg", "mlstatic8.jpg", <Logo x={29} y={19.6} w={128.7} />)}
+      {bgPage("mlstatic9.jpg", "mlstatic9.jpg", null)}
+      {bgPage("mlstatic10.jpg", "mlstatic10.jpg", <Logo x={31} y={27.3} w={138} />)}
     </Document>
   )
 }

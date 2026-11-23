@@ -30,11 +30,11 @@ export function AdminPageIntro({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 border-b border-[#ebe9e4] pb-5 sm:flex-row sm:items-end sm:justify-between",
+        "flex flex-col gap-4 pb-1 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {eyebrow ? <p className="admin-eyebrow">{eyebrow}</p> : null}
         <h1 className="admin-page-title">{title}</h1>
         {description ? <p className="admin-page-desc max-w-2xl">{description}</p> : null}

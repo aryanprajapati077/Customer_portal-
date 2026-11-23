@@ -5,7 +5,6 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import "./admin.css"
-import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
   Users,
@@ -35,7 +34,6 @@ import {
   ToggleRight,
   MailCheck,
   ListChecks,
-  ChevronRight,
   Search,
   Zap,
   MapPinned,
@@ -188,6 +186,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [admin, setAdmin] = useState<AdminMe | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navQuery, setNavQuery] = useState("")
+  const [scrolled, setScrolled] = useState(false)
 
   const isAuthPage = AUTH_PATHS.includes(pathname)
 
@@ -233,6 +232,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     setMobileOpen(false)
   }, [pathname])
+
+  // Portalled dialogs/menus render outside .admin-root; tag <body> so they share the admin look.
+  useEffect(() => {
+    if (isAuthPage) return
+    document.body.classList.add("admin-body")
+    return () => document.body.classList.remove("admin-body")
+  }, [isAuthPage])
+
+  // Toolbar shows its hairline + compact title only once content scrolls under it.
+  useEffect(() => {
+    if (isAuthPage) return
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [isAuthPage])
 
   const flatNav = useMemo(() => navGroups.flatMap((g) => g.items), [])
 
@@ -305,6 +320,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <div className="admin-auth min-h-screen bg-white">{children}</div>
   }
 
+  const initials = (admin?.name || admin?.email || "A")
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("")
+
+  const NavLink = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) => {
+    const Icon = item.icon
+    const active = isActive(pathname, item.href)
+    return (
+      <Link
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className="admin-nav-item"
+      >
+        <Icon strokeWidth={1.8} aria-hidden />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    )
+  }
+
   const SidebarNav = ({ onNavigate }: { onNavigate?: () => void }) => {
     const q = navQuery.trim().toLowerCase()
     const visibleGroups = filteredGroups.groups
@@ -322,147 +360,110 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
 
     return (
-    <>
-      <div className="border-b border-[#ebe9e4] px-4 pb-4 pt-5">
-        <Link href="/admin" onClick={onNavigate} className="group block">
-          <Image
-            src="/logo.svg"
-            alt="BuffIndia"
-            width={140}
-            height={44}
-            className="h-9 w-auto object-contain transition-opacity group-hover:opacity-90"
-            priority
-          />
-          <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a9a9a]">
-            Admin Console
-          </p>
-        </Link>
-        {admin && (
-          <div className="mt-3 rounded-xl border border-[#dce8dc] bg-[#f7fbf7] px-3 py-2.5">
-            <p className="truncate text-[13px] font-semibold text-[#141414]">{admin.name}</p>
-            <p className="truncate text-[11px] text-[#6b6b6b]">
-              {admin.role === "super_admin" ? "Super Admin" : "Admin"} · {admin.email}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="px-3 pb-2">
-        <label className="sr-only" htmlFor="admin-nav-search">
-          Search admin menu
-        </label>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9a9a9a]" aria-hidden />
-          <input
-            id="admin-nav-search"
-            type="search"
-            value={navQuery}
-            onChange={(e) => setNavQuery(e.target.value)}
-            placeholder="Search menu…"
-            className="admin-nav-search h-9 w-full rounded-[10px] border border-[#ebe9e4] bg-[#fafaf8] pl-8 pr-2 text-[12px] text-[#141414] placeholder:text-[#9a9a9a]"
-          />
+      <>
+        <div className="px-4 pb-3 pt-5">
+          <Link href="/admin" onClick={onNavigate} className="flex items-center gap-2.5 rounded-lg">
+            <Image
+              src="/logo.svg"
+              alt="BuffIndia"
+              width={120}
+              height={36}
+              className="h-7 w-auto object-contain"
+              priority
+            />
+            <span className="rounded-md bg-[rgba(118,118,128,0.12)] px-1.5 py-0.5 text-[11px] font-semibold text-[#6e6e73]">
+              Admin
+            </span>
+          </Link>
         </div>
-      </div>
 
-      <nav className="admin-sidebar-scroll flex-1 overflow-y-auto px-2.5 py-2" aria-label="Admin navigation">
-        {visibleGroups.map((group) => (
-          <div key={group.label} className="mb-1">
-            <p className="admin-nav-label">{group.label}</p>
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const active = isActive(pathname, item.href)
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative flex min-h-[42px] items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13.5px] font-medium transition-colors duration-150",
-                      active
-                        ? "bg-[#e8f5e9] text-[#1b7339] shadow-sm"
-                        : "text-[#4a4a4a] hover:bg-[#f5f5f3] hover:text-[#141414]",
-                    )}
-                  >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 h-[22px] w-[3px] -translate-y-1/2 rounded-r-full bg-[#1b7339]" />
-                    )}
-                    <Icon
-                      className={cn(
-                        "h-[17px] w-[17px] shrink-0",
-                        active ? "text-[#1b7339]" : "text-[#8a8a8a]",
-                      )}
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                )
-              })}
-            </div>
+        <div className="px-3 pb-1">
+          <label className="sr-only" htmlFor="admin-nav-search">
+            Search admin menu
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#86868b]"
+              aria-hidden
+            />
+            <input
+              id="admin-nav-search"
+              type="search"
+              value={navQuery}
+              onChange={(e) => setNavQuery(e.target.value)}
+              placeholder="Search"
+              className="admin-nav-search"
+            />
           </div>
-        ))}
+        </div>
 
-        {visibleSystem.length > 0 && (
-          <div className="mb-1 mt-2 border-t border-[#ebe9e4] pt-2">
-            <p className="admin-nav-label">System</p>
-            <div className="space-y-0.5">
-              {visibleSystem.map((item) => {
-                const active = isActive(pathname, item.href)
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative flex min-h-[42px] items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13.5px] font-medium transition-colors duration-150",
-                      active
-                        ? "bg-[#e8f5e9] text-[#1b7339]"
-                        : "text-[#4a4a4a] hover:bg-[#f5f5f3] hover:text-[#141414]",
-                    )}
-                  >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 h-[22px] w-[3px] -translate-y-1/2 rounded-r-full bg-[#1b7339]" />
-                    )}
-                    <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.75} aria-hidden />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                )
-              })}
+        <nav className="admin-sidebar-scroll flex-1 overflow-y-auto px-2.5 pb-3" aria-label="Admin navigation">
+          {visibleGroups.map((group) => (
+            <div key={group.label}>
+              <p className="admin-nav-label">{group.label}</p>
+              <div className="space-y-px">
+                {group.items.map((item) => (
+                  <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+                ))}
+              </div>
             </div>
+          ))}
+
+          {visibleSystem.length > 0 && (
+            <div>
+              <p className="admin-nav-label">System</p>
+              <div className="space-y-px">
+                {visibleSystem.map((item) => (
+                  <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {q && visibleGroups.length === 0 && visibleSystem.length === 0 ? (
+            <p className="px-3 py-8 text-center text-[13px] text-[#86868b]">No results for “{navQuery.trim()}”</p>
+          ) : null}
+        </nav>
+
+        <div className="border-t-[0.5px] border-[rgba(0,0,0,0.1)] p-2.5">
+          <div className="flex items-center gap-2.5 rounded-[10px] px-1.5 py-1.5">
+            <span
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#a1a1a6] to-[#7c7c80] text-[12px] font-semibold text-white"
+            >
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold leading-tight text-[#1d1d1f]">
+                {admin?.name || "Admin"}
+              </p>
+              <p className="truncate text-[11.5px] leading-tight text-[#86868b]">
+                {admin ? (admin.role === "super_admin" ? "Super Admin" : "Admin") : ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              disabled={isLoggingOut}
+              className="admin-toolbar-btn !h-8 !w-8 !px-0 !bg-transparent hover:!bg-[rgba(118,118,128,0.12)] disabled:opacity-50"
+              aria-label={isLoggingOut ? "Signing out" : "Sign out"}
+              title="Sign out"
+            >
+              <LogOut aria-hidden />
+            </button>
           </div>
-        )}
-
-        {q && visibleGroups.length === 0 && visibleSystem.length === 0 ? (
-          <p className="px-3 py-6 text-center text-[12px] text-[#8a8a8a]">No menu items match.</p>
-        ) : null}
-      </nav>
-
-      <div className="border-t border-[#ebe9e4] p-3">
-        <button
-          type="button"
-          onClick={logout}
-          disabled={isLoggingOut}
-          className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#f0d0d0] bg-[#fff8f8] px-3 py-2.5 text-[13px] font-semibold text-[#c62828] transition-colors hover:bg-[#ffebee] disabled:opacity-60"
-        >
-          <LogOut className="h-4 w-4" aria-hidden />
-          {isLoggingOut ? "Signing out..." : "Sign Out"}
-        </button>
-      </div>
-    </>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="admin-root min-h-screen text-[#141414]">
+    <div className="admin-root">
       <a href="#admin-main" className="admin-skip-link">
         Skip to main content
       </a>
-      <div className="relative z-10 flex min-h-screen">
-        <aside className="admin-sidebar sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col lg:flex">
+      <div className="relative flex min-h-screen">
+        <aside className="admin-sidebar sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col lg:flex">
           <SidebarNav />
         </aside>
 
@@ -470,19 +471,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
             <button
               type="button"
-              className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+              className="admin-scrim absolute inset-0 bg-black/20"
               aria-label="Close menu"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="admin-sidebar absolute left-0 top-0 flex h-full w-[280px] flex-col shadow-xl">
-              <div className="flex items-center justify-end p-3">
+            <aside className="admin-sidebar admin-drawer absolute left-0 top-0 flex h-full w-[284px] flex-col shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center justify-end px-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f5f5f3]"
+                  className="admin-toolbar-btn !px-0"
                   aria-label="Close menu"
                 >
-                  <X className="h-5 w-5" />
+                  <X aria-hidden />
                 </button>
               </div>
               <SidebarNav onNavigate={() => setMobileOpen(false)} />
@@ -491,76 +492,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         <div className="admin-canvas flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-[#ebe9e4] bg-white/92 backdrop-blur-md">
-            <div className="flex min-h-[3.75rem] items-center justify-between gap-3 px-4 lg:px-8">
-              <div className="flex min-w-0 items-center gap-2">
-                <button
-                  type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white lg:hidden"
-                  onClick={() => setMobileOpen(true)}
-                  aria-label="Open navigation menu"
-                >
-                  <Menu className="h-4 w-4" />
-                </button>
-                <div className="min-w-0">
-                  <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-[#8a8a8a]">
-                    <span>Admin</span>
-                    <ChevronRight className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-                    <span className="truncate font-medium text-[#1b7339]">{pageTitle}</span>
-                  </nav>
-                  <p className="truncate text-[15px] font-semibold tracking-tight text-[#141414]">{pageTitle}</p>
+          <header className="admin-toolbar" data-scrolled={scrolled ? "true" : "false"}>
+            <div className="flex h-[52px] items-center justify-between gap-3 px-4 lg:px-8">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="lg:hidden">
+                  <button
+                    type="button"
+                    className="admin-toolbar-btn !px-0"
+                    onClick={() => setMobileOpen(true)}
+                    aria-label="Open navigation menu"
+                  >
+                    <Menu aria-hidden />
+                  </button>
                 </div>
+                <p
+                  className={cn(
+                    "truncate text-[13px] font-semibold tracking-[-0.01em] text-[#1d1d1f] transition-opacity duration-200",
+                    scrolled ? "opacity-100" : "opacity-0 lg:opacity-0",
+                  )}
+                  aria-hidden={!scrolled}
+                >
+                  {pageTitle}
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                {admin && (
-                  <span className="hidden max-w-[200px] truncate rounded-full border border-[#ebe9e4] bg-[#fafaf8] px-3 py-1.5 text-[11px] text-[#6b6b6b] md:inline">
-                    {admin.email}
-                  </span>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-10 rounded-full border-[#dce8dc] bg-white px-4 text-[#1b7339] hover:bg-[#e8f5e9]"
-                  onClick={() => router.push("/dashboard")}
-                >
-                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  Portal
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-10 rounded-full border-[#f0d0d0] text-[#c62828] hover:bg-[#fff5f5] sm:hidden"
-                  onClick={logout}
-                  disabled={isLoggingOut}
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <Link href="/dashboard" className="admin-toolbar-btn">
+                  <ExternalLink aria-hidden />
+                  <span className="hidden sm:inline">Customer portal</span>
+                </Link>
               </div>
             </div>
           </header>
 
-          <main id="admin-main" className="flex flex-1 flex-col px-4 py-6 lg:px-8 lg:py-8">
-            <div className="admin-content admin-page flex-1">{children}</div>
-            <footer className="admin-footer mt-8 border-t border-[#ebe9e4] pt-4">
-              <div className="flex flex-col gap-2 text-[11px] text-[#8a8a8a] sm:flex-row sm:items-center sm:justify-between">
-                <span>BuffIndia Admin Console</span>
+          <main id="admin-main" className="flex flex-1 flex-col px-4 pb-8 pt-4 lg:px-8 lg:pt-6">
+            <div key={pathname} className="admin-content admin-page admin-page-enter flex-1">
+              {children}
+            </div>
+            <footer className="admin-footer admin-content mt-12">
+              <div className="flex flex-col gap-2 border-t-[0.5px] border-[rgba(0,0,0,0.1)] pt-4 text-[12px] text-[#86868b] sm:flex-row sm:items-center sm:justify-between">
+                <span>BuffIndia Admin</span>
                 <nav aria-label="Admin footer links" className="flex flex-wrap gap-x-4 gap-y-1">
-                  <Link href="/admin/support" className="hover:text-[#1b7339]">
-                    Support inbox
-                  </Link>
-                  <Link href="/admin/report-status" className="hover:text-[#1b7339]">
-                    Report status
-                  </Link>
-                  <Link href="/admin/email-status" className="hover:text-[#1b7339]">
-                    Email delivery
-                  </Link>
-                  <Link href="/admin/pending-collections" className="hover:text-[#1b7339]">
-                    Pending collections
-                  </Link>
-                  <Link href="/admin/security" className="hover:text-[#1b7339]">
-                    Authenticator
-                  </Link>
+                  <Link href="/admin/support">Support inbox</Link>
+                  <Link href="/admin/report-status">Report status</Link>
+                  <Link href="/admin/email-status">Email delivery</Link>
+                  <Link href="/admin/pending-collections">Pending collections</Link>
+                  <Link href="/admin/security">Authenticator</Link>
                 </nav>
               </div>
             </footer>

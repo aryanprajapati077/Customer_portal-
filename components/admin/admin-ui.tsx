@@ -15,7 +15,7 @@ export function AdminDataMeta({
   noun?: string
 }) {
   return (
-    <p className="text-[12px] text-[#6b6b6b]">
+    <p className="text-[12px] text-[#86868b] tabular-nums">
       Showing {shown} of {total} {noun}
       {total === 1 ? "" : "s"}
     </p>
@@ -92,15 +92,15 @@ export function AdminEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-dashed border-[#dce8dc] bg-[#fafaf8] px-6 py-12 text-center",
+        "flex flex-col items-center justify-center rounded-[18px] bg-white px-6 py-14 text-center shadow-[0_0.5px_1px_rgba(0,0,0,0.04),0_2px_12px_rgba(0,0,0,0.04)]",
         className,
       )}
     >
-      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#e8f5e9] text-[#1b7339]">
-        {icon ?? <SearchX className="h-5 w-5" aria-hidden />}
+      <div className="mb-3 text-[#c7c7cc] [&>svg]:h-9 [&>svg]:w-9">
+        {icon ?? <SearchX className="h-9 w-9" strokeWidth={1.5} aria-hidden />}
       </div>
-      <p className="text-sm font-semibold text-[#141414]">{title}</p>
-      {description ? <p className="mt-1 max-w-md text-[13px] text-[#6b6b6b]">{description}</p> : null}
+      <p className="text-[17px] font-semibold tracking-[-0.02em] text-[#1d1d1f]">{title}</p>
+      {description ? <p className="mt-1 max-w-md text-[14px] text-[#6e6e73]">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   )
@@ -119,23 +119,27 @@ export function AdminAttentionStrip({
           key={item.href + item.label}
           href={item.href}
           className={cn(
-            "flex items-center justify-between rounded-xl border px-4 py-3 text-[13px] transition hover:shadow-sm",
-            item.tone === "danger"
-              ? "border-[#f0d0d0] bg-[#fff8f8] hover:border-[#e57373]"
-              : item.tone === "warn"
-                ? "border-[#fde68a] bg-[#fffbeb] hover:border-[#fbbf24]"
-                : "border-[#dce8dc] bg-[#f7fbf7] hover:border-[#9fd4ad]",
+            "flex items-center justify-between rounded-[14px] bg-white px-4 py-3 text-[14px] shadow-[0_0.5px_1px_rgba(0,0,0,0.04),0_2px_12px_rgba(0,0,0,0.04)] transition-transform duration-150 active:scale-[0.985] active:duration-75",
           )}
         >
-          <span className="font-medium text-[#141414]">{item.label}</span>
+          <span className="flex items-center gap-2.5 font-medium text-[#1d1d1f]">
+            <span
+              aria-hidden
+              className={cn(
+                "h-2 w-2 rounded-full",
+                item.tone === "danger" ? "bg-[#ff3b30]" : item.tone === "warn" ? "bg-[#ff9500]" : "bg-[#34c759]",
+              )}
+            />
+            {item.label}
+          </span>
           <span
             className={cn(
-              "text-lg font-bold tabular-nums",
+              "text-[17px] font-semibold tabular-nums tracking-[-0.02em]",
               item.tone === "danger"
-                ? "text-[#c62828]"
+                ? "text-[#d70015]"
                 : item.tone === "warn"
-                  ? "text-[#b45309]"
-                  : "text-[#1b7339]",
+                  ? "text-[#c25700]"
+                  : "text-[#1d1d1f]",
             )}
           >
             {item.value}

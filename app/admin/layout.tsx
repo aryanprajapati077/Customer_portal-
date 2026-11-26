@@ -37,6 +37,7 @@ import {
   Search,
   Zap,
   MapPinned,
+  Recycle,
   Images,
   FileText,
   type LucideIcon,
@@ -111,6 +112,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         label: "LSU Assign",
         icon: MapPinned,
         keywords: ["lsu", "assign", "operations", "manager"],
+      },
+      {
+        href: "/admin/lsu-waste",
+        label: "LSU's Waste",
+        icon: Recycle,
+        keywords: ["lsu", "waste", "reverse", "pickup", "courier", "monthly", "annual", "kg"],
       },
       { href: "/admin/renewals", label: "Renewals", icon: CalendarClock },
       {

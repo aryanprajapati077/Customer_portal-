@@ -19,6 +19,7 @@ export const ADMIN_PERMISSIONS = [
   { key: "collections", label: "Reverify Collections", href: "/admin/reverify-collections" },
   { key: "pending-collections", label: "Pending Collections", href: "/admin/pending-collections" },
   { key: "collections", label: "LSU Assign", href: "/admin/lsu-assign" },
+  { key: "collections", label: "LSU's Waste", href: "/admin/lsu-waste" },
   { key: "renewals", label: "Renewals", href: "/admin/renewals" },
   { key: "renewals", label: "Renewal Responses", href: "/admin/renewal-responses" },
   { key: "report-status", label: "Report Status", href: "/admin/report-status" },
